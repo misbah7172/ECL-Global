@@ -3,7 +3,6 @@ import { useAuth } from "@/lib/auth";
 import { Link, Redirect } from "wouter";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
-import FlyingPlaneLoader from "@/components/flying-plane-loader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -88,21 +87,20 @@ export default function Dashboard() {
       <div className="container py-12">
         {isLoading ? (
           <div className="flex items-center justify-center min-h-[400px]">
-            <FlyingPlaneLoader 
-              size="lg" 
-              message="Loading your ECL Global dashboard..." 
-              className="sky-background p-12 rounded-2xl"
-            />
+            <div className="glass-card rounded-2xl p-8">
+              <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto" />
+              <p className="text-gray-600 mt-4 text-center">Loading your dashboard...</p>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-8">
               {/* Modern Quick Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 dashboard-section">
-                <div className="glass-card rounded-2xl p-6 hover:shadow-xl transition-all stat-card">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="glass-card rounded-2xl p-6 hover:shadow-xl transition-all">
                   <div className="flex items-center">
-                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center mr-4 shadow-lg stat-icon">
+                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center mr-4 shadow-lg">
                       <BookOpen className="h-6 w-6 text-white" />
                     </div>
                     <div>
@@ -114,9 +112,9 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                <div className="glass-card rounded-2xl p-6 hover:shadow-xl transition-all stat-card">
+                <div className="glass-card rounded-2xl p-6 hover:shadow-xl transition-all">
                   <div className="flex items-center">
-                    <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center mr-4 shadow-lg stat-icon">
+                    <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center mr-4 shadow-lg">
                       <FileText className="h-6 w-6 text-white" />
                     </div>
                     <div>
@@ -128,9 +126,9 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                <div className="glass-card rounded-2xl p-6 hover:shadow-xl transition-all stat-card metric-highlight">
+                <div className="glass-card rounded-2xl p-6 hover:shadow-xl transition-all">
                   <div className="flex items-center">
-                    <div className="w-12 h-12 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl flex items-center justify-center mr-4 shadow-lg stat-icon">
+                    <div className="w-12 h-12 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl flex items-center justify-center mr-4 shadow-lg">
                       <TrendingUp className="h-6 w-6 text-white" />
                     </div>
                     <div>
@@ -149,7 +147,7 @@ export default function Dashboard() {
                 <div className="space-y-6">
                   {Array.isArray(enrollments) && enrollments.length > 0 ? (
                     enrollments.map((enrollment: any) => (
-                      <div key={enrollment.id} className="bg-white/60 backdrop-blur-sm border border-white/20 rounded-xl p-6 hover:shadow-md transition-all progress-card">
+                      <div key={enrollment.id} className="bg-white/60 backdrop-blur-sm border border-white/20 rounded-xl p-6 hover:shadow-md transition-all">
                         <div className="flex items-center justify-between mb-4">
                           <h3 className="font-bold text-gray-900 text-lg">
                             Course #{enrollment.courseId}
@@ -163,7 +161,7 @@ export default function Dashboard() {
                             <span className="text-gray-600">Progress</span>
                             <span className="font-semibold text-gray-900">{enrollment.progress}%</span>
                           </div>
-                          <Progress value={enrollment.progress} className="h-3 progress-bar" />
+                          <Progress value={enrollment.progress} className="h-3" />
                         </div>
                         <p className="text-sm text-gray-600">
                           Enrolled: {new Date(enrollment.enrolledAt).toLocaleDateString()}
@@ -243,19 +241,19 @@ export default function Dashboard() {
               <div className="glass-card rounded-2xl p-8 shadow-xl border-0">
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h2>
                 <div className="grid grid-cols-1 gap-4">
-                  <Button asChild className="modern-button h-14 justify-start quick-action-btn">
+                  <Button asChild className="modern-button h-14 justify-start">
                     <Link href="/courses">
                       <BookOpen className="h-5 w-5 mr-3" />
                       Browse Courses
                     </Link>
                   </Button>
-                  <Button asChild className="modern-button h-14 justify-start quick-action-btn">
+                  <Button asChild className="modern-button h-14 justify-start">
                     <Link href="/mock-tests">
                       <FileText className="h-5 w-5 mr-3" />
                       Take Mock Test
                     </Link>
                   </Button>
-                  <Button asChild className="modern-button h-14 justify-start quick-action-btn">
+                  <Button asChild className="modern-button h-14 justify-start">
                     <Link href="/events">
                       <Calendar className="h-5 w-5 mr-3" />
                       View Events
@@ -273,7 +271,7 @@ export default function Dashboard() {
                 <div className="space-y-4">
                   {Array.isArray(upcomingEvents) && upcomingEvents.length > 0 ? (
                     upcomingEvents.slice(0, 3).map((event: any) => (
-                      <div key={event.id} className="bg-white/60 backdrop-blur-sm border border-white/20 rounded-xl p-4 hover:shadow-md transition-all event-card">
+                      <div key={event.id} className="bg-white/60 backdrop-blur-sm border border-white/20 rounded-xl p-4 hover:shadow-md transition-all">
                         <h3 className="font-bold text-gray-900 mb-2">{event.title}</h3>
                         <div className="flex items-center text-sm text-gray-600 mb-2">
                           <Clock className="h-4 w-4 mr-1" />

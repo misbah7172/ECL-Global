@@ -1,9 +1,8 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
-import AnimatedAirplaneLogo from "@/components/animated-airplane-logo";
+import AnimatedPlaneLogo from "@/components/animated-plane-logo";
 import { Menu, User, LogOut, Phone, MessageSquare, ChevronDown } from "lucide-react";
-import "@/styles/airplane-logo.css";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,7 +44,7 @@ export default function Header() {
         {/* Logo */}
         <Link href="/">
           <div className="flex items-center space-x-3 ecl-logo-container">
-            <AnimatedAirplaneLogo size="md" />
+            <AnimatedPlaneLogo size="md" />
             <div>
               <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 ECL Global
@@ -122,7 +121,7 @@ export default function Header() {
           <SheetContent side="right" className="w-72">
             <div className="flex flex-col space-y-4 mt-6">
               <div className="flex items-center space-x-2 mb-4">
-                <AnimatedAirplaneLogo size="sm" />
+                <AnimatedPlaneLogo size="sm" />
                 <span className="font-bold text-lg text-gray-900">ECL Global</span>
               </div>
               

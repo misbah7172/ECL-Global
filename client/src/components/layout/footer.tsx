@@ -1,5 +1,7 @@
 import { Link } from "wouter";
-import { GraduationCap, Facebook, Youtube, Linkedin, Instagram } from "lucide-react";
+import AnimatedAirplaneLogo from "@/components/animated-airplane-logo";
+import { Facebook, Youtube, Linkedin, Instagram } from "lucide-react";
+import "@/styles/airplane-logo.css";
 
 export default function Footer() {
   return (
@@ -9,8 +11,8 @@ export default function Footer() {
           {/* Company Info */}
           <div>
             <div className="flex items-center mb-4">
-              <GraduationCap className="h-8 w-8 text-primary mr-2" />
-              <span className="text-xl font-bold">Mentors</span>
+              <AnimatedAirplaneLogo size="sm" className="mr-2" />
+              <span className="text-xl font-bold">ECL Global</span>
             </div>
             <p className="text-gray-300 mb-4">
               Leading the way in test preparation and study abroad counseling for over a decade. Your success is our mission.
@@ -62,7 +64,7 @@ export default function Footer() {
 
         <div className="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-400 text-sm">
-            © 2024 Mentors Learning Platform. All rights reserved.
+            © 2024 ECL Global Educational Consultancy. All rights reserved.
           </p>
           <div className="flex space-x-6 mt-4 md:mt-0">
             <span className="text-gray-400 hover:text-white text-sm cursor-pointer transition-colors">Privacy Policy</span>

@@ -1,0 +1,230 @@
+/* Animated Airplane Logo Styles - Enhanced GIF-like Animation */
+.airplane-logo-wrapper {
+  position: relative;
+  border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(135deg, #87ceeb 0%, #4a90e2 50%, #2563eb 100%);
+  box-shadow: 0 4px 20px rgba(37, 99, 235, 0.3);
+  animation: logo-float 4s ease-in-out infinite;
+}
+
+.airplane-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.airplane-scene {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #87ceeb 0%, #4a90e2 50%, #2563eb 100%);
+}
+
+.sky-background {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.airplane-flying {
+  position: absolute;
+  inset: 0;
+  animation: airplane-flight 3s ease-in-out infinite;
+}
+
+.airplane-svg {
+  width: 100%;
+  height: 100%;
+  animation: airplane-tilt 2s ease-in-out infinite;
+}
+
+.airplane-body {
+  transform-origin: center center;
+  animation: airplane-bounce 1.5s ease-in-out infinite;
+}
+
+/* Cloud animations */
+.cloud {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 50px;
+  animation: cloud-drift 8s linear infinite;
+}
+
+.cloud-1 {
+  width: 12px;
+  height: 4px;
+  top: 20%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.cloud-2 {
+  width: 10px;
+  height: 3px;
+  top: 60%;
+  right: 15%;
+  animation-delay: 2s;
+}
+
+.cloud-3 {
+  width: 8px;
+  height: 2px;
+  top: 35%;
+  right: 20%;
+  animation-delay: 4s;
+}
+
+.cloud-4 {
+  width: 14px;
+  height: 5px;
+  top: 70%;
+  left: 20%;
+  animation-delay: 6s;
+}
+
+/* Main animations */
+@keyframes logo-float {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+    box-shadow: 0 4px 20px rgba(37, 99, 235, 0.3);
+  }
+  50% {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 8px 30px rgba(37, 99, 235, 0.4);
+  }
+}
+
+@keyframes airplane-flight {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-2px) rotate(2deg);
+  }
+  50% {
+    transform: translateY(-1px) rotate(0deg);
+  }
+  75% {
+    transform: translateY(-2px) rotate(-2deg);
+  }
+}
+
+@keyframes airplane-tilt {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  33% {
+    transform: rotate(1deg);
+  }
+  66% {
+    transform: rotate(-1deg);
+  }
+}
+
+@keyframes airplane-bounce {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-1px);
+  }
+}
+
+@keyframes cloud-drift {
+  0% {
+    transform: translateX(-10px);
+    opacity: 0.2;
+  }
+  25% {
+    opacity: 0.5;
+  }
+  75% {
+    opacity: 0.3;
+  }
+  100% {
+    transform: translateX(10px);
+    opacity: 0.1;
+  }
+}
+
+/* Enhanced glow effect */
+.airplane-logo-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #87ceeb, #4a90e2, #2563eb);
+  z-index: -1;
+  opacity: 0.3;
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.05);
+  }
+}
+
+/* Hover effects */
+.airplane-logo-wrapper:hover {
+  animation-duration: 2s;
+  transform: scale(1.1);
+  box-shadow: 0 8px 40px rgba(37, 99, 235, 0.5);
+}
+
+.airplane-logo-wrapper:hover .airplane-flying {
+  animation-duration: 1.5s;
+}
+
+.airplane-logo-wrapper:hover .airplane-svg {
+  animation-duration: 1s;
+}
+
+.airplane-logo-wrapper:hover .airplane-body {
+  animation-duration: 1s;
+}
+
+.airplane-logo-wrapper:hover .cloud {
+  animation-duration: 4s;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .airplane-logo-wrapper {
+    animation-duration: 3s;
+  }
+  
+  .airplane-logo-wrapper:hover {
+    transform: scale(1.05);
+  }
+}
+
+/* Additional visual effects */
+.airplane-logo-wrapper::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.3) 0%, transparent 50%);
+  pointer-events: none;
+  animation: shine 4s ease-in-out infinite;
+}
+
+@keyframes shine {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}

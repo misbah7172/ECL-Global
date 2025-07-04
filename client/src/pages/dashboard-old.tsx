@@ -3,7 +3,6 @@ import { useAuth } from "@/lib/auth";
 import { Link, Redirect } from "wouter";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
-import FlyingPlaneLoader from "@/components/flying-plane-loader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -88,21 +87,20 @@ export default function Dashboard() {
       <div className="container py-12">
         {isLoading ? (
           <div className="flex items-center justify-center min-h-[400px]">
-            <FlyingPlaneLoader 
-              size="lg" 
-              message="Loading your ECL Global dashboard..." 
-              className="sky-background p-12 rounded-2xl"
-            />
+            <div className="glass-card rounded-2xl p-8">
+              <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto" />
+              <p className="text-gray-600 mt-4 text-center">Loading your dashboard...</p>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-8">
               {/* Modern Quick Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 dashboard-section">
-                <div className="glass-card rounded-2xl p-6 hover:shadow-xl transition-all stat-card">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="glass-card rounded-2xl p-6 hover:shadow-xl transition-all">
                   <div className="flex items-center">
-                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center mr-4 shadow-lg stat-icon">
+                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center mr-4 shadow-lg">
                       <BookOpen className="h-6 w-6 text-white" />
                     </div>
                     <div>
@@ -114,9 +112,9 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                <div className="glass-card rounded-2xl p-6 hover:shadow-xl transition-all stat-card">
+                <div className="glass-card rounded-2xl p-6 hover:shadow-xl transition-all">
                   <div className="flex items-center">
-                    <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center mr-4 shadow-lg stat-icon">
+                    <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center mr-4 shadow-lg">
                       <FileText className="h-6 w-6 text-white" />
                     </div>
                     <div>
@@ -128,9 +126,9 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                <div className="glass-card rounded-2xl p-6 hover:shadow-xl transition-all stat-card metric-highlight">
+                <div className="glass-card rounded-2xl p-6 hover:shadow-xl transition-all">
                   <div className="flex items-center">
-                    <div className="w-12 h-12 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl flex items-center justify-center mr-4 shadow-lg stat-icon">
+                    <div className="w-12 h-12 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl flex items-center justify-center mr-4 shadow-lg">
                       <TrendingUp className="h-6 w-6 text-white" />
                     </div>
                     <div>
@@ -146,10 +144,13 @@ export default function Dashboard() {
               {/* Course Progress */}
               <div className="glass-card rounded-2xl p-8 shadow-xl border-0">
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">Course Progress</h2>
+                  <CardTitle className="flex items-center">
+                    <BookOpen className="h-5 w-5 mr-2" />
+                    My Courses
                 <div className="space-y-6">
                   {Array.isArray(enrollments) && enrollments.length > 0 ? (
                     enrollments.map((enrollment: any) => (
-                      <div key={enrollment.id} className="bg-white/60 backdrop-blur-sm border border-white/20 rounded-xl p-6 hover:shadow-md transition-all progress-card">
+                      <div key={enrollment.id} className="bg-white/60 backdrop-blur-sm border border-white/20 rounded-xl p-6 hover:shadow-md transition-all">
                         <div className="flex items-center justify-between mb-4">
                           <h3 className="font-bold text-gray-900 text-lg">
                             Course #{enrollment.courseId}
@@ -163,7 +164,7 @@ export default function Dashboard() {
                             <span className="text-gray-600">Progress</span>
                             <span className="font-semibold text-gray-900">{enrollment.progress}%</span>
                           </div>
-                          <Progress value={enrollment.progress} className="h-3 progress-bar" />
+                          <Progress value={enrollment.progress} className="h-3" />
                         </div>
                         <p className="text-sm text-gray-600">
                           Enrolled: {new Date(enrollment.enrolledAt).toLocaleDateString()}
@@ -175,6 +176,7 @@ export default function Dashboard() {
                       <div className="w-16 h-16 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <BookOpen className="h-8 w-8 text-blue-600" />
                       </div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No courses yet</h3>
                       <h3 className="text-xl font-bold text-gray-900 mb-2">No courses enrolled</h3>
                       <p className="text-gray-600 mb-6">Start your learning journey by enrolling in a course</p>
                       <Button asChild className="modern-button">
@@ -194,10 +196,9 @@ export default function Dashboard() {
                 <div className="space-y-4">
                   {Array.isArray(mockTestAttempts) && mockTestAttempts.length > 0 ? (
                     mockTestAttempts.slice(0, 5).map((attempt: any) => (
-                      <div key={attempt.id} className="bg-white/60 backdrop-blur-sm border border-white/20 rounded-xl p-4 hover:shadow-md transition-all">
-                        <div className="flex items-center justify-between">
+                        <div key={attempt.id} className="flex items-center justify-between p-4 border rounded-lg">
                           <div>
-                            <h3 className="font-bold text-gray-900">
+                            <h3 className="font-medium text-gray-900">
                               Mock Test #{attempt.mockTestId}
                             </h3>
                             <p className="text-sm text-gray-600">
@@ -207,92 +208,102 @@ export default function Dashboard() {
                           <div className="text-right">
                             {attempt.isCompleted ? (
                               <div>
-                                <p className="text-2xl font-bold text-emerald-600">
+                                <p className="text-lg font-bold text-primary">
                                   {attempt.score}
                                 </p>
                                 <p className="text-sm text-gray-600">Score</p>
                               </div>
                             ) : (
-                              <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-                                In Progress
-                              </Badge>
+                              <Badge variant="outline">In Progress</Badge>
                             )}
                           </div>
                         </div>
-                      </div>
-                    ))
+                      ))}
+                    </div>
                   ) : (
-                    <div className="text-center py-12">
-                      <div className="w-16 h-16 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <FileText className="h-8 w-8 text-blue-600" />
-                      </div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-2">No tests taken yet</h3>
-                      <p className="text-gray-600 mb-6">Practice with our mock tests to improve your skills</p>
-                      <Button asChild className="modern-button">
+                    <div className="text-center py-8">
+                      <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No tests taken yet</h3>
+                      <p className="text-gray-600 mb-4">Practice with our mock tests to improve your skills</p>
+                      <Button asChild>
                         <Link href="/mock-tests">Start Mock Test</Link>
                       </Button>
                     </div>
                   )}
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             </div>
 
             {/* Sidebar */}
-            <div className="space-y-8">
+            <div className="space-y-6">
               {/* Quick Actions */}
-              <div className="glass-card rounded-2xl p-8 shadow-xl border-0">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h2>
-                <div className="grid grid-cols-1 gap-4">
-                  <Button asChild className="modern-button h-14 justify-start quick-action-btn">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Quick Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button className="w-full" asChild>
                     <Link href="/courses">
-                      <BookOpen className="h-5 w-5 mr-3" />
+                      <BookOpen className="h-4 w-4 mr-2" />
                       Browse Courses
                     </Link>
                   </Button>
-                  <Button asChild className="modern-button h-14 justify-start quick-action-btn">
+                  <Button variant="outline" className="w-full" asChild>
                     <Link href="/mock-tests">
-                      <FileText className="h-5 w-5 mr-3" />
+                      <PlayCircle className="h-4 w-4 mr-2" />
                       Take Mock Test
                     </Link>
                   </Button>
-                  <Button asChild className="modern-button h-14 justify-start quick-action-btn">
+                  <Button variant="outline" className="w-full" asChild>
                     <Link href="/events">
-                      <Calendar className="h-5 w-5 mr-3" />
+                      <Calendar className="h-4 w-4 mr-2" />
                       View Events
                     </Link>
                   </Button>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
 
               {/* Upcoming Events */}
-              <div className="glass-card rounded-2xl p-8 shadow-xl border-0">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                  <Calendar className="h-6 w-6 mr-3" />
-                  Upcoming Events
-                </h2>
-                <div className="space-y-4">
-                  {Array.isArray(upcomingEvents) && upcomingEvents.length > 0 ? (
-                    upcomingEvents.slice(0, 3).map((event: any) => (
-                      <div key={event.id} className="bg-white/60 backdrop-blur-sm border border-white/20 rounded-xl p-4 hover:shadow-md transition-all event-card">
-                        <h3 className="font-bold text-gray-900 mb-2">{event.title}</h3>
-                        <div className="flex items-center text-sm text-gray-600 mb-2">
-                          <Clock className="h-4 w-4 mr-1" />
-                          {new Date(event.startDateTime).toLocaleDateString()}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Calendar className="h-5 w-5 mr-2" />
+                    Upcoming Events
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {upcomingEvents && upcomingEvents.length > 0 ? (
+                    <div className="space-y-3">
+                      {upcomingEvents.slice(0, 3).map((event: any) => (
+                        <div key={event.id} className="border-l-4 border-primary pl-4">
+                          <h4 className="font-medium text-gray-900">{event.title}</h4>
+                          <p className="text-sm text-gray-600">
+                            {new Date(event.eventDate).toLocaleDateString()}
+                          </p>
                         </div>
-                        <Badge variant="outline" className="text-xs">
-                          {event.eventType}
-                        </Badge>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-8">
-                      <div className="w-12 h-12 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Calendar className="h-6 w-6 text-blue-600" />
-                      </div>
-                      <p className="text-gray-600 text-sm">No upcoming events</p>
+                      ))}
                     </div>
+                  ) : (
+                    <p className="text-gray-600 text-sm">No upcoming events</p>
                   )}
-                </div>
+                </CardContent>
+              </Card>
+
+              {/* Study Streak */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Star className="h-5 w-5 mr-2" />
+                    Study Streak
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-primary mb-2">7</p>
+                    <p className="text-gray-600 text-sm">Days in a row</p>
+                    <p className="text-xs text-gray-500 mt-2">Keep it up!</p>
+                  </div>
+                </CardContent>
               </div>
             </div>
           </div>

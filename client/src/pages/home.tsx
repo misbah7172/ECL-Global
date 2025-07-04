@@ -8,20 +8,49 @@ import InstructorCard from "@/components/instructor-card";
 import EventCard from "@/components/event-card";
 import LeadForm from "@/components/lead-form";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, ClipboardCheck, Languages, Globe, Star, Clock, Users, ArrowRight, MapPin, Calendar, Phone } from "lucide-react";
+import { 
+  CheckCircle, 
+  ClipboardCheck, 
+  Languages, 
+  Globe, 
+  Star, 
+  Clock, 
+  Users, 
+  ArrowRight, 
+  MapPin, 
+  Calendar, 
+  Phone,
+  BookOpen,
+  Trophy,
+  Target,
+  Zap,
+  Award,
+  TrendingUp,
+  Heart,
+  Shield,
+  Play,
+  Video,
+  ChevronRight,
+  GraduationCap,
+  Building,
+  Briefcase,
+  MessageSquare,
+  FileText,
+  Headphones
+} from "lucide-react";
 
 export default function Home() {
-  const { data: featuredCourses } = useQuery({
+  const { data: featuredCourses = [] } = useQuery({
     queryKey: ["/api/courses", { featured: true }],
   });
 
-  const { data: upcomingEvents } = useQuery({
+  const { data: upcomingEvents = [] } = useQuery({
     queryKey: ["/api/events", { upcoming: true }],
   });
 
-  const { data: branches } = useQuery({
+  const { data: branches = [] } = useQuery({
     queryKey: ["/api/branches"],
   });
 
@@ -65,156 +94,324 @@ export default function Home() {
     }
   ];
 
+  const services = [
+    {
+      icon: ClipboardCheck,
+      title: "Test Preparation",
+      description: "IELTS, TOEFL, SAT, GRE, GMAT preparation with expert guidance",
+      features: ["Personal mentoring", "Practice tests", "Score guarantee"],
+      color: "from-blue-500 to-blue-600"
+    },
+    {
+      icon: Globe,
+      title: "Study Abroad Consulting",
+      description: "Complete guidance for studying in top universities worldwide",
+      features: ["University selection", "Visa assistance", "Document preparation"],
+      color: "from-purple-500 to-purple-600"
+    },
+    {
+      icon: Briefcase,
+      title: "Career Counseling",
+      description: "Professional career guidance and job placement assistance",
+      features: ["Resume building", "Interview prep", "Job placement"],
+      color: "from-green-500 to-green-600"
+    },
+    {
+      icon: Languages,
+      title: "Language Training",
+      description: "Comprehensive language courses for academic and professional needs",
+      features: ["Speaking practice", "Grammar mastery", "Writing skills"],
+      color: "from-orange-500 to-orange-600"
+    }
+  ];
+
+  const successStories = [
+    {
+      name: "Rashid Ahmed",
+      achievement: "IELTS Band 8.5",
+      university: "University of Toronto",
+      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face",
+      quote: "The personalized guidance helped me achieve my dream score and secure admission to my dream university."
+    },
+    {
+      name: "Fatima Khan",
+      achievement: "SAT Score 1550",
+      university: "MIT",
+      image: "https://images.unsplash.com/photo-1494790108755-2616b612b193?w=200&h=200&fit=crop&crop=face",
+      quote: "The strategic approach and comprehensive materials made all the difference in my preparation."
+    },
+    {
+      name: "Arif Hassan",
+      achievement: "Visa Success",
+      university: "University of Melbourne",
+      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face",
+      quote: "From application to visa approval, the support was exceptional throughout my journey."
+    }
+  ];
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <Header />
       
-      {/* Hero Section */}
-      <section className="hero-gradient text-white">
-        <div className="container py-16">
+      {/* Hero Section - Modern Design */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-900 via-purple-900 to-indigo-900 opacity-95"></div>
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1920&h=1080&fit=crop')] bg-cover bg-center opacity-20"></div>
+        
+        <div className="relative container py-24 lg:py-32">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="animate-fade-in-up">
-              <h1 className="text-4xl lg:text-5xl font-bold mb-6 leading-tight">
-                Excel in IELTS, SAT & Study Abroad Dreams
-              </h1>
-              <p className="text-xl mb-8 text-blue-100">
-                Join thousands of students who achieved their academic goals with our expert guidance, comprehensive courses, and proven methodologies.
-              </p>
+            <div className="text-white space-y-8">
+              <div className="space-y-4">
+                <Badge className="bg-white/10 text-white border-white/20 hover:bg-white/20">
+                  <Trophy className="h-4 w-4 mr-2" />
+                  #1 Study Abroad Consultant in Bangladesh
+                </Badge>
+                <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
+                  Your Gateway to
+                  <span className="bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
+                    {" "}Global Education
+                  </span>
+                </h1>
+                <p className="text-xl text-blue-100 leading-relaxed">
+                  Transform your academic dreams into reality with our expert guidance, comprehensive test preparation, and personalized study abroad consulting services.
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-3 gap-6 py-8">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-yellow-400">15K+</div>
+                  <div className="text-sm text-blue-200">Students Placed</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-green-400">98%</div>
+                  <div className="text-sm text-blue-200">Visa Success Rate</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-purple-400">50+</div>
+                  <div className="text-sm text-blue-200">Partner Universities</div>
+                </div>
+              </div>
+              
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" variant="secondary" asChild>
-                  <Link href="/register">Book Free Consultation</Link>
+                <Button size="lg" className="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-black font-semibold" asChild>
+                  <Link href="/register">
+                    <Calendar className="h-5 w-5 mr-2" />
+                    Book Free Consultation
+                  </Link>
                 </Button>
-                <Button size="lg" variant="outline" className="text-white border-white hover:bg-white hover:text-primary" asChild>
-                  <Link href="/courses">Explore Courses</Link>
+                <Button size="lg" variant="outline" className="text-white border-white hover:bg-white hover:text-black" asChild>
+                  <Link href="/courses">
+                    <Play className="h-5 w-5 mr-2" />
+                    Watch Success Stories
+                  </Link>
                 </Button>
               </div>
             </div>
-            <div className="relative animate-fade-in-up">
-              <img 
-                src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&h=600&fit=crop" 
-                alt="Diverse group of students studying together" 
-                className="rounded-lg shadow-2xl w-full"
-              />
-              <div className="absolute -bottom-6 -left-6 bg-white p-4 rounded-lg shadow-lg">
-                <div className="flex items-center space-x-2">
-                  <div className="bg-secondary/20 p-2 rounded-full">
-                    <CheckCircle className="h-5 w-5 text-secondary" />
+            
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-3xl opacity-20 blur-3xl"></div>
+              <Card className="relative bg-white/10 backdrop-blur-md border-white/20 shadow-2xl">
+                <CardHeader>
+                  <CardTitle className="text-white text-center">Quick Assessment</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <Button variant="outline" className="text-white border-white/30 hover:bg-white/10">
+                      <GraduationCap className="h-4 w-4 mr-2" />
+                      IELTS Prep
+                    </Button>
+                    <Button variant="outline" className="text-white border-white/30 hover:bg-white/10">
+                      <Building className="h-4 w-4 mr-2" />
+                      SAT Prep
+                    </Button>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Success Rate</p>
-                    <p className="text-lg font-bold text-gray-900">98.5%</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <Button variant="outline" className="text-white border-white/30 hover:bg-white/10">
+                      <Globe className="h-4 w-4 mr-2" />
+                      Study Abroad
+                    </Button>
+                    <Button variant="outline" className="text-white border-white/30 hover:bg-white/10">
+                      <Briefcase className="h-4 w-4 mr-2" />
+                      Career Guide
+                    </Button>
                   </div>
-                </div>
-              </div>
+                  <Button className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-black font-semibold">
+                    Get Free Assessment
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Quick Stats */}
-      <StatsSection />
-
-      {/* Course Categories */}
-      <section className="py-16 bg-gray-50">
+      {/* Services Section */}
+      <section className="py-20 bg-white">
         <div className="container">
-          <div className="text-center mb-12">
-            <h2 className="section-title">Popular Course Categories</h2>
-            <p className="section-subtitle">
-              Choose from our comprehensive range of courses designed to help you achieve your academic and professional goals.
+          <div className="text-center mb-16">
+            <Badge className="mb-4 bg-blue-50 text-blue-700 hover:bg-blue-100">
+              Our Services
+            </Badge>
+            <h2 className="text-4xl font-bold text-gray-900 mb-6">
+              Comprehensive Solutions for Your Educational Journey
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              From test preparation to visa guidance, we provide end-to-end support for your academic and professional success.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {/* Test Preparation */}
-            <Card className="course-card overflow-hidden">
-              <img 
-                src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&h=300&fit=crop" 
-                alt="Test preparation materials" 
-                className="w-full h-48 object-cover"
-              />
-              <CardContent className="p-6">
-                <div className="flex items-center mb-3">
-                  <ClipboardCheck className="h-6 w-6 text-primary mr-3" />
-                  <h3 className="text-xl font-semibold">Test Preparation</h3>
-                </div>
-                <p className="text-gray-600 mb-4">
-                  IELTS, TOEFL, SAT, GRE preparation with expert instructors and proven methodologies.
-                </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500">8 Courses</span>
-                  <Button variant="link" className="p-0" asChild>
-                    <Link href="/courses?category=test-prep">
-                      View Courses <ArrowRight className="h-4 w-4 ml-1" />
-                    </Link>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {services.map((service, index) => (
+              <Card key={index} className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-0 shadow-lg">
+                <CardContent className="p-8 text-center">
+                  <div className={`w-16 h-16 mx-auto mb-6 bg-gradient-to-br ${service.color} rounded-full flex items-center justify-center`}>
+                    <service.icon className="h-8 w-8 text-white" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-4">{service.title}</h3>
+                  <p className="text-gray-600 mb-6">{service.description}</p>
+                  <ul className="space-y-2 mb-6">
+                    {service.features.map((feature, idx) => (
+                      <li key={idx} className="flex items-center text-sm text-gray-500">
+                        <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                  <Button variant="outline" className="w-full group-hover:bg-blue-50 group-hover:text-blue-700">
+                    Learn More
+                    <ChevronRight className="h-4 w-4 ml-2" />
                   </Button>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
 
-            {/* Language Development */}
-            <Card className="course-card overflow-hidden">
-              <img 
-                src="https://images.unsplash.com/photo-1544717297-fa95b6ee9643?w=800&h=300&fit=crop" 
-                alt="Language learning classroom" 
-                className="w-full h-48 object-cover"
-              />
-              <CardContent className="p-6">
-                <div className="flex items-center mb-3">
-                  <Languages className="h-6 w-6 text-primary mr-3" />
-                  <h3 className="text-xl font-semibold">Language Development</h3>
-                </div>
-                <p className="text-gray-600 mb-4">
-                  English proficiency, grammar, writing, and communication skills enhancement programs.
-                </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500">12 Courses</span>
-                  <Button variant="link" className="p-0" asChild>
-                    <Link href="/courses?category=language">
-                      View Courses <ArrowRight className="h-4 w-4 ml-1" />
-                    </Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+      {/* Success Stories Section */}
+      <section className="py-20 bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="container">
+          <div className="text-center mb-16">
+            <Badge className="mb-4 bg-green-50 text-green-700 hover:bg-green-100">
+              Student Success Stories
+            </Badge>
+            <h2 className="text-4xl font-bold text-gray-900 mb-6">
+              Real Students, Real Success
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              See how our personalized guidance and expert coaching helped students achieve their dreams.
+            </p>
+          </div>
 
-            {/* Study Abroad */}
-            <Card className="course-card overflow-hidden">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {successStories.map((story, index) => (
+              <Card key={index} className="bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <CardContent className="p-8 text-center">
+                  <div className="relative mb-6">
+                    <img 
+                      src={story.image} 
+                      alt={story.name}
+                      className="w-20 h-20 rounded-full mx-auto object-cover"
+                    />
+                    <div className="absolute -bottom-2 -right-2 bg-gradient-to-r from-green-400 to-blue-500 rounded-full p-2">
+                      <Trophy className="h-4 w-4 text-white" />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">{story.name}</h3>
+                  <div className="text-lg font-bold text-blue-600 mb-1">{story.achievement}</div>
+                  <div className="text-sm text-gray-500 mb-4">{story.university}</div>
+                  <p className="text-gray-600 italic">"{story.quote}"</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-20 bg-white">
+        <div className="container">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <div>
+              <Badge className="mb-4 bg-purple-50 text-purple-700 hover:bg-purple-100">
+                Why Choose Us
+              </Badge>
+              <h2 className="text-4xl font-bold text-gray-900 mb-6">
+                Your Success is Our Mission
+              </h2>
+              <p className="text-xl text-gray-600 mb-8">
+                We combine cutting-edge technology with personalized mentoring to deliver exceptional results for every student.
+              </p>
+              
+              <div className="space-y-6">
+                {[
+                  {
+                    icon: Target,
+                    title: "Personalized Learning Path",
+                    description: "Customized study plans based on your goals, strengths, and timeline."
+                  },
+                  {
+                    icon: Shield,
+                    title: "Guaranteed Results",
+                    description: "Score improvement guarantee or money back. We stand behind our methods."
+                  },
+                  {
+                    icon: Headphones,
+                    title: "24/7 Support",
+                    description: "Round-the-clock assistance from our expert team whenever you need help."
+                  },
+                  {
+                    icon: Award,
+                    title: "Proven Track Record",
+                    description: "15+ years of excellence with 15,000+ successful student placements."
+                  }
+                ].map((feature, index) => (
+                  <div key={index} className="flex items-start space-x-4">
+                    <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-3 rounded-lg">
+                      <feature.icon className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
+                      <p className="text-gray-600">{feature.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-3xl opacity-20 blur-3xl"></div>
               <img 
-                src="https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=800&h=300&fit=crop" 
-                alt="Students planning study abroad" 
-                className="w-full h-48 object-cover"
+                src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop" 
+                alt="Student using online platform" 
+                className="relative rounded-2xl shadow-2xl w-full"
               />
-              <CardContent className="p-6">
-                <div className="flex items-center mb-3">
-                  <Globe className="h-6 w-6 text-primary mr-3" />
-                  <h3 className="text-xl font-semibold">Study Abroad</h3>
+              <div className="absolute top-4 right-4 bg-white p-4 rounded-lg shadow-lg">
+                <div className="flex items-center space-x-2">
+                  <TrendingUp className="h-5 w-5 text-green-500" />
+                  <div>
+                    <div className="text-sm font-medium">Score Improvement</div>
+                    <div className="text-lg font-bold text-green-600">+280 Points</div>
+                  </div>
                 </div>
-                <p className="text-gray-600 mb-4">
-                  Complete guidance for studying in USA, UK, Canada, Australia, and more countries.
-                </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500">15 Services</span>
-                  <Button variant="link" className="p-0" asChild>
-                    <Link href="/courses?category=study-abroad">
-                      View Services <ArrowRight className="h-4 w-4 ml-1" />
-                    </Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Featured Courses */}
-      <section className="py-16 bg-white">
+      <section className="py-20 bg-gray-50">
         <div className="container">
           <div className="flex justify-between items-center mb-12">
             <div>
-              <h2 className="section-title">Featured Courses</h2>
+              <Badge className="mb-4 bg-blue-50 text-blue-700 hover:bg-blue-100">
+                Popular Courses
+              </Badge>
+              <h2 className="text-4xl font-bold text-gray-900 mb-4">Featured Courses</h2>
               <p className="text-gray-600">Most popular courses chosen by our students</p>
             </div>
-            <Button variant="link" asChild>
+            <Button variant="outline" asChild>
               <Link href="/courses">
                 View All Courses <ArrowRight className="h-4 w-4 ml-1" />
               </Link>
@@ -222,63 +419,117 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredCourses?.slice(0, 3).map((course: any) => (
+            {Array.isArray(featuredCourses) && featuredCourses.slice(0, 3).map((course: any) => (
               <CourseCard key={course.id} course={course} />
             ))}
           </div>
         </div>
       </section>
 
-      {/* Mock Test Section */}
-      <section className="py-16 bg-gradient-to-r from-gray-900 to-gray-800 text-white">
+      {/* Interactive Demo Section */}
+      <section className="py-20 bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 text-white">
         <div className="container">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-3xl font-bold mb-6">Practice with Real Mock Tests</h2>
-              <p className="text-gray-300 text-lg mb-8">
-                Get exam-ready with our comprehensive mock test engine featuring real exam patterns, auto-grading, and detailed performance analytics.
+              <Badge className="mb-4 bg-white/10 text-white hover:bg-white/20">
+                Try It Now
+              </Badge>
+              <h2 className="text-4xl font-bold mb-6">Experience Our Platform</h2>
+              <p className="text-xl text-blue-100 mb-8">
+                Take a free mock test and see how our AI-powered platform provides instant feedback and personalized improvement suggestions.
               </p>
               <div className="space-y-4 mb-8">
                 {[
-                  "Full-length practice tests for IELTS, SAT, TOEFL",
-                  "Instant auto-grading and detailed feedback",
-                  "Performance analytics and improvement suggestions",
-                  "Adaptive difficulty based on your skill level"
+                  "Real exam simulation with timer",
+                  "Instant AI-powered feedback",
+                  "Detailed performance analytics",
+                  "Personalized study recommendations"
                 ].map((feature, index) => (
                   <div key={index} className="flex items-center">
-                    <CheckCircle className="h-5 w-5 text-secondary mr-3" />
-                    <span>{feature}</span>
+                    <div className="bg-green-500 rounded-full p-1 mr-3">
+                      <CheckCircle className="h-4 w-4 text-white" />
+                    </div>
+                    <span className="text-blue-100">{feature}</span>
                   </div>
                 ))}
               </div>
-              <Button variant="secondary" size="lg" asChild>
-                <Link href="/mock-tests">Start Free Mock Test</Link>
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button size="lg" className="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-black font-semibold" asChild>
+                  <Link href="/mock-tests">
+                    <Play className="h-5 w-5 mr-2" />
+                    Start Free Mock Test
+                  </Link>
+                </Button>
+                <Button size="lg" variant="outline" className="text-white border-white hover:bg-white hover:text-black" asChild>
+                  <Link href="/dashboard">
+                    <Video className="h-5 w-5 mr-2" />
+                    Watch Demo
+                  </Link>
+                </Button>
+              </div>
             </div>
             <div className="relative">
-              <img 
-                src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop" 
-                alt="Online test interface" 
-                className="rounded-lg shadow-2xl w-full"
-              />
-              <div className="absolute -top-4 -right-4 bg-white p-4 rounded-lg shadow-lg">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900">25,000+</div>
-                  <div className="text-sm text-gray-600">Tests Completed</div>
-                </div>
-              </div>
+              <Card className="bg-white/10 backdrop-blur-md border-white/20 shadow-2xl">
+                <CardHeader>
+                  <CardTitle className="text-white text-center">Mock Test Dashboard</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div>
+                    <div className="flex justify-between text-sm mb-2">
+                      <span className="text-blue-200">Reading Comprehension</span>
+                      <span className="text-white">85%</span>
+                    </div>
+                    <div className="w-full bg-white/20 rounded-full h-2">
+                      <div className="bg-gradient-to-r from-green-400 to-blue-500 h-2 rounded-full" style={{ width: "85%" }}></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm mb-2">
+                      <span className="text-blue-200">Writing Skills</span>
+                      <span className="text-white">72%</span>
+                    </div>
+                    <div className="w-full bg-white/20 rounded-full h-2">
+                      <div className="bg-gradient-to-r from-yellow-400 to-orange-500 h-2 rounded-full" style={{ width: "72%" }}></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm mb-2">
+                      <span className="text-blue-200">Speaking Practice</span>
+                      <span className="text-white">91%</span>
+                    </div>
+                    <div className="w-full bg-white/20 rounded-full h-2">
+                      <div className="bg-gradient-to-r from-purple-400 to-pink-500 h-2 rounded-full" style={{ width: "91%" }}></div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 pt-4">
+                    <div className="text-center p-3 bg-white/10 rounded-lg">
+                      <div className="text-2xl font-bold text-yellow-400">7.5</div>
+                      <div className="text-xs text-blue-200">IELTS Band</div>
+                    </div>
+                    <div className="text-center p-3 bg-white/10 rounded-lg">
+                      <div className="text-2xl font-bold text-green-400">1480</div>
+                      <div className="text-xs text-blue-200">SAT Score</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Instructor Showcase */}
-      <section className="py-16 bg-white">
+      {/* Expert Instructors */}
+      <section className="py-20 bg-white">
         <div className="container">
-          <div className="text-center mb-12">
-            <h2 className="section-title">Meet Our Expert Instructors</h2>
-            <p className="section-subtitle">
-              Learn from industry experts with years of experience in test preparation and international education.
+          <div className="text-center mb-16">
+            <Badge className="mb-4 bg-orange-50 text-orange-700 hover:bg-orange-100">
+              Our Expert Team
+            </Badge>
+            <h2 className="text-4xl font-bold text-gray-900 mb-6">
+              Learn from the Best
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Our instructors are industry experts with proven track records in test preparation and international education consulting.
             </p>
           </div>
 
@@ -290,140 +541,54 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Student Dashboard Preview */}
-      <section className="py-16 bg-gray-50">
+      {/* Locations */}
+      <section className="py-20 bg-gray-50">
         <div className="container">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-6">Track Your Progress</h2>
-              <p className="text-lg text-gray-600 mb-8">
-                Monitor your learning journey with our comprehensive student dashboard featuring progress tracking, assignments, and performance analytics.
-              </p>
-              <div className="space-y-6 mb-8">
-                {[
-                  {
-                    icon: CheckCircle,
-                    title: "Performance Analytics",
-                    description: "Detailed insights into your strengths and areas for improvement"
-                  },
-                  {
-                    icon: ClipboardCheck,
-                    title: "Assignment Tracking",
-                    description: "Keep track of assignments, deadlines, and submission status"
-                  },
-                  {
-                    icon: Calendar,
-                    title: "Schedule Management",
-                    description: "View upcoming classes, sessions, and important dates"
-                  }
-                ].map((feature, index) => (
-                  <div key={index} className="flex items-start">
-                    <div className="bg-primary/10 p-2 rounded-lg mr-4">
-                      <feature.icon className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900 mb-1">{feature.title}</h3>
-                      <p className="text-gray-600 text-sm">{feature.description}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <Button asChild>
-                <Link href="/dashboard">View Dashboard Demo</Link>
-              </Button>
-            </div>
-            <div className="relative">
-              {/* Dashboard mockup */}
-              <Card className="shadow-2xl">
-                <div className="bg-primary text-white p-4 rounded-t-lg">
-                  <h3 className="font-semibold">Student Dashboard</h3>
-                </div>
-                <CardContent className="p-6">
-                  <div className="space-y-6">
-                    <div>
-                      <h4 className="font-medium mb-3">Course Progress</h4>
-                      <div className="space-y-3">
-                        <div>
-                          <div className="flex justify-between text-sm mb-1">
-                            <span>IELTS Preparation</span>
-                            <span>75%</span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div className="bg-primary h-2 rounded-full" style={{ width: "75%" }}></div>
-                          </div>
-                        </div>
-                        <div>
-                          <div className="flex justify-between text-sm mb-1">
-                            <span>SAT Math</span>
-                            <span>60%</span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div className="bg-secondary h-2 rounded-full" style={{ width: "60%" }}></div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="font-medium mb-3">Recent Test Scores</h4>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="text-center p-3 bg-primary/5 rounded-lg">
-                          <div className="text-lg font-bold text-primary">7.5</div>
-                          <div className="text-xs text-gray-600">IELTS Mock</div>
-                        </div>
-                        <div className="text-center p-3 bg-secondary/5 rounded-lg">
-                          <div className="text-lg font-bold text-secondary">1480</div>
-                          <div className="text-xs text-gray-600">SAT Practice</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Branches Section */}
-      <section className="py-16 bg-white">
-        <div className="container">
-          <div className="text-center mb-12">
-            <h2 className="section-title">Find a Branch Near You</h2>
-            <p className="section-subtitle">
+          <div className="text-center mb-16">
+            <Badge className="mb-4 bg-red-50 text-red-700 hover:bg-red-100">
+              Our Locations
+            </Badge>
+            <h2 className="text-4xl font-bold text-gray-900 mb-6">
+              Find Us Near You
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               Visit any of our conveniently located branches across Bangladesh for in-person consultations and classes.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-            {branches?.slice(0, 3).map((branch: any) => (
-              <Card key={branch.id} className="hover:shadow-lg transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex items-center mb-4">
-                    <div className="bg-primary/10 p-3 rounded-lg mr-4">
-                      <MapPin className="h-6 w-6 text-primary" />
+            {Array.isArray(branches) && branches.slice(0, 3).map((branch: any) => (
+              <Card key={branch.id} className="hover:shadow-xl transition-all duration-300 group">
+                <CardContent className="p-8">
+                  <div className="flex items-center mb-6">
+                    <div className="bg-gradient-to-br from-red-500 to-pink-600 p-3 rounded-lg mr-4">
+                      <MapPin className="h-6 w-6 text-white" />
                     </div>
                     <div>
-                      <h3 className="font-semibold">{branch.name}</h3>
+                      <h3 className="text-xl font-semibold">{branch.name}</h3>
                       <p className="text-sm text-gray-500">
                         {branch.isMain ? "Main Branch" : "Regional Branch"}
                       </p>
                     </div>
                   </div>
-                  <div className="space-y-3 mb-4">
+                  <div className="space-y-3 mb-6">
                     <div className="flex items-start">
                       <MapPin className="h-4 w-4 text-gray-400 mt-1 mr-3" />
-                      <p className="text-sm text-gray-600">{branch.address}</p>
+                      <p className="text-gray-600">{branch.address}</p>
                     </div>
                     <div className="flex items-center">
                       <Phone className="h-4 w-4 text-gray-400 mr-3" />
-                      <p className="text-sm text-gray-600">{branch.phone}</p>
+                      <p className="text-gray-600">{branch.phone}</p>
                     </div>
                     <div className="flex items-center">
                       <Clock className="h-4 w-4 text-gray-400 mr-3" />
-                      <p className="text-sm text-gray-600">{branch.hours}</p>
+                      <p className="text-gray-600">{branch.hours}</p>
                     </div>
                   </div>
-                  <Button className="w-full">Get Directions</Button>
+                  <Button className="w-full group-hover:bg-red-600">
+                    <MapPin className="h-4 w-4 mr-2" />
+                    Get Directions
+                  </Button>
                 </CardContent>
               </Card>
             ))}
@@ -437,18 +602,23 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Events Section */}
-      <section className="py-16 bg-gray-50">
+      {/* Events */}
+      <section className="py-20 bg-white">
         <div className="container">
-          <div className="text-center mb-12">
-            <h2 className="section-title">Upcoming Events & Seminars</h2>
-            <p className="section-subtitle">
+          <div className="text-center mb-16">
+            <Badge className="mb-4 bg-indigo-50 text-indigo-700 hover:bg-indigo-100">
+              Upcoming Events
+            </Badge>
+            <h2 className="text-4xl font-bold text-gray-900 mb-6">
+              Educational Events & Seminars
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               Join our educational events, workshops, and study abroad fairs to enhance your knowledge and network with experts.
             </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-            {upcomingEvents?.slice(0, 2).map((event: any) => (
+            {Array.isArray(upcomingEvents) && upcomingEvents.slice(0, 2).map((event: any) => (
               <EventCard key={event.id} event={event} />
             ))}
           </div>
@@ -461,23 +631,51 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Call to Action */}
-      <section className="py-16 hero-gradient text-white">
-        <div className="container">
+      {/* CTA Section */}
+      <section className="py-20 bg-gradient-to-r from-blue-900 via-purple-900 to-indigo-900 text-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1920&h=1080&fit=crop')] bg-cover bg-center opacity-10"></div>
+        
+        <div className="container relative">
           <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-3xl lg:text-4xl font-bold mb-6">Ready to Start Your Journey?</h2>
-            <p className="text-xl mb-8 text-blue-100">
-              Join thousands of successful students who achieved their dreams with our expert guidance and comprehensive programs.
+            <Badge className="mb-6 bg-white/10 text-white hover:bg-white/20">
+              Ready to Start?
+            </Badge>
+            <h2 className="text-4xl lg:text-5xl font-bold mb-8">
+              Your Educational Journey Starts Here
+            </h2>
+            <p className="text-xl mb-12 text-blue-100 max-w-3xl mx-auto">
+              Join thousands of successful students who transformed their futures with our expert guidance. Get started with a free consultation today.
             </p>
             
-            <LeadForm />
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 mb-12 max-w-2xl mx-auto">
+              <LeadForm />
+            </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
-              <Button variant="secondary" size="lg">
-                <Phone className="h-5 w-5 mr-2" />
-                Call Now: +880 1777-123456
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+              <div className="text-center">
+                <Phone className="h-12 w-12 mx-auto mb-4 text-yellow-400" />
+                <h3 className="text-lg font-semibold mb-2">Call Now</h3>
+                <p className="text-blue-200">+880 1777-123456</p>
+              </div>
+              <div className="text-center">
+                <MessageSquare className="h-12 w-12 mx-auto mb-4 text-green-400" />
+                <h3 className="text-lg font-semibold mb-2">WhatsApp</h3>
+                <p className="text-blue-200">Instant messaging support</p>
+              </div>
+              <div className="text-center">
+                <Calendar className="h-12 w-12 mx-auto mb-4 text-purple-400" />
+                <h3 className="text-lg font-semibold mb-2">Book Meeting</h3>
+                <p className="text-blue-200">Free consultation</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" className="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-black font-semibold">
+                <Calendar className="h-5 w-5 mr-2" />
+                Book Free Consultation
               </Button>
-              <Button variant="outline" size="lg" className="text-white border-white hover:bg-white hover:text-primary">
+              <Button size="lg" variant="outline" className="text-white border-white hover:bg-white hover:text-black">
+                <MessageSquare className="h-5 w-5 mr-2" />
                 WhatsApp Chat
               </Button>
             </div>

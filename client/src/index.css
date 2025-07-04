@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import modern platform styles */
+@import './styles/modern-platform.css';
+
 @layer base {
   :root {
     --background: hsl(0, 0%, 100%);
