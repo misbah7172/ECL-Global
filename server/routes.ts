@@ -590,7 +590,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Users/Instructors routes
+  // Users and Instructors routes
+  app.get("/api/instructors", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const instructors = await storage.getUsers();
+      const filtered = instructors.filter((user: any) => user.role === 'instructor' || user.role === 'admin');
+      res.json(filtered.map((user: any) => ({
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role
+      })));
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   app.get("/api/users", authenticateToken, requireAdmin, async (req, res) => {
     try {
       const { role } = req.query;

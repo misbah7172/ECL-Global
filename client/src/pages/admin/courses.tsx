@@ -68,6 +68,19 @@ export default function AdminCourses() {
     },
   });
 
+  const { data: instructors } = useQuery({
+    queryKey: ["/api/instructors"],
+    queryFn: async () => {
+      const response = await fetch("/api/instructors", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (!response.ok) throw new Error("Failed to fetch instructors");
+      return response.json();
+    },
+  });
+
   const form = useForm<CourseFormData>({
     resolver: zodResolver(courseSchema),
     defaultValues: {
@@ -222,10 +235,24 @@ export default function AdminCourses() {
                         name="instructorId"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Instructor ID</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Enter instructor ID" {...field} />
-                            </FormControl>
+                            <FormLabel>Instructor</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select instructor" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {instructors?.map((instructor: any) => (
+                                  <SelectItem 
+                                    key={instructor.id} 
+                                    value={instructor.id.toString()}
+                                  >
+                                    {instructor.firstName} {instructor.lastName} ({instructor.role})
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                             <FormMessage />
                           </FormItem>
                         )}

@@ -31,7 +31,7 @@ export const courseSchema = z.object({
   format: z.string().min(1, "Format is required"),
   totalSessions: z.string().optional(),
   syllabus: z.string().optional(),
-  lectures: z.array(lectureSchema).min(1, "At least one lecture is required"),
+  lectures: z.array(lectureSchema).optional(), // Made optional to allow course creation without lectures initially
   thumbnail: z.string().optional(),
   featured: z.boolean().default(false),
   difficulty: z.enum(["Beginner", "Intermediate", "Advanced"]).default("Beginner"),
