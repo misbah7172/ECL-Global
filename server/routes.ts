@@ -279,13 +279,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Course routes
   app.get("/api/courses", async (req, res) => {
     try {
-      const { categoryId, featured, search, isFree } = req.query;
+      const { categoryId, featured, search, isFree, free } = req.query;
       const filters: any = {};
       
       if (categoryId) filters.categoryId = parseInt(categoryId as string);
       if (featured === 'true') filters.featured = true;
       if (search) filters.search = search as string;
-      if (isFree === 'true') filters.isFree = true;
+      if (isFree === 'true' || free === 'true') filters.isFree = true;
       
       const courses = await storage.getCourses(filters);
       res.json(courses);
@@ -308,7 +308,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/courses", authenticateToken, requireAdmin, async (req, res) => {
     try {
-      const courseData = insertCourseSchema.parse(req.body);
+      const courseData = insertCourseSchema.parse({
+        ...req.body,
+        categoryId: parseInt(req.body.categoryId),
+        instructorId: parseInt(req.body.instructorId),
+        price: parseFloat(req.body.price) || 0,
+        originalPrice: req.body.originalPrice ? parseFloat(req.body.originalPrice) : null,
+      });
       const course = await storage.createCourse(courseData);
       res.json(course);
     } catch (error: any) {
@@ -579,6 +585,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           recentAttempts: attempts.slice(0, 5),
         });
       }
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Users/Instructors routes
+  app.get("/api/users", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const { role } = req.query;
+      const users = await storage.getUsers();
+      
+      if (role) {
+        const filteredUsers = users.filter((user: any) => user.role === role);
+        return res.json(filteredUsers);
+      }
+      
+      res.json(users);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
