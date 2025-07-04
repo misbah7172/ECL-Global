@@ -1,0 +1,221 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   Int      @id @default(autoincrement())
+  email                String   @unique @db.VarChar(255)
+  username             String   @unique @db.VarChar(100)
+  password             String   @db.Text
+  firstName            String   @map("first_name") @db.VarChar(100)
+  lastName             String   @map("last_name") @db.VarChar(100)
+  phone                String?  @db.VarChar(20)
+  role                 String   @default("student") @db.VarChar(20)
+  isActive             Boolean  @default(true) @map("is_active")
+  stripeCustomerId     String?  @map("stripe_customer_id") @db.VarChar(255)
+  stripeSubscriptionId String?  @map("stripe_subscription_id") @db.VarChar(255)
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  enrollments         Enrollment[]
+  mockTestAttempts    MockTestAttempt[]
+  eventRegistrations  EventRegistration[]
+  instructedCourses   Course[]
+
+  @@map("users")
+}
+
+model Category {
+  id          Int     @id @default(autoincrement())
+  name        String  @db.VarChar(100)
+  description String? @db.Text
+  icon        String? @db.VarChar(50)
+  isActive    Boolean @default(true) @map("is_active")
+
+  // Relations
+  courses Course[]
+
+  @@map("categories")
+}
+
+model Course {
+  id            Int      @id @default(autoincrement())
+  title         String   @db.VarChar(200)
+  description   String   @db.Text
+  objectives    String?  @db.Text
+  syllabus      Json?
+  categoryId    Int      @map("category_id")
+  instructorId  Int      @map("instructor_id")
+  price         Decimal  @db.Decimal(10, 2)
+  originalPrice Decimal? @map("original_price") @db.Decimal(10, 2)
+  duration      String   @db.VarChar(50)
+  format        String   @db.VarChar(20)
+  totalSessions Int      @default(0) @map("total_sessions")
+  isActive      Boolean  @default(true) @map("is_active")
+  isFeatured    Boolean  @default(false) @map("is_featured")
+  imageUrl      String?  @map("image_url") @db.Text
+  rating        Decimal  @default(0) @db.Decimal(3, 2)
+  enrolledCount Int      @default(0) @map("enrolled_count")
+  difficulty    String   @default("Beginner") @db.VarChar(20)
+  prerequisites String?  @db.Text
+  whatYouWillLearn Json?  @map("what_you_will_learn")
+  requirements  Json?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  category    Category     @relation(fields: [categoryId], references: [id])
+  instructor  User         @relation(fields: [instructorId], references: [id])
+  enrollments Enrollment[]
+  lectures    Lecture[]
+
+  @@map("courses")
+}
+
+model Lecture {
+  id          String    @id @default(cuid())
+  title       String    @db.VarChar(200)
+  description String?   @db.Text
+  duration    Int       // Duration in minutes
+  videoUrl    String?   @map("video_url") @db.Text
+  content     String?   @db.Text
+  order       Int
+  isFree      Boolean   @default(false) @map("is_free")
+  materials   Json?     // Array of materials
+  courseId    Int       @map("course_id")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@map("lectures")
+}
+
+model Enrollment {
+  id          Int       @id @default(autoincrement())
+  userId      Int       @map("user_id")
+  courseId    Int       @map("course_id")
+  enrolledAt  DateTime  @default(now()) @map("enrolled_at")
+  completedAt DateTime? @map("completed_at")
+  progress    Int       @default(0)
+  isActive    Boolean   @default(true) @map("is_active")
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id])
+  course Course @relation(fields: [courseId], references: [id])
+
+  @@map("enrollments")
+}
+
+model MockTest {
+  id             Int      @id @default(autoincrement())
+  title          String   @db.VarChar(200)
+  description    String?  @db.Text
+  testType       String   @map("test_type") @db.VarChar(50)
+  duration       Int
+  totalQuestions Int      @map("total_questions")
+  questions      Json
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // Relations
+  attempts MockTestAttempt[]
+
+  @@map("mock_tests")
+}
+
+model MockTestAttempt {
+  id          Int       @id @default(autoincrement())
+  userId      Int       @map("user_id")
+  mockTestId  Int       @map("mock_test_id")
+  answers     Json?
+  score       Decimal?  @db.Decimal(5, 2)
+  completedAt DateTime? @map("completed_at")
+  timeSpent   Int?      @map("time_spent")
+  isCompleted Boolean   @default(false) @map("is_completed")
+  startedAt   DateTime  @default(now()) @map("started_at")
+
+  // Relations
+  user     User     @relation(fields: [userId], references: [id])
+  mockTest MockTest @relation(fields: [mockTestId], references: [id])
+
+  @@map("mock_test_attempts")
+}
+
+model Event {
+  id              Int      @id @default(autoincrement())
+  title           String   @db.VarChar(200)
+  description     String   @db.Text
+  eventType       String   @map("event_type") @db.VarChar(50)
+  eventDate       DateTime @map("event_date")
+  endDate         DateTime? @map("end_date")
+  venue           String?  @db.VarChar(200)
+  isOnline        Boolean  @default(false) @map("is_online")
+  price           Decimal  @default(0) @db.Decimal(10, 2)
+  maxAttendees    Int?     @map("max_attendees")
+  registeredCount Int      @default(0) @map("registered_count")
+  imageUrl        String?  @map("image_url") @db.Text
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relations
+  registrations EventRegistration[]
+
+  @@map("events")
+}
+
+model EventRegistration {
+  id           Int       @id @default(autoincrement())
+  userId       Int       @map("user_id")
+  eventId      Int       @map("event_id")
+  registeredAt DateTime  @default(now()) @map("registered_at")
+  attended     Boolean   @default(false)
+
+  // Relations
+  user  User  @relation(fields: [userId], references: [id])
+  event Event @relation(fields: [eventId], references: [id])
+
+  @@map("event_registrations")
+}
+
+model Branch {
+  id       Int     @id @default(autoincrement())
+  name     String  @db.VarChar(100)
+  address  String  @db.Text
+  city     String  @db.VarChar(50)
+  country  String  @db.VarChar(50)
+  phone    String? @db.VarChar(20)
+  email    String? @db.VarChar(100)
+  hours    String? @db.VarChar(100)
+  isMain   Boolean @default(false) @map("is_main")
+  isActive Boolean @default(true) @map("is_active")
+
+  @@map("branches")
+}
+
+model Lead {
+  id        Int      @id @default(autoincrement())
+  fullName  String   @map("full_name") @db.VarChar(100)
+  email     String   @db.VarChar(255)
+  phone     String   @db.VarChar(20)
+  interest  String   @db.VarChar(50)
+  message   String?  @db.Text
+  source    String   @default("website") @db.VarChar(50)
+  status    String   @default("new") @db.VarChar(20)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("leads")
+}

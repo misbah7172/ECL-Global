@@ -1,0 +1,122 @@
+🎓 Mentors (mentors.com.bd)
+
+Key Offerings & Functionalities
+
+    Study-Abroad Services: Information pages on studying in countries like Australia, UK, USA, Canada. Includes admission consulting, spot-assessment sessions, expos, and seminars.
+    mentorslearning.com+1mentorslearning.com+1
+    mentors.com.bd+1mentors.com.bd+1
+
+    Test-Prep Courses: Interactive prep for IELTS, SAT, grammar & writing, math, etc., with clearly listed durations, schedules, and prices.
+
+    Service Packages: Defined bundled packages (e.g., SAT + IELTS) with timelines, number of classes, mock tests.
+
+    Delivery Modes: Both online and on-campus options, with live classes and recorded materials.
+    mentorslearning.com+6mentors.com.bd+6mentors.com.bd+6
+
+    Mock Tests & Diagnostics: Full-length mocks (e.g., 5 digital SAT mocks), plus topic-specific tests.
+    mentors.com.bd
+
+    Learning Resources: Recorded video classes, free learning materials, plus supplementary resources like “Language Club.”
+    mentors.com.bd
+
+    Expert Instructors: Highlighting experienced, certified teachers for each course.
+    mentorslearning.com+5mentors.com.bd+5mentors.com.bd+5
+
+    Student Support: Small class sizes, one-on-one support, review lectures, Grammar Club, support center access.
+    mentors.com.bd
+
+    Events Calendar: Listing campus and virtual events, fairs, seminars with dates and venues.
+
+    Locations & Branches: Directory of multiple branches across Bangladesh and even overseas offices (USA, Australia).
+
+    Call-to-Action Controls: “Request a Call,” “Apply,” “Contact,” social media links, inquiry forms.
+
+📘 MentorsLearning (mentorslearning.com)
+
+Course Catalog & Structure
+
+    Categorized Courses: Clearly organized by topics – e.g., Test Prep (IELTS, SAT), Language Development, and niche programs like “Abacus Brain Math.”
+
+    Course Pages Detailing: Each course shows objective, syllabus breakdown, class durations, formats, and mediums (live/interactive).
+    mentorslearning.com
+
+    Live Interactive Classes: Scheduled sessions with fixed durations (e.g., 10 sessions at 1h44m each) via online platforms.
+    mentorslearning.com
+
+    Device-Free Learning: Emphasis on techniques that don't require extra tools or materials.
+    mentorslearning.com
+
+🔗 Shared & Integrated Features
+Feature	Mentors.com.bd	MentorsLearning.com
+Course Listings	Detailed pages with duration, schedule, pricing	Detailed breakdown per course
+Delivery Formats	In-person + online	Live interactive online
+Materials & Testing	Recorded videos, tests, mock exams	Course objectives & interactive lessons
+Support & Engagement	Small groups, one-on-one, clubs	Instructor-led live classes
+Event Integration	Seminar & expo scheduling	–
+Global Presence	Multiple physical & online branches	–
+Lead Capture	CTAs, application forms	Likely integrated contact options
+🛠️ To Build a Similar Platform
+
+    Course Management System
+
+        Backend for creating course entries: title, descriptions, objectives, syllabus modules, class count/duration, format, pricing.
+
+    Student Dashboard
+
+        Access to live sessions, recorded videos, downloadables, progress tracking.
+
+    Mock Test Engine
+
+        Admin interface for test creation, timed delivery, auto-grading, performance analytics.
+
+    Event & Seminar Module
+
+        Calendar with upcoming events, venue info, RSVP/signup forms.
+
+    Multi-Channel Support
+
+        Live chat, support tickets, small group tools, one-on-one mentoring scheduling.
+
+    Branch & Location Display
+
+        Map view or directory listing branches with contact info.
+
+    Lead & Application Forms
+
+        Forms for “Request a Call,” “Apply Now,” integrated with email or CRM.
+
+    Responsive UI Design
+
+        Clean category layouts, instructor showcases, mobile-friendly navigation.
+
+    Payments & Enrollment Flow
+
+        Secure gateways, package bundling (e.g. SAT + IELTS), discount codes.
+
+    Integration
+
+        Email/SMS reminders, analytics, social media links.
+
+✅ Summary
+
+To replicate mentorslearning.com and mentors.com.bd, your website should include:
+
+    Structured course catalog with filters/categories
+
+    Dedicated course-detail pages: objectives, features, pricing
+
+    Multiple delivery options: live-online & recorded content
+
+    Interactive testing features (mock exams, quizzes)
+
+    Student support system (live classes, club access)
+
+    Event calendar and scheduling tools
+
+    Location directory for branches/offices
+
+    Lead-gen forms and contact CTAs
+
+    Instructor profiles and reviews/testimonials
+
+    Responsive UI, payment processing, and progress dashboards
