@@ -26,7 +26,8 @@ import {
   Activity,
   Target,
   Award,
-  Bell
+  Bell,
+  Globe
 } from "lucide-react";
 
 export default function AdminDashboard() {
@@ -282,6 +283,12 @@ export default function AdminDashboard() {
                   <Link href="/admin/courses">
                     <Plus className="h-4 w-4 mr-2" />
                     Add New Course
+                  </Link>
+                </Button>
+                <Button variant="outline" className="w-full" asChild>
+                  <Link href="/admin/study-abroad-services">
+                    <Globe className="h-4 w-4 mr-2" />
+                    Study Abroad Services
                   </Link>
                 </Button>
                 <Button variant="outline" className="w-full" asChild>

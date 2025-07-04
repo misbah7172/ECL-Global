@@ -28,13 +28,14 @@ const insertCourseSchema = z.object({
   syllabus: z.any().optional(),
   categoryId: z.number(),
   instructorId: z.number(),
-  price: z.number(),
+  price: z.number().optional(),
   originalPrice: z.number().optional(),
   duration: z.string(),
   format: z.string(),
   totalSessions: z.number().default(0),
   isActive: z.boolean().default(true),
   isFeatured: z.boolean().default(false),
+  isFree: z.boolean().default(false),
   imageUrl: z.string().optional(),
   rating: z.number().default(0),
   enrolledCount: z.number().default(0),
@@ -278,12 +279,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Course routes
   app.get("/api/courses", async (req, res) => {
     try {
-      const { categoryId, featured, search } = req.query;
+      const { categoryId, featured, search, isFree } = req.query;
       const filters: any = {};
       
       if (categoryId) filters.categoryId = parseInt(categoryId as string);
       if (featured === 'true') filters.featured = true;
       if (search) filters.search = search as string;
+      if (isFree === 'true') filters.isFree = true;
       
       const courses = await storage.getCourses(filters);
       res.json(courses);
@@ -577,6 +579,167 @@ export async function registerRoutes(app: Express): Promise<Server> {
           recentAttempts: attempts.slice(0, 5),
         });
       }
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Study Abroad Service routes
+  app.get("/api/study-abroad-services", async (req, res) => {
+    try {
+      const { serviceType, featured, popular, search } = req.query;
+      const services = await storage.getStudyAbroadServices({
+        serviceType: serviceType as string,
+        featured: featured === 'true',
+        popular: popular === 'true',
+        search: search as string
+      });
+      res.json(services);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/study-abroad-services/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const service = await storage.getStudyAbroadService(id);
+      if (!service) {
+        return res.status(404).json({ error: "Service not found" });
+      }
+      res.json(service);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/study-abroad-services/slug/:slug", async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const service = await storage.getStudyAbroadServiceBySlug(slug);
+      if (!service) {
+        return res.status(404).json({ error: "Service not found" });
+      }
+      res.json(service);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/study-abroad-services", authenticateToken, async (req, res) => {
+    try {
+      if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+
+      const serviceData = req.body;
+      const service = await storage.createStudyAbroadService(serviceData);
+      res.status(201).json(service);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.put("/api/study-abroad-services/:id", authenticateToken, async (req, res) => {
+    try {
+      if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+
+      const id = parseInt(req.params.id);
+      const updates = req.body;
+      const service = await storage.updateStudyAbroadService(id, updates);
+      res.json(service);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.delete("/api/study-abroad-services/:id", authenticateToken, async (req, res) => {
+    try {
+      if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+
+      const id = parseInt(req.params.id);
+      await storage.deleteStudyAbroadService(id);
+      res.status(204).send();
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Study Abroad Inquiry routes
+  app.get("/api/study-abroad-inquiries", authenticateToken, async (req, res) => {
+    try {
+      if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+
+      const { status, priority, serviceId, assignedTo } = req.query;
+      const inquiries = await storage.getStudyAbroadInquiries({
+        status: status as string,
+        priority: priority as string,
+        serviceId: serviceId ? parseInt(serviceId as string) : undefined,
+        assignedTo: assignedTo ? parseInt(assignedTo as string) : undefined
+      });
+      res.json(inquiries);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/study-abroad-inquiries/:id", authenticateToken, async (req, res) => {
+    try {
+      if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+
+      const id = parseInt(req.params.id);
+      const inquiry = await storage.getStudyAbroadInquiry(id);
+      if (!inquiry) {
+        return res.status(404).json({ error: "Inquiry not found" });
+      }
+      res.json(inquiry);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/study-abroad-inquiries", async (req, res) => {
+    try {
+      const inquiryData = req.body;
+      const inquiry = await storage.createStudyAbroadInquiry(inquiryData);
+      res.status(201).json(inquiry);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.put("/api/study-abroad-inquiries/:id", authenticateToken, async (req, res) => {
+    try {
+      if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+
+      const id = parseInt(req.params.id);
+      const updates = req.body;
+      const inquiry = await storage.updateStudyAbroadInquiry(id, updates);
+      res.json(inquiry);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.delete("/api/study-abroad-inquiries/:id", authenticateToken, async (req, res) => {
+    try {
+      if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+
+      const id = parseInt(req.params.id);
+      await storage.deleteStudyAbroadInquiry(id);
+      res.status(204).send();
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

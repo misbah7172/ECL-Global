@@ -38,12 +38,21 @@ import {
   Briefcase,
   MessageSquare,
   FileText,
-  Headphones
+  Headphones,
+  Gift
 } from "lucide-react";
 
 export default function Home() {
   const { data: featuredCourses = [] } = useQuery({
     queryKey: ["/api/courses", { featured: true }],
+  });
+
+  const { data: freeCourses = [] } = useQuery({
+    queryKey: ["/api/courses", { isFree: true }],
+    queryFn: async () => {
+      const response = await fetch("/api/courses?isFree=true");
+      return response.json();
+    },
   });
 
   const { data: upcomingEvents = [] } = useQuery({
@@ -422,6 +431,196 @@ export default function Home() {
             {Array.isArray(featuredCourses) && featuredCourses.slice(0, 3).map((course: any) => (
               <CourseCard key={course.id} course={course} />
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Free Courses Section */}
+      <section className="py-20 bg-gradient-to-br from-green-50 to-emerald-50">
+        <div className="container">
+          <div className="text-center mb-16">
+            <Badge className="mb-4 bg-green-100 text-green-700 hover:bg-green-200">
+              <Gift className="h-4 w-4 mr-2" />
+              100% Free Learning
+            </Badge>
+            <h2 className="text-4xl font-bold text-gray-900 mb-6">
+              Start Learning for Free
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Access our collection of completely free courses. No cost, no registration required - just quality education to get you started.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+            {Array.isArray(freeCourses) && freeCourses.slice(0, 3).map((course: any) => (
+              <div key={course.id} className="relative">
+                <CourseCard course={course} />
+                {/* Free badge */}
+                <div className="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium shadow-md flex items-center">
+                  <Gift className="h-4 w-4 mr-1" />
+                  FREE
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center">
+            <Button className="bg-green-600 hover:bg-green-700 text-white" asChild>
+              <Link href="/free-courses">
+                <BookOpen className="h-5 w-5 mr-2" />
+                Explore All Free Courses
+              </Link>
+            </Button>
+          </div>
+
+          {/* Benefits of Free Courses */}
+          <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="bg-green-100 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                <BookOpen className="h-8 w-8 text-green-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                Quality Content
+              </h3>
+              <p className="text-gray-600">
+                Same high-quality content as our paid courses, completely free.
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="bg-green-100 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                <Users className="h-8 w-8 text-green-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                No Registration Required
+              </h3>
+              <p className="text-gray-600">
+                Start learning immediately without any signup or hidden fees.
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="bg-green-100 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                <Clock className="h-8 w-8 text-green-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                Lifetime Access
+              </h3>
+              <p className="text-gray-600">
+                Access your free courses anytime, anywhere, forever.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Study Abroad Services Section */}
+      <section className="py-20 bg-white">
+        <div className="container">
+          <div className="text-center mb-16">
+            <Badge className="mb-4 bg-blue-100 text-blue-700 hover:bg-blue-200">
+              Study Abroad Services
+            </Badge>
+            <h2 className="text-4xl font-bold mb-6">Your Path to Global Education</h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Expert guidance and comprehensive support for every step of your international education journey.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            {[
+              {
+                icon: <Award className="h-8 w-8 text-blue-600" />,
+                title: "University Admission",
+                description: "Expert guidance for applications to top universities worldwide",
+                features: ["Application review", "Essay assistance", "Interview prep"]
+              },
+              {
+                icon: <Shield className="h-8 w-8 text-green-600" />,
+                title: "Visa Processing",
+                description: "Complete visa application support with high success rates",
+                features: ["Document preparation", "Application filing", "Interview coaching"]
+              },
+              {
+                icon: <Star className="h-8 w-8 text-yellow-600" />,
+                title: "Scholarship Guidance",
+                description: "Maximize funding opportunities for your international education",
+                features: ["Scholarship search", "Application strategy", "Interview prep"]
+              },
+              {
+                icon: <TrendingUp className="h-8 w-8 text-red-600" />,
+                title: "Career Counseling",
+                description: "Strategic career planning and academic pathway guidance",
+                features: ["Career assessment", "Course selection", "Industry insights"]
+              }
+            ].map((service, index) => (
+              <Card key={index} className="hover:shadow-lg transition-shadow border-0 bg-gradient-to-br from-gray-50 to-white">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    {service.icon}
+                    <h3 className="font-semibold text-lg">{service.title}</h3>
+                  </div>
+                  <p className="text-gray-600 mb-4 text-sm">{service.description}</p>
+                  <ul className="space-y-2">
+                    {service.features.map((feature, featureIndex) => (
+                      <li key={featureIndex} className="flex items-center gap-2 text-sm text-gray-600">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h3 className="text-3xl font-bold mb-6">Why Choose Our Study Abroad Services?</h3>
+              <div className="space-y-4">
+                {[
+                  { stat: "98%", label: "Visa Success Rate", icon: <Shield className="h-5 w-5 text-green-500" /> },
+                  { stat: "15K+", label: "Students Placed", icon: <Users className="h-5 w-5 text-blue-500" /> },
+                  { stat: "50+", label: "Partner Universities", icon: <Building className="h-5 w-5 text-purple-500" /> },
+                  { stat: "25+", label: "Countries", icon: <Globe className="h-5 w-5 text-red-500" /> }
+                ].map((item, index) => (
+                  <div key={index} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      {item.icon}
+                      <span className="text-2xl font-bold text-gray-900">{item.stat}</span>
+                    </div>
+                    <span className="text-gray-600">{item.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-8 rounded-xl">
+              <h4 className="text-2xl font-bold mb-6 text-center">Ready to Start Your Journey?</h4>
+              <div className="space-y-4 mb-6">
+                <div className="flex items-center gap-3 p-3 bg-white rounded-lg">
+                  <CheckCircle className="h-5 w-5 text-green-500" />
+                  <span className="text-sm">Free initial consultation</span>
+                </div>
+                <div className="flex items-center gap-3 p-3 bg-white rounded-lg">
+                  <CheckCircle className="h-5 w-5 text-green-500" />
+                  <span className="text-sm">Personalized study plan</span>
+                </div>
+                <div className="flex items-center gap-3 p-3 bg-white rounded-lg">
+                  <CheckCircle className="h-5 w-5 text-green-500" />
+                  <span className="text-sm">End-to-end support</span>
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button className="flex-1" asChild>
+                  <Link href="/study-abroad-services">
+                    <Globe className="h-4 w-4 mr-2" />
+                    Explore Services
+                  </Link>
+                </Button>
+                <Button variant="outline" className="flex-1">
+                  <Phone className="h-4 w-4 mr-2" />
+                  Book Consultation
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </section>

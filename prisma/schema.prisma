@@ -33,6 +33,7 @@ model User {
   mockTestAttempts    MockTestAttempt[]
   eventRegistrations  EventRegistration[]
   instructedCourses   Course[]
+  assignedInquiries   StudyAbroadInquiry[]
 
   @@map("users")
 }
@@ -65,6 +66,7 @@ model Course {
   totalSessions Int      @default(0) @map("total_sessions")
   isActive      Boolean  @default(true) @map("is_active")
   isFeatured    Boolean  @default(false) @map("is_featured")
+  isFree        Boolean  @default(false) @map("is_free")
   imageUrl      String?  @map("image_url") @db.Text
   rating        Decimal  @default(0) @db.Decimal(3, 2)
   enrolledCount Int      @default(0) @map("enrolled_count")
@@ -218,4 +220,59 @@ model Lead {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("leads")
+}
+
+model StudyAbroadService {
+  id            Int      @id @default(autoincrement())
+  title         String   @db.VarChar(200)
+  slug          String   @unique @db.VarChar(200)
+  description   String   @db.Text
+  shortDesc     String?  @map("short_desc") @db.Text
+  serviceType   String   @map("service_type") @db.VarChar(50) // counseling, visa, application, etc.
+  price         Decimal? @db.Decimal(10, 2)
+  duration      String?  @db.VarChar(50)
+  features      Json?    // Array of features included
+  countries     Json?    // Array of supported countries
+  requirements  Json?    // Array of requirements
+  process       Json?    // Array of process steps
+  benefits      Json?    // Array of benefits
+  imageUrl      String?  @map("image_url") @db.Text
+  iconName      String?  @map("icon_name") @db.VarChar(50)
+  isActive      Boolean  @default(true) @map("is_active")
+  isFeatured    Boolean  @default(false) @map("is_featured")
+  isPopular     Boolean  @default(false) @map("is_popular")
+  order         Int      @default(0)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  inquiries StudyAbroadInquiry[]
+
+  @@map("study_abroad_services")
+}
+
+model StudyAbroadInquiry {
+  id          Int      @id @default(autoincrement())
+  serviceId   Int      @map("service_id")
+  fullName    String   @map("full_name") @db.VarChar(100)
+  email       String   @db.VarChar(255)
+  phone       String   @db.VarChar(20)
+  country     String   @db.VarChar(100)
+  course      String?  @db.VarChar(200)
+  university  String?  @db.VarChar(200)
+  budget      String?  @db.VarChar(50)
+  timeline    String?  @db.VarChar(50)
+  message     String?  @db.Text
+  status      String   @default("new") @db.VarChar(20) // new, contacted, in_progress, completed
+  priority    String   @default("medium") @db.VarChar(20) // low, medium, high
+  assignedTo  Int?     @map("assigned_to")
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  service     StudyAbroadService @relation(fields: [serviceId], references: [id])
+  assignedUser User?             @relation(fields: [assignedTo], references: [id])
+
+  @@map("study_abroad_inquiries")
 }

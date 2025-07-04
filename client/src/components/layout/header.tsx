@@ -19,6 +19,8 @@ export default function Header() {
 
   const navItems = [
     { href: "/courses", label: "Courses" },
+    { href: "/free-courses", label: "Free Courses" },
+    { href: "/study-abroad-services", label: "Study Abroad" },
     { href: "/mock-tests", label: "Mock Tests" },
     { href: "/events", label: "Events" },
     { href: "/branches", label: "Branches" },
