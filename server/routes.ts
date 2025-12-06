@@ -131,6 +131,15 @@ const requireAdmin = (req: any, res: any, next: any) => {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
+  // Health check endpoint for Render
+  app.get("/api/health", (req, res) => {
+    res.status(200).json({ 
+      status: "healthy", 
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development'
+    });
+  });
+
   // Auth routes
   app.post("/api/auth/register", async (req, res) => {
     try {

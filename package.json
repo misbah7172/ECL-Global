@@ -6,14 +6,16 @@
   "license": "MIT",
   "scripts": {
     "dev": "NODE_ENV=development tsx server/index.ts",
-    "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
+    "build": "prisma generate && vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:reset": "prisma migrate reset"
+    "db:migrate": "prisma migrate deploy",
+    "db:reset": "prisma migrate reset",
+    "postinstall": "prisma generate",
+    "generate-secrets": "node generate-secrets.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

@@ -1,0 +1,41 @@
+# Render ignore file - files to exclude from deployment
+
+# Development files
+*.md
+!README.md
+!RENDER_DEPLOYMENT.md
+
+# Tests
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+__tests__/
+
+# Documentation
+docs/
+ADMIN_SETUP.md
+ANIMATED_LOGO_IMPLEMENTATION.md
+COURSE_CREATION_FIX.md
+ECL_GLOBAL_REBRANDING_SUMMARY.md
+IMPLEMENTATION_COMPLETE.md
+PROJECT_SUMMARY.md
+REDESIGN_SUMMARY.md
+SESSION_MANAGEMENT.md
+
+# Scripts
+test-*.sh
+test-*.ts
+test-*.js
+create-*.ts
+update-*.ts
+check-*.ts
+scripts/verify-*.js
+scripts/create-*.js
+
+# Replit specific
+replit.md
+.replit
+
+# Assets
+attached_assets/
