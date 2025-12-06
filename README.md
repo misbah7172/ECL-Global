@@ -4,13 +4,13 @@ ECL Global is a comprehensive educational consultancy platform designed to help 
 
 ## Features
 
-- 🎓 **Course Management**: Browse and enroll in various educational courses
-- 🌍 **Study Abroad Services**: Comprehensive guidance for international education
-- 📝 **Mock Tests**: Practice tests for exam preparation
-- 📅 **Events**: Educational events and webinars
-- 🏢 **Branch Locations**: Multiple office locations
-- 💳 **Payment Integration**: Stripe payment processing
-- 👥 **User Authentication**: Secure login and registration
+-  **Course Management**: Browse and enroll in various educational courses
+-  **Study Abroad Services**: Comprehensive guidance for international education
+-  **Mock Tests**: Practice tests for exam preparation
+-  **Events**: Educational events and webinars
+-  **Branch Locations**: Multiple office locations
+-  **Payment Integration**: Stripe payment processing
+-  **User Authentication**: Secure login and registration
 
 ## Tech Stack
 
