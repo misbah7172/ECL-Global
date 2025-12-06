@@ -58,14 +58,14 @@ export default function Login() {
         title: "Welcome back!",
         description: "You have been successfully logged in.",
       });
-      setLocation("/dashboard");
+      // Use window.location to ensure navigation happens after auth state update
+      window.location.href = "/dashboard";
     } catch (error: any) {
       toast({
         title: "Login Failed",
         description: error.message || "Invalid email or password",
         variant: "destructive",
       });
-    } finally {
       setIsLoading(false);
     }
   };

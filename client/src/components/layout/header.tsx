@@ -50,6 +50,10 @@ export default function Header() {
             style={{
               backgroundColor: isActive(item.href) ? COLORS.deepBlue : 'transparent',
             }}
+            onClick={() => {
+              // Ensure scroll to top on navigation
+              window.scrollTo({ top: 0, behavior: 'instant' });
+            }}
             onMouseEnter={(e) => {
               if (!isActive(item.href)) {
                 e.currentTarget.style.backgroundColor = COLORS.skyBlue;

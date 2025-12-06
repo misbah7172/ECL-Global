@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { queryClient } from "@/lib/queryClient";
 import { LoadingScreen } from "@/components/loading-screen";
+import ScrollToTop from "@/components/scroll-to-top";
 
 // Pages
 import Home from "@/pages/home-redesigned";
@@ -58,6 +59,7 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-background">
+      <ScrollToTop />
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/courses" component={Courses} />

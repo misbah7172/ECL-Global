@@ -74,14 +74,14 @@ export default function Register() {
         title: "Account created successfully!",
         description: "Welcome to ECL Global Learning Platform.",
       });
-      setLocation("/dashboard");
+      // Use window.location to ensure navigation happens after auth state update
+      window.location.href = "/dashboard";
     } catch (error: any) {
       toast({
         title: "Registration Failed",
         description: error.message || "Something went wrong",
         variant: "destructive",
       });
-    } finally {
       setIsLoading(false);
     }
   };
