@@ -6,7 +6,7 @@ import { queryClient } from "@/lib/queryClient";
 import { LoadingScreen } from "@/components/loading-screen";
 
 // Pages
-import Home from "@/pages/home";
+import Home from "@/pages/home-redesigned";
 import Courses from "@/pages/courses";
 import CourseDetail from "@/pages/enhanced-course-detail";
 import Dashboard from "@/pages/dashboard";

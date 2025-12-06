@@ -3,9 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import CourseCard from "@/components/course-card";
-import FlyingPlaneLoader from "@/components/flying-plane-loader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -13,7 +13,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Filter, BookOpen, Gift } from "lucide-react";
+import { Search, Filter, BookOpen, Gift, GraduationCap, Users, Clock, CheckCircle, Star, ChevronRight } from "lucide-react";
+
+// ECL Global Color Palette
+const COLORS = {
+  deepBlue: '#1C4E9C',
+  skyBlue: '#33A9D9',
+  midBlue: '#2A7CCD',
+  darkGrey: '#4F4F4F',
+  offWhite: '#F8F8F8',
+};
 
 export default function FreeCourses() {
   const [search, setSearch] = useState("");
@@ -43,11 +52,37 @@ export default function FreeCourses() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+      <div className="min-h-screen" style={{ backgroundColor: COLORS.offWhite }}>
         <Header />
-        <div className="container py-16">
-          <div className="flex items-center justify-center min-h-[400px]">
-            <FlyingPlaneLoader size="lg" />
+        <div className="container mx-auto px-4 py-16">
+          <div className="flex flex-col items-center justify-center min-h-[400px]">
+            {/* Beautiful Pulsing Animation */}
+            <div className="relative w-24 h-24 mb-8">
+              {/* Outer ring - pulsing */}
+              <div 
+                className="absolute inset-0 rounded-full animate-ping opacity-75"
+                style={{ backgroundColor: COLORS.skyBlue }}
+              />
+              {/* Middle ring */}
+              <div 
+                className="absolute inset-2 rounded-full animate-pulse"
+                style={{ backgroundColor: COLORS.midBlue }}
+              />
+              {/* Inner circle with icon */}
+              <div 
+                className="absolute inset-4 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: COLORS.deepBlue }}
+              >
+                <Gift className="h-8 w-8 text-white animate-pulse" />
+              </div>
+            </div>
+            
+            <div className="text-center">
+              <h3 className="text-xl font-bold mb-2" style={{ color: COLORS.deepBlue }}>
+                Loading Free Courses
+              </h3>
+              <p style={{ color: COLORS.darkGrey }}>Preparing your free learning resources...</p>
+            </div>
           </div>
         </div>
         <Footer />
@@ -56,51 +91,87 @@ export default function FreeCourses() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+    <div className="min-h-screen" style={{ backgroundColor: COLORS.offWhite }}>
       <Header />
       
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-green-600 to-emerald-600 text-white py-16">
-        <div className="container">
-          <div className="max-w-3xl mx-auto text-center">
+      <section 
+        className="text-white py-20 relative overflow-hidden"
+        style={{
+          background: `linear-gradient(135deg, ${COLORS.deepBlue} 0%, ${COLORS.midBlue} 50%, ${COLORS.skyBlue} 100%)`
+        }}
+      >
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-10 left-10 w-32 h-32 border-4 border-white rounded-full"></div>
+          <div className="absolute bottom-10 right-10 w-40 h-40 border-4 border-white rounded-full"></div>
+          <div className="absolute top-1/2 left-1/3 w-24 h-24 border-4 border-white rounded-full"></div>
+        </div>
+
+        <div className="container mx-auto px-4 max-w-6xl relative z-10">
+          <div className="text-center">
             <div className="flex items-center justify-center mb-6">
-              <Gift className="h-12 w-12 mr-4" />
-              <h1 className="text-4xl md:text-5xl font-bold">
+              <div 
+                className="w-20 h-20 rounded-full flex items-center justify-center mr-4"
+                style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
+              >
+                <Gift className="h-10 w-10 text-white" />
+              </div>
+              <h1 className="text-4xl md:text-6xl font-bold">
                 Free Courses
               </h1>
             </div>
-            <p className="text-xl text-green-100 mb-8">
-              Access our collection of completely free courses designed to help you start your learning journey. 
-              No cost, no hidden fees - just quality education.
+            <p className="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto leading-relaxed">
+              Start your learning journey with our expertly crafted free courses. 
+              High-quality education accessible to everyone - no cost, no barriers.
             </p>
-            <div className="flex items-center justify-center space-x-4 text-green-100">
-              <BookOpen className="h-5 w-5" />
-              <span>100% Free</span>
-              <span>•</span>
-              <span>No Registration Required</span>
-              <span>•</span>
-              <span>Lifetime Access</span>
+            
+            {/* Features Badges */}
+            <div className="flex flex-wrap items-center justify-center gap-4 mb-8">
+              {[
+                { icon: Gift, text: "100% Free" },
+                { icon: Clock, text: "Lifetime Access" },
+                { icon: CheckCircle, text: "No Hidden Fees" },
+                { icon: GraduationCap, text: "Expert Instructors" }
+              ].map((item, index) => (
+                <div 
+                  key={index}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full text-white font-medium"
+                  style={{ backgroundColor: 'rgba(255, 255, 255, 0.15)' }}
+                >
+                  <item.icon className="h-5 w-5" />
+                  <span>{item.text}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
       {/* Filter Section */}
-      <section className="py-8 bg-white shadow-sm">
-        <div className="container">
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="flex items-center space-x-4 w-full md:w-auto">
-              <div className="relative flex-1 md:w-80">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+      <section className="py-8 bg-white shadow-md">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <div className="flex flex-col lg:flex-row gap-6 items-center justify-between">
+            {/* Search and Filter */}
+            <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
+              <div className="relative w-full sm:w-96">
+                <Search 
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5" 
+                  style={{ color: COLORS.darkGrey }}
+                />
                 <Input
                   placeholder="Search free courses..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="pl-10"
+                  className="pl-12 h-12 border-2 rounded-lg"
+                  style={{ borderColor: COLORS.skyBlue }}
                 />
               </div>
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-48">
+                <SelectTrigger 
+                  className="w-full sm:w-56 h-12 border-2 rounded-lg font-medium"
+                  style={{ borderColor: COLORS.skyBlue, color: COLORS.deepBlue }}
+                >
                   <Filter className="h-4 w-4 mr-2" />
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
@@ -114,40 +185,100 @@ export default function FreeCourses() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="text-sm text-gray-600">
-              {courses?.length || 0} free courses available
+            
+            {/* Results Count */}
+            <div className="flex items-center gap-3">
+              <div 
+                className="px-5 py-3 rounded-lg font-semibold text-white"
+                style={{ backgroundColor: COLORS.skyBlue }}
+              >
+                <BookOpen className="h-5 w-5 inline mr-2" />
+                {courses?.length || 0} Free Courses
+              </div>
             </div>
           </div>
+
+          {/* Active Filters */}
+          {(search || categoryFilter !== "all") && (
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <span className="text-sm font-medium" style={{ color: COLORS.darkGrey }}>Active Filters:</span>
+              {search && (
+                <Badge 
+                  variant="secondary" 
+                  className="px-3 py-1 cursor-pointer hover:opacity-80"
+                  style={{ backgroundColor: `${COLORS.skyBlue}20`, color: COLORS.deepBlue }}
+                  onClick={() => setSearch("")}
+                >
+                  Search: "{search}" ✕
+                </Badge>
+              )}
+              {categoryFilter !== "all" && (
+                <Badge 
+                  variant="secondary" 
+                  className="px-3 py-1 cursor-pointer hover:opacity-80"
+                  style={{ backgroundColor: `${COLORS.skyBlue}20`, color: COLORS.deepBlue }}
+                  onClick={() => setCategoryFilter("all")}
+                >
+                  {categories?.find((c: any) => c.id.toString() === categoryFilter)?.name} ✕
+                </Badge>
+              )}
+              <button
+                onClick={() => { setSearch(""); setCategoryFilter("all"); }}
+                className="text-sm underline ml-2"
+                style={{ color: COLORS.skyBlue }}
+              >
+                Clear all
+              </button>
+            </div>
+          )}
         </div>
       </section>
 
       {/* Courses Grid */}
       <section className="py-16">
-        <div className="container">
+        <div className="container mx-auto px-4 max-w-6xl">
+          {/* Section Header */}
+          <div className="mb-10">
+            <h2 className="text-3xl font-bold mb-2" style={{ color: COLORS.deepBlue }}>
+              Available Free Courses
+            </h2>
+            <p style={{ color: COLORS.darkGrey }}>
+              {courses?.length || 0} course{courses?.length !== 1 ? 's' : ''} ready for you to explore
+            </p>
+          </div>
+
           {courses?.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {courses.map((course: any) => (
-                <div key={course.id} className="relative">
+                <div key={course.id} className="relative group">
                   <CourseCard course={course} />
                   {/* Free badge */}
-                  <div className="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium shadow-md">
-                    <Gift className="h-4 w-4 inline mr-1" />
+                  <div 
+                    className="absolute top-4 right-4 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg z-10 flex items-center gap-1"
+                    style={{ backgroundColor: COLORS.skyBlue }}
+                  >
+                    <Gift className="h-4 w-4" />
                     FREE
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="text-center py-16">
-              <div className="max-w-md mx-auto">
-                <Gift className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  No free courses found
+            <div className="text-center py-20">
+              <div className="max-w-md mx-auto bg-white rounded-2xl p-12 shadow-lg">
+                <div 
+                  className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
+                  style={{ backgroundColor: `${COLORS.skyBlue}20` }}
+                >
+                  <Gift className="h-10 w-10" style={{ color: COLORS.skyBlue }} />
+                </div>
+                <h3 className="text-2xl font-bold mb-3" style={{ color: COLORS.deepBlue }}>
+                  No Free Courses Found
                 </h3>
-                <p className="text-gray-600 mb-6">
+                <p className="mb-6" style={{ color: COLORS.darkGrey }}>
                   {search || categoryFilter !== "all" 
-                    ? "Try adjusting your search or filter criteria."
-                    : "We're working on adding free courses. Check back soon!"}
+                    ? "We couldn't find any free courses matching your criteria. Try adjusting your filters."
+                    : "We're continuously adding new free courses. Check back soon for more learning opportunities!"}
                 </p>
                 {(search || categoryFilter !== "all") && (
                   <Button
@@ -155,9 +286,12 @@ export default function FreeCourses() {
                       setSearch("");
                       setCategoryFilter("all");
                     }}
-                    variant="outline"
+                    className="text-white font-semibold"
+                    style={{ backgroundColor: COLORS.skyBlue }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = COLORS.midBlue}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = COLORS.skyBlue}
                   >
-                    Clear Filters
+                    Clear All Filters
                   </Button>
                 )}
               </div>
@@ -167,47 +301,115 @@ export default function FreeCourses() {
       </section>
 
       {/* Benefits Section */}
-      <section className="py-16 bg-gradient-to-r from-green-50 to-emerald-50">
-        <div className="container">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-3xl font-bold text-gray-900 mb-8">
+      <section className="py-16 bg-white">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: COLORS.deepBlue }}>
               Why Choose Our Free Courses?
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="text-center">
-                <div className="bg-green-100 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  <BookOpen className="h-8 w-8 text-green-600" />
+            <p className="text-lg" style={{ color: COLORS.darkGrey }}>
+              Premium quality education without the premium price tag
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                icon: BookOpen,
+                title: "Expert-Led Content",
+                description: "Same high-quality curriculum as our premium courses, taught by industry professionals with 10+ years of experience."
+              },
+              {
+                icon: Gift,
+                title: "Truly Free Forever",
+                description: "No hidden fees, no credit card required, no time limits. Start learning immediately with lifetime access."
+              },
+              {
+                icon: Users,
+                title: "Join 15,000+ Learners",
+                description: "Be part of our growing community of successful students who started their journey with our free courses."
+              }
+            ].map((benefit, index) => (
+              <div 
+                key={index}
+                className="p-8 rounded-xl text-center hover:shadow-xl transition-all duration-300"
+                style={{ backgroundColor: COLORS.offWhite }}
+              >
+                <div 
+                  className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
+                  style={{ backgroundColor: `${COLORS.skyBlue}20` }}
+                >
+                  <benefit.icon className="h-10 w-10" style={{ color: COLORS.skyBlue }} />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  Quality Content
+                <h3 className="text-xl font-bold mb-3" style={{ color: COLORS.deepBlue }}>
+                  {benefit.title}
                 </h3>
-                <p className="text-gray-600">
-                  Same high-quality content as our paid courses, completely free.
+                <p className="leading-relaxed" style={{ color: COLORS.darkGrey }}>
+                  {benefit.description}
                 </p>
               </div>
-              <div className="text-center">
-                <div className="bg-green-100 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  <Gift className="h-8 w-8 text-green-600" />
+            ))}
+          </div>
+
+          {/* Stats */}
+          <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6">
+            {[
+              { value: "15,000+", label: "Active Students" },
+              { value: "50+", label: "Free Courses" },
+              { value: "4.8/5", label: "Average Rating" },
+              { value: "98%", label: "Success Rate" }
+            ].map((stat, index) => (
+              <div 
+                key={index}
+                className="text-center p-6 rounded-xl"
+                style={{ backgroundColor: `${COLORS.deepBlue}10` }}
+              >
+                <div className="text-3xl font-bold mb-2" style={{ color: COLORS.deepBlue }}>
+                  {stat.value}
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  No Hidden Costs
-                </h3>
-                <p className="text-gray-600">
-                  Completely free with no registration required or hidden fees.
-                </p>
-              </div>
-              <div className="text-center">
-                <div className="bg-green-100 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  <Search className="h-8 w-8 text-green-600" />
+                <div className="text-sm font-medium" style={{ color: COLORS.darkGrey }}>
+                  {stat.label}
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  Lifetime Access
-                </h3>
-                <p className="text-gray-600">
-                  Access your free courses anytime, anywhere, forever.
-                </p>
               </div>
-            </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-16 bg-gradient-to-br from-[#1C4E9C] to-[#2A7CCD] text-white">
+        <div className="container mx-auto px-4 max-w-4xl text-center">
+          <Star className="h-12 w-12 mx-auto mb-6 text-yellow-300" />
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            Ready to Upgrade Your Learning?
+          </h2>
+          <p className="text-xl text-blue-100 mb-8">
+            Love our free courses? Explore our premium courses for advanced certifications and personalized mentorship.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button 
+              className="h-12 px-8 text-white font-semibold shadow-xl"
+              style={{ backgroundColor: COLORS.skyBlue }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = COLORS.midBlue}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = COLORS.skyBlue}
+            >
+              View Premium Courses
+              <ChevronRight className="ml-2 h-4 w-4" />
+            </Button>
+            <Button 
+              variant="outline"
+              className="h-12 px-8 border-2 border-white text-white hover:bg-white font-semibold"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'white';
+                e.currentTarget.style.color = COLORS.deepBlue;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = 'white';
+              }}
+            >
+              Book Free Consultation
+            </Button>
           </div>
         </div>
       </section>

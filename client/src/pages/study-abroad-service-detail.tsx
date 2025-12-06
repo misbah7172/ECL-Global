@@ -110,12 +110,33 @@ export default function StudyAbroadServiceDetail() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
         <Header />
         <div className="container mx-auto px-4 py-20">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
-            <div className="h-4 bg-gray-200 rounded w-2/3 mb-8"></div>
-            <div className="grid md:grid-cols-2 gap-8">
-              <div className="bg-gray-200 rounded-lg h-96"></div>
-              <div className="bg-gray-200 rounded-lg h-96"></div>
+          <div className="flex flex-col items-center justify-center min-h-[400px]">
+            {/* Beautiful Pulsing Animation */}
+            <div className="relative w-24 h-24 mb-8">
+              {/* Outer ring - pulsing */}
+              <div 
+                className="absolute inset-0 rounded-full animate-ping opacity-75"
+                style={{ backgroundColor: '#33A9D9' }}
+              />
+              {/* Middle ring */}
+              <div 
+                className="absolute inset-2 rounded-full animate-pulse"
+                style={{ backgroundColor: '#2A7CCD' }}
+              />
+              {/* Inner circle with icon */}
+              <div 
+                className="absolute inset-4 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: '#1C4E9C' }}
+              >
+                <Globe className="h-8 w-8 text-white animate-pulse" />
+              </div>
+            </div>
+            
+            <div className="text-center">
+              <h3 className="text-xl font-bold mb-2" style={{ color: '#1C4E9C' }}>
+                Loading Service Details
+              </h3>
+              <p className="text-gray-600">Preparing your study abroad information...</p>
             </div>
           </div>
         </div>
