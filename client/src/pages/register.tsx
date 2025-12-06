@@ -251,7 +251,7 @@ export default function Register() {
                             <FormItem>
                               <FormLabel style={{ color: COLORS.darkGrey }}>First Name</FormLabel>
                               <FormControl>
-                                <Input placeholder="John" className="h-11" {...field} />
+                                <Input placeholder="Md. Habibulla" className="h-11" {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -264,7 +264,7 @@ export default function Register() {
                             <FormItem>
                               <FormLabel style={{ color: COLORS.darkGrey }}>Last Name</FormLabel>
                               <FormControl>
-                                <Input placeholder="Doe" className="h-11" {...field} />
+                                <Input placeholder="Misba" className="h-11" {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -280,7 +280,7 @@ export default function Register() {
                             <FormControl>
                               <div className="relative">
                                 <UserIcon className="absolute left-3 top-3 h-5 w-5" style={{ color: COLORS.skyBlue }} />
-                                <Input placeholder="johndoe" className="pl-11 h-11" {...field} />
+                                <Input placeholder="misba" className="pl-11 h-11" {...field} />
                               </div>
                             </FormControl>
                             <FormMessage />
