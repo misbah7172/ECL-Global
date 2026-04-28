@@ -42,6 +42,18 @@ import {
   Gift
 } from "lucide-react";
 
+// Helper function to get icon and color for service type
+function getServiceIcon(serviceType: string) {
+  const iconMap: { [key: string]: any } = {
+    'University Admission': { icon: ClipboardCheck, color: 'from-blue-500 to-blue-600' },
+    'Visa Processing': { icon: Globe, color: 'from-purple-500 to-purple-600' },
+    'Scholarship Guidance': { icon: Trophy, color: 'from-green-500 to-green-600' },
+    'Career Counseling': { icon: Briefcase, color: 'from-orange-500 to-orange-600' },
+    'Language Training': { icon: Languages, color: 'from-pink-500 to-pink-600' },
+  };
+  return iconMap[serviceType] || { icon: Award, color: 'from-gray-500 to-gray-600' };
+}
+
 export default function Home() {
   const { data: featuredCourses = [] } = useQuery({
     queryKey: ["/api/courses", { featured: true }],
@@ -71,36 +83,13 @@ export default function Home() {
     },
   });
 
-  const services = [
-    {
-      icon: ClipboardCheck,
-      title: "Test Preparation",
-      description: "IELTS, TOEFL, SAT, GRE, GMAT preparation with expert guidance",
-      features: ["Personal ECL Globaling", "Practice tests", "Score guarantee"],
-      color: "from-blue-500 to-blue-600"
+  const { data: services = [] } = useQuery({
+    queryKey: ["/api/study-abroad-services"],
+    queryFn: async () => {
+      const response = await fetch("/api/study-abroad-services");
+      return response.json();
     },
-    {
-      icon: Globe,
-      title: "Study Abroad Consulting",
-      description: "Complete guidance for studying in top universities worldwide",
-      features: ["University selection", "Visa assistance", "Document preparation"],
-      color: "from-purple-500 to-purple-600"
-    },
-    {
-      icon: Briefcase,
-      title: "Career Counseling",
-      description: "Professional career guidance and job placement assistance",
-      features: ["Resume building", "Interview prep", "Job placement"],
-      color: "from-green-500 to-green-600"
-    },
-    {
-      icon: Languages,
-      title: "Language Training",
-      description: "Comprehensive language courses for academic and professional needs",
-      features: ["Speaking practice", "Grammar mastery", "Writing skills"],
-      color: "from-orange-500 to-orange-600"
-    }
-  ];
+  });
 
 
 
@@ -216,29 +205,34 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {services.map((service, index) => (
-              <Card key={index} className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-0 shadow-lg">
-                <CardContent className="p-8 text-center">
-                  <div className={`w-16 h-16 mx-auto mb-6 bg-gradient-to-br ${service.color} rounded-full flex items-center justify-center`}>
-                    <service.icon className="h-8 w-8 text-white" />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-4">{service.title}</h3>
-                  <p className="text-gray-600 mb-6">{service.description}</p>
-                  <ul className="space-y-2 mb-6">
-                    {service.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-center text-sm text-gray-500">
-                        <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-                  <Button variant="outline" className="w-full group-hover:bg-blue-50 group-hover:text-blue-700">
-                    Learn More
-                    <ChevronRight className="h-4 w-4 ml-2" />
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+            {services.map((service, index) => {
+              const { icon: IconComponent, color } = getServiceIcon(service.serviceType);
+              return (
+                <Card key={index} className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-0 shadow-lg">
+                  <CardContent className="p-8 text-center">
+                    <div className={`w-16 h-16 mx-auto mb-6 bg-gradient-to-br ${color} rounded-full flex items-center justify-center`}>
+                      <IconComponent className="h-8 w-8 text-white" />
+                    </div>
+                    <h3 className="text-xl font-semibold mb-4">{service.title}</h3>
+                    <p className="text-gray-600 mb-6">{service.description || service.shortDesc}</p>
+                    <ul className="space-y-2 mb-6">
+                      {(service.features || []).map((feature: string, idx: number) => (
+                        <li key={idx} className="flex items-center text-sm text-gray-500">
+                          <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                    <Button variant="outline" className="w-full group-hover:bg-blue-50 group-hover:text-blue-700" asChild>
+                      <Link href={`/study-abroad-services`}>
+                        Learn More
+                        <ChevronRight className="h-4 w-4 ml-2" />
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
       </section>
