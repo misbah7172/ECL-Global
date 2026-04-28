@@ -44,6 +44,29 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
+// Helper function to get icon for service type
+function getServiceIcon(serviceType: string) {
+  const iconMap: { [key: string]: any } = {
+    "University Admission": ClipboardCheck,
+    "Visa Processing": Globe,
+    "Scholarship Guidance": Trophy,
+    "Career Counseling": Briefcase,
+    "Language Training": Languages,
+  };
+  return iconMap[serviceType] || Award;
+}
+
+function getServiceImage(serviceType: string, defaultImage: string) {
+  const imageMap: { [key: string]: string } = {
+    "University Admission": "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&h=600&fit=crop",
+    "Visa Processing": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&h=600&fit=crop",
+    "Scholarship Guidance": "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&h=600&fit=crop",
+    "Career Counseling": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&h=600&fit=crop",
+    "Language Training": "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=800&h=600&fit=crop",
+  };
+  return imageMap[serviceType] || defaultImage;
+}
+
 // Color Scheme Constants
 const COLORS = {
   deepBlue: '#1C4E9C',      // Primary Brand Color
@@ -64,6 +87,22 @@ export default function HomeRedesigned() {
     queryKey: ["/api/courses", { isFree: true }],
     queryFn: async () => {
       const response = await fetch("/api/courses?isFree=true");
+      return response.json();
+    },
+  });
+
+  const { data: services = [] } = useQuery({
+    queryKey: ["/api/study-abroad-services"],
+    queryFn: async () => {
+      const response = await fetch("/api/study-abroad-services");
+      return response.json();
+    },
+  });
+
+  const { data: reviews = [] } = useQuery({
+    queryKey: ["/api/reviews", { featured: true }],
+    queryFn: async () => {
+      const response = await fetch("/api/reviews?featured=true&limit=6");
       return response.json();
     },
   });
@@ -109,107 +148,6 @@ export default function HomeRedesigned() {
       credentials: "PhD in Career Psychology",
       imageUrl: "https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=400&h=400&fit=crop&crop=face",
       bio: "Specialized in matching students with perfect career paths. Over 2,000 successful career transitions."
-    }
-  ];
-
-  // Testimonials with photos
-  const testimonials = [
-    {
-      id: 1,
-      name: "Rashid Ahmed",
-      achievement: "IELTS Band 8.5 → University of Toronto",
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
-      quote: "The personalized guidance and expert coaching helped me achieve my dream score. The team's dedication is unmatched. I'm now pursuing Computer Science at my dream university!",
-      course: "IELTS Preparation",
-      rating: 5
-    },
-    {
-      id: 2,
-      name: "Fatima Khan",
-      achievement: "SAT 1550 → MIT",
-      image: "https://images.unsplash.com/photo-1494790108755-2616b612b193?w=150&h=150&fit=crop&crop=face",
-      quote: "The strategic approach and comprehensive materials made all the difference. The mock tests were incredibly accurate. ECL Global made my MIT dream a reality!",
-      course: "SAT Preparation",
-      rating: 5
-    },
-    {
-      id: 3,
-      name: "Arif Hassan",
-      achievement: "Successful Visa → University of Melbourne",
-      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
-      quote: "From application to visa approval, the support was exceptional. They handled everything professionally and I got my visa on the first attempt. Highly recommended!",
-      course: "Study Abroad Consulting",
-      rating: 5
-    },
-    {
-      id: 4,
-      name: "Nadia Islam",
-      achievement: "TOEFL 118 → Stanford University",
-      image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
-      quote: "Outstanding instructors and world-class resources. The personalized study plan was exactly what I needed. Now I'm at Stanford thanks to ECL Global!",
-      course: "TOEFL Preparation",
-      rating: 5
-    },
-    {
-      id: 5,
-      name: "Karim Mahmud",
-      achievement: "GRE 330 → Harvard Business School",
-      image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face",
-      quote: "The quality of instruction exceeded my expectations. Small class sizes meant individual attention. My dream of Harvard is now a reality!",
-      course: "GRE Preparation",
-      rating: 5
-    }
-  ];
-
-  // Services/Key Offerings
-  const services = [
-    {
-      icon: ClipboardCheck,
-      title: "Test Preparation",
-      description: "Expert coaching for IELTS, TOEFL, SAT, GRE, GMAT with guaranteed score improvement",
-      features: [
-        "Personal ECL Globaling from certified experts",
-        "Comprehensive practice tests & materials",
-        "Score improvement guarantee",
-        "Flexible online & offline classes"
-      ],
-      image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&h=600&fit=crop"
-    },
-    {
-      icon: Globe,
-      title: "Study Abroad Consulting",
-      description: "End-to-end guidance for studying at top universities worldwide",
-      features: [
-        "University selection & application",
-        "Visa assistance (98% success rate)",
-        "Scholarship guidance",
-        "Pre-departure orientation"
-      ],
-      image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&h=600&fit=crop"
-    },
-    {
-      icon: Briefcase,
-      title: "Career Counseling",
-      description: "Professional career guidance aligned with your academic goals",
-      features: [
-        "Career assessment & planning",
-        "Resume building & interview prep",
-        "Job placement assistance",
-        "Industry networking opportunities"
-      ],
-      image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&h=600&fit=crop"
-    },
-    {
-      icon: Languages,
-      title: "Language Training",
-      description: "Comprehensive language courses for academic and professional success",
-      features: [
-        "Speaking & pronunciation practice",
-        "Grammar & vocabulary mastery",
-        "Academic writing skills",
-        "Business English training"
-      ],
-      image: "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=800&h=600&fit=crop"
     }
   ];
 
@@ -415,7 +353,12 @@ export default function HomeRedesigned() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {services.map((service, index) => (
+            {services.map((service: any, index: number) => {
+              const IconComponent = getServiceIcon(service.serviceType);
+              const imageUrl = getServiceImage(service.serviceType, service.imageUrl || "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&h=600&fit=crop");
+              const featureList = Array.isArray(service.features) ? service.features : [];
+              
+              return (
               <Card 
                 key={index} 
                 className="group hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-0 overflow-hidden cursor-pointer"
@@ -423,13 +366,13 @@ export default function HomeRedesigned() {
               >
                 <div className="relative h-48 overflow-hidden">
                   <img 
-                    src={service.image} 
+                    src={imageUrl} 
                     alt={service.title}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                   <div className="absolute bottom-4 left-4">
-                    <service.icon className="h-12 w-12 text-white" />
+                    <IconComponent className="h-12 w-12 text-white" />
                   </div>
                 </div>
                 <CardContent className="p-8">
@@ -437,10 +380,10 @@ export default function HomeRedesigned() {
                     {service.title}
                   </h3>
                   <p className="mb-6" style={{ color: COLORS.darkGrey }}>
-                    {service.description}
+                    {service.shortDesc || service.description}
                   </p>
                   <ul className="space-y-3 mb-6">
-                    {service.features.map((feature, idx) => (
+                    {featureList.slice(0, 4).map((feature: string, idx: number) => (
                       <li key={idx} className="flex items-start gap-3">
                         <CheckCircle className="h-5 w-5 mt-0.5 flex-shrink-0" style={{ color: COLORS.skyBlue }} />
                         <span style={{ color: COLORS.darkGrey }}>{feature}</span>
@@ -456,13 +399,17 @@ export default function HomeRedesigned() {
                     }}
                     onMouseEnter={(e) => e.currentTarget.style.backgroundColor = COLORS.skyBlue}
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    asChild
                   >
-                    Learn More
-                    <ChevronRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                    <Link href="/study-abroad-services">
+                      Learn More
+                      <ChevronRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                    </Link>
                   </Button>
                 </CardContent>
               </Card>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -484,42 +431,46 @@ export default function HomeRedesigned() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {testimonials.slice(0, 3).map((testimonial) => (
-              <Card key={testimonial.id} className="bg-white shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+            {reviews.slice(0, 3).length > 0 ? reviews.slice(0, 3).map((review: any) => (
+              <Card key={review.id} className="bg-white shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
                 <CardContent className="p-8">
                   {/* Rating Stars */}
                   <div className="flex gap-1 mb-4">
-                    {[...Array(testimonial.rating)].map((_, i) => (
+                    {[...Array(review.rating)].map((_, i: number) => (
                       <Star key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
                     ))}
                   </div>
                   
                   {/* Quote */}
-                  <p className="text-gray-700 italic mb-6">"{testimonial.quote}"</p>
+                  <p className="text-gray-700 italic mb-6">"{review.comment}"</p>
                   
                   {/* Student Info */}
                   <div className="flex items-center gap-4">
                     <img 
-                      src={testimonial.image} 
-                      alt={testimonial.name}
+                      src={review.studentAvatar || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face"} 
+                      alt={review.studentName}
                       className="w-16 h-16 rounded-full object-cover border-2"
                       style={{ borderColor: COLORS.skyBlue }}
                     />
                     <div>
                       <h4 className="font-semibold" style={{ color: COLORS.deepBlue }}>
-                        {testimonial.name}
+                        {review.studentName}
                       </h4>
                       <p className="text-sm font-medium" style={{ color: COLORS.skyBlue }}>
-                        {testimonial.achievement}
+                        {review.title}
                       </p>
                       <p className="text-xs" style={{ color: COLORS.darkGrey }}>
-                        {testimonial.course}
+                        {review.courseName}
                       </p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            ))}
+            )) : (
+              <div className="col-span-full text-center py-12">
+                <p style={{ color: COLORS.darkGrey }}>No approved student reviews yet. Check back soon for featured student success stories!</p>
+              </div>
+            )}
           </div>
 
           {/* Show More Testimonials */}

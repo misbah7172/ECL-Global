@@ -85,6 +85,23 @@ const insertLeadSchema = z.object({
   status: z.string().default("new"),
 });
 
+const insertReviewSchema = z.object({
+  courseId: z.coerce.number().optional(),
+  courseName: z.string().min(1),
+  rating: z.coerce.number().int().min(1).max(5),
+  title: z.string().min(1),
+  comment: z.string().min(1),
+  isFeatured: z.coerce.boolean().default(false),
+});
+
+const updateReviewSchema = z.object({
+  status: z.enum(["pending", "approved", "rejected"]).optional(),
+  adminResponse: z.string().optional(),
+  isVerified: z.coerce.boolean().optional(),
+  isFeatured: z.coerce.boolean().optional(),
+  helpful: z.coerce.number().optional(),
+});
+
 const insertMockTestSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
@@ -1224,6 +1241,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(leads);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Review routes
+  app.get("/api/reviews", async (req, res) => {
+    try {
+      const { featured, limit } = req.query;
+      const reviews = await storage.getReviews({
+        status: "approved",
+        featured: featured === "true" ? true : undefined,
+        limit: limit ? parseInt(limit as string, 10) : 6,
+      });
+
+      res.json(reviews);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/reviews", authenticateToken, async (req, res) => {
+    try {
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ error: "Invalid token" });
+      }
+
+      const reviewData = insertReviewSchema.parse(req.body);
+      const currentUser = await storage.getUser(req.user.id);
+
+      if (!currentUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      const review = await storage.createReview({
+        userId: currentUser.id,
+        studentName: `${currentUser.firstName} ${currentUser.lastName}`.trim(),
+        studentEmail: currentUser.email,
+        studentAvatar: undefined,
+        courseId: reviewData.courseId,
+        courseName: reviewData.courseName,
+        rating: reviewData.rating,
+        title: reviewData.title,
+        comment: reviewData.comment,
+        status: "pending",
+        isVerified: false,
+        helpful: 0,
+        adminResponse: undefined,
+        isFeatured: reviewData.isFeatured,
+      });
+
+      res.json(review);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/admin/reviews", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const { status, featured, limit } = req.query;
+      const reviews = await storage.getReviews({
+        status: typeof status === "string" && status !== "all" ? status : undefined,
+        featured: featured === "true" ? true : featured === "false" ? false : undefined,
+        limit: limit ? parseInt(limit as string, 10) : undefined,
+      });
+
+      res.json(reviews);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.put("/api/admin/reviews/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updateData = updateReviewSchema.parse(req.body);
+      const review = await storage.updateReview(id, updateData);
+      res.json(review);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.delete("/api/admin/reviews/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteReview(id);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
     }
   });
 

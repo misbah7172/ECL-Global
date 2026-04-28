@@ -32,6 +32,7 @@ model User {
   enrollments         Enrollment[]
   mockTestAttempts    MockTestAttempt[]
   eventRegistrations  EventRegistration[]
+  reviews             Review[]
   instructedCourses   Course[]
   assignedInquiries   StudyAbroadInquiry[]
 
@@ -82,6 +83,7 @@ model Course {
   instructor  User         @relation(fields: [instructorId], references: [id])
   enrollments Enrollment[]
   lectures    Lecture[]
+  reviews     Review[]
 
   @@map("courses")
 }
@@ -191,6 +193,31 @@ model EventRegistration {
   event Event @relation(fields: [eventId], references: [id])
 
   @@map("event_registrations")
+}
+
+model Review {
+  id            Int      @id @default(autoincrement())
+  userId        Int      @map("user_id")
+  courseId      Int?     @map("course_id")
+  studentName   String   @map("student_name") @db.VarChar(200)
+  studentEmail  String   @map("student_email") @db.VarChar(255)
+  studentAvatar String?  @map("student_avatar") @db.Text
+  courseName    String   @map("course_name") @db.VarChar(200)
+  rating        Int
+  title         String   @db.VarChar(200)
+  comment       String   @db.Text
+  status        String   @default("pending") @db.VarChar(20)
+  isVerified    Boolean  @default(false) @map("is_verified")
+  helpful       Int      @default(0)
+  adminResponse String?  @map("admin_response") @db.Text
+  isFeatured    Boolean  @default(false) @map("is_featured")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
+
+  user   User   @relation(fields: [userId], references: [id])
+  course Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
+
+  @@map("reviews")
 }
 
 model Branch {

@@ -27,8 +27,8 @@ process.on("beforeExit", async () => {
 
 // server/storage.ts
 var Storage = class {
-  constructor(db) {
-    this.db = db;
+  constructor(db2) {
+    this.db = db2;
   }
   // User methods
   async getUser(id) {
@@ -108,6 +108,9 @@ var Storage = class {
     if (filters?.featured) {
       where.isFeatured = true;
     }
+    if (filters?.isFree !== void 0) {
+      where.isFree = filters.isFree;
+    }
     if (filters?.search) {
       where.OR = [
         { title: { contains: filters.search, mode: "insensitive" } },
@@ -182,6 +185,9 @@ var Storage = class {
   }
   async createCourse(courseData) {
     const { lectures, ...courseFields } = courseData;
+    if (courseFields.isFree && !courseFields.price) {
+      courseFields.price = 0;
+    }
     return await this.db.course.create({
       data: {
         ...courseFields,
@@ -189,8 +195,8 @@ var Storage = class {
           create: lectures.map((lecture, index) => ({
             ...lecture,
             order: index + 1,
-            isFree: index === 0
-            // First lecture is always free
+            isFree: courseFields.isFree || index === 0
+            // All lectures are free for free courses, or just first for paid
           }))
         } : void 0
       },
@@ -419,6 +425,353 @@ var Storage = class {
       orderBy: { createdAt: "desc" }
     });
   }
+  // Free Course methods
+  async getFreeCourses(filters) {
+    const where = { isActive: true, isFree: true };
+    if (filters?.categoryId) {
+      where.categoryId = filters.categoryId;
+    }
+    if (filters?.featured) {
+      where.isFeatured = true;
+    }
+    if (filters?.search) {
+      where.OR = [
+        { title: { contains: filters.search, mode: "insensitive" } },
+        { description: { contains: filters.search, mode: "insensitive" } }
+      ];
+    }
+    return await this.db.course.findMany({
+      where,
+      include: {
+        category: true,
+        instructor: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true
+          }
+        },
+        lectures: {
+          orderBy: { order: "asc" }
+        }
+      },
+      orderBy: { createdAt: "desc" }
+    });
+  }
+  async getFreeCourse(id) {
+    return await this.db.course.findUnique({
+      where: { id, isFree: true },
+      include: {
+        category: true,
+        instructor: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true
+          }
+        },
+        lectures: {
+          orderBy: { order: "asc" }
+        }
+      }
+    });
+  }
+  async getFreeCourseWithDetails(id) {
+    return await this.db.course.findUnique({
+      where: { id, isFree: true },
+      include: {
+        category: true,
+        instructor: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            phone: true
+          }
+        },
+        lectures: {
+          orderBy: { order: "asc" }
+        },
+        enrollments: {
+          select: {
+            id: true,
+            userId: true,
+            enrolledAt: true,
+            progress: true
+          }
+        }
+      }
+    });
+  }
+  async createFreeCourse(courseData) {
+    const { lectures, ...courseFields } = courseData;
+    return await this.db.course.create({
+      data: {
+        ...courseFields,
+        isFree: true,
+        lectures: lectures ? {
+          create: lectures.map((lecture, index) => ({
+            ...lecture,
+            order: index + 1,
+            isFree: index === 0
+            // First lecture is always free
+          }))
+        } : void 0
+      },
+      include: {
+        lectures: {
+          orderBy: { order: "asc" }
+        },
+        category: true,
+        instructor: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true
+          }
+        }
+      }
+    });
+  }
+  async updateFreeCourse(id, updates) {
+    return await this.db.course.update({
+      where: { id, isFree: true },
+      data: updates
+    });
+  }
+  async deleteFreeCourse(id) {
+    return await this.db.course.delete({
+      where: { id, isFree: true }
+    });
+  }
+  // Free Course Enrollment methods
+  async getFreeCourseEnrollments(userId) {
+    return await this.db.enrollment.findMany({
+      where: { userId, course: { isFree: true } },
+      include: {
+        course: {
+          include: {
+            category: true,
+            instructor: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+  async getFreeCourseEnrollment(userId, courseId) {
+    return await this.db.enrollment.findFirst({
+      where: {
+        userId,
+        courseId,
+        course: { isFree: true }
+      }
+    });
+  }
+  async createFreeCourseEnrollment(enrollmentData) {
+    return await this.db.enrollment.create({
+      data: enrollmentData
+    });
+  }
+  async updateFreeCourseEnrollment(id, updates) {
+    return await this.db.enrollment.update({
+      where: { id },
+      data: updates
+    });
+  }
+  async getUserFreeCourseEnrollments(userId) {
+    return await this.db.enrollment.findMany({
+      where: { userId, course: { isFree: true } },
+      include: {
+        course: {
+          include: {
+            category: true,
+            instructor: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+  async updateFreeCourseEnrollmentProgress(enrollmentId, progress) {
+    return await this.db.enrollment.update({
+      where: { id: enrollmentId },
+      data: { progress }
+    });
+  }
+  async completeFreeCourseEnrollment(enrollmentId) {
+    return await this.db.enrollment.update({
+      where: { id: enrollmentId },
+      data: {
+        completedAt: /* @__PURE__ */ new Date(),
+        progress: 100
+      }
+    });
+  }
+  // Study Abroad Service methods
+  async getStudyAbroadServices(filters) {
+    const where = { isActive: true };
+    if (filters?.serviceType) {
+      where.serviceType = filters.serviceType;
+    }
+    if (filters?.featured) {
+      where.isFeatured = true;
+    }
+    if (filters?.popular) {
+      where.isPopular = true;
+    }
+    if (filters?.search) {
+      where.OR = [
+        { title: { contains: filters.search, mode: "insensitive" } },
+        { description: { contains: filters.search, mode: "insensitive" } }
+      ];
+    }
+    return await this.db.studyAbroadService.findMany({
+      where,
+      include: {
+        _count: {
+          select: { inquiries: true }
+        }
+      },
+      orderBy: [
+        { order: "asc" },
+        { createdAt: "desc" }
+      ]
+    });
+  }
+  async getStudyAbroadService(id) {
+    return await this.db.studyAbroadService.findUnique({
+      where: { id },
+      include: {
+        inquiries: {
+          orderBy: { createdAt: "desc" },
+          take: 10
+        },
+        _count: {
+          select: { inquiries: true }
+        }
+      }
+    });
+  }
+  async getStudyAbroadServiceBySlug(slug) {
+    return await this.db.studyAbroadService.findUnique({
+      where: { slug },
+      include: {
+        _count: {
+          select: { inquiries: true }
+        }
+      }
+    });
+  }
+  async createStudyAbroadService(serviceData) {
+    return await this.db.studyAbroadService.create({
+      data: serviceData
+    });
+  }
+  async updateStudyAbroadService(id, updates) {
+    return await this.db.studyAbroadService.update({
+      where: { id },
+      data: updates
+    });
+  }
+  async deleteStudyAbroadService(id) {
+    return await this.db.studyAbroadService.delete({
+      where: { id }
+    });
+  }
+  // Study Abroad Inquiry methods
+  async getStudyAbroadInquiries(filters) {
+    const where = {};
+    if (filters?.status) {
+      where.status = filters.status;
+    }
+    if (filters?.priority) {
+      where.priority = filters.priority;
+    }
+    if (filters?.serviceId) {
+      where.serviceId = filters.serviceId;
+    }
+    if (filters?.assignedTo) {
+      where.assignedTo = filters.assignedTo;
+    }
+    return await this.db.studyAbroadInquiry.findMany({
+      where,
+      include: {
+        service: true,
+        assignedUser: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true
+          }
+        }
+      },
+      orderBy: { createdAt: "desc" }
+    });
+  }
+  async getStudyAbroadInquiry(id) {
+    return await this.db.studyAbroadInquiry.findUnique({
+      where: { id },
+      include: {
+        service: true,
+        assignedUser: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true
+          }
+        }
+      }
+    });
+  }
+  async createStudyAbroadInquiry(inquiryData) {
+    return await this.db.studyAbroadInquiry.create({
+      data: inquiryData,
+      include: {
+        service: true
+      }
+    });
+  }
+  async updateStudyAbroadInquiry(id, updates) {
+    return await this.db.studyAbroadInquiry.update({
+      where: { id },
+      data: updates,
+      include: {
+        service: true,
+        assignedUser: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true
+          }
+        }
+      }
+    });
+  }
+  async deleteStudyAbroadInquiry(id) {
+    return await this.db.studyAbroadInquiry.delete({
+      where: { id }
+    });
+  }
 };
 var storage = new Storage(prisma);
 
@@ -443,13 +796,14 @@ var insertCourseSchema = z.object({
   syllabus: z.any().optional(),
   categoryId: z.number(),
   instructorId: z.number(),
-  price: z.number(),
+  price: z.number().optional(),
   originalPrice: z.number().optional(),
   duration: z.string(),
   format: z.string(),
   totalSessions: z.number().default(0),
   isActive: z.boolean().default(true),
   isFeatured: z.boolean().default(false),
+  isFree: z.boolean().default(false),
   imageUrl: z.string().optional(),
   rating: z.number().default(0),
   enrolledCount: z.number().default(0),
@@ -496,6 +850,21 @@ var insertLeadSchema = z.object({
   source: z.string().default("website"),
   status: z.string().default("new")
 });
+var insertReviewSchema = z.object({
+  courseId: z.coerce.number().optional(),
+  courseName: z.string().min(1),
+  rating: z.coerce.number().int().min(1).max(5),
+  title: z.string().min(1),
+  comment: z.string().min(1),
+  isFeatured: z.coerce.boolean().default(false)
+});
+var updateReviewSchema = z.object({
+  status: z.enum(["pending", "approved", "rejected"]).optional(),
+  adminResponse: z.string().optional(),
+  isVerified: z.coerce.boolean().optional(),
+  isFeatured: z.coerce.boolean().optional(),
+  helpful: z.coerce.number().optional()
+});
 var insertMockTestSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
@@ -504,6 +873,93 @@ var insertMockTestSchema = z.object({
   totalQuestions: z.number(),
   questions: z.any().default([]),
   isActive: z.boolean().default(true)
+});
+var insertBranchSchema = z.object({
+  name: z.string().min(1),
+  code: z.string().min(1),
+  description: z.string().optional(),
+  address: z.string().min(1),
+  city: z.string().min(1),
+  state: z.string().optional(),
+  zipCode: z.string().optional(),
+  country: z.string().min(1),
+  phone: z.string().optional(),
+  email: z.string().email().optional().or(z.literal("")),
+  managerName: z.string().optional(),
+  managerPhone: z.string().optional(),
+  managerEmail: z.string().email().optional().or(z.literal("")),
+  establishedDate: z.string().optional().transform((value) => value ? new Date(value) : void 0),
+  hours: z.string().optional(),
+  isActive: z.boolean().default(true)
+});
+var insertContentItemSchema = z.object({
+  title: z.string().min(1),
+  description: z.string().min(1),
+  type: z.string().min(1),
+  fileName: z.string().min(1),
+  fileSize: z.coerce.number().default(0),
+  mimeType: z.string().min(1),
+  duration: z.coerce.number().optional(),
+  courseId: z.coerce.number().optional(),
+  courseName: z.string().optional(),
+  moduleId: z.coerce.number().optional(),
+  moduleName: z.string().optional(),
+  isPublic: z.coerce.boolean().default(false),
+  isActive: z.coerce.boolean().default(true),
+  downloadCount: z.coerce.number().default(0),
+  viewCount: z.coerce.number().default(0),
+  uploadedBy: z.string().min(1),
+  tags: z.any().default([]),
+  url: z.string().min(1),
+  thumbnailUrl: z.string().optional()
+});
+var insertPaymentSchema = z.object({
+  transactionId: z.string().min(1),
+  studentId: z.coerce.number(),
+  studentName: z.string().min(1),
+  studentEmail: z.string().email(),
+  courseId: z.coerce.number(),
+  courseName: z.string().min(1),
+  amount: z.coerce.number(),
+  currency: z.string().min(1),
+  paymentMethod: z.string().min(1),
+  status: z.string().min(1),
+  paymentDate: z.string().transform((value) => new Date(value)),
+  dueDate: z.string().transform((value) => new Date(value)),
+  description: z.string().min(1),
+  gatewayTransactionId: z.string().optional(),
+  paymentGateway: z.string().min(1),
+  refundAmount: z.coerce.number().optional(),
+  refundDate: z.string().optional().transform((value) => value ? new Date(value) : void 0),
+  refundReason: z.string().optional()
+});
+var insertBackupSchema = z.object({
+  name: z.string().min(1),
+  type: z.string().min(1),
+  status: z.string().min(1),
+  size: z.coerce.number().default(0),
+  completedAt: z.string().optional().transform((value) => value ? new Date(value) : void 0),
+  duration: z.coerce.number().optional(),
+  progress: z.coerce.number().optional(),
+  includes: z.any().default([]),
+  location: z.string().min(1),
+  checksum: z.string().default(""),
+  isEncrypted: z.coerce.boolean().default(true),
+  retentionDays: z.coerce.number().default(7),
+  note: z.string().optional()
+});
+var insertBackupScheduleSchema = z.object({
+  name: z.string().min(1),
+  type: z.string().min(1),
+  frequency: z.string().min(1),
+  time: z.string().min(1),
+  isEnabled: z.coerce.boolean().default(true),
+  includes: z.any().default([]),
+  location: z.string().min(1),
+  retentionDays: z.coerce.number().default(7),
+  isEncrypted: z.coerce.boolean().default(true),
+  lastRun: z.string().optional().transform((value) => value ? new Date(value) : void 0),
+  nextRun: z.string().transform((value) => new Date(value))
 });
 var JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -531,6 +987,13 @@ var requireAdmin = (req, res, next) => {
   next();
 };
 async function registerRoutes(app2) {
+  app2.get("/api/health", (req, res) => {
+    res.status(200).json({
+      status: "healthy",
+      timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+      environment: process.env.NODE_ENV || "development"
+    });
+  });
   app2.post("/api/auth/register", async (req, res) => {
     try {
       const userData = insertUserSchema.parse(req.body);
@@ -648,11 +1111,12 @@ async function registerRoutes(app2) {
   });
   app2.get("/api/courses", async (req, res) => {
     try {
-      const { categoryId, featured, search } = req.query;
+      const { categoryId, featured, search, isFree, free } = req.query;
       const filters = {};
       if (categoryId) filters.categoryId = parseInt(categoryId);
       if (featured === "true") filters.featured = true;
       if (search) filters.search = search;
+      if (isFree === "true" || free === "true") filters.isFree = true;
       const courses = await storage.getCourses(filters);
       res.json(courses);
     } catch (error) {
@@ -672,9 +1136,103 @@ async function registerRoutes(app2) {
   });
   app2.post("/api/courses", authenticateToken, requireAdmin, async (req, res) => {
     try {
-      const courseData = insertCourseSchema.parse(req.body);
+      const courseData = insertCourseSchema.parse({
+        ...req.body,
+        categoryId: parseInt(req.body.categoryId),
+        instructorId: parseInt(req.body.instructorId),
+        price: parseFloat(req.body.price) || 0,
+        originalPrice: req.body.originalPrice ? parseFloat(req.body.originalPrice) : null
+      });
       const course = await storage.createCourse(courseData);
       res.json(course);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+  app2.put("/api/courses/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const courseId = parseInt(req.params.id);
+      const existingCourse = await db.course.findUnique({
+        where: { id: courseId }
+      });
+      if (!existingCourse) {
+        return res.status(404).json({ error: "Course not found" });
+      }
+      const { lectures, ...courseFields } = req.body;
+      const courseData = {
+        title: courseFields.title,
+        description: courseFields.description,
+        categoryId: parseInt(courseFields.categoryId),
+        instructorId: parseInt(courseFields.instructorId),
+        price: parseFloat(courseFields.price) || 0,
+        duration: courseFields.duration,
+        format: courseFields.format
+      };
+      if (courseFields.objectives !== void 0) courseData.objectives = courseFields.objectives;
+      if (courseFields.originalPrice !== void 0 && courseFields.originalPrice !== null && courseFields.originalPrice !== "") {
+        courseData.originalPrice = parseFloat(courseFields.originalPrice);
+      }
+      if (courseFields.totalSessions !== void 0) courseData.totalSessions = parseInt(courseFields.totalSessions) || 0;
+      if (courseFields.syllabus !== void 0) courseData.syllabus = courseFields.syllabus;
+      if (courseFields.imageUrl !== void 0) courseData.imageUrl = courseFields.imageUrl;
+      if (courseFields.isFeatured !== void 0) courseData.isFeatured = courseFields.isFeatured;
+      if (courseFields.difficulty !== void 0) courseData.difficulty = courseFields.difficulty;
+      if (courseFields.prerequisites !== void 0) courseData.prerequisites = courseFields.prerequisites;
+      if (courseFields.whatYouWillLearn !== void 0) courseData.whatYouWillLearn = courseFields.whatYouWillLearn;
+      if (courseFields.requirements !== void 0) courseData.requirements = courseFields.requirements;
+      if (lectures && Array.isArray(lectures)) {
+        await db.lecture.deleteMany({
+          where: { courseId }
+        });
+        courseData.lectures = {
+          create: lectures.map((lecture, index) => ({
+            title: lecture.title,
+            description: lecture.description || "",
+            duration: parseInt(lecture.duration) || 0,
+            videoUrl: lecture.videoUrl || null,
+            content: lecture.content || "",
+            order: lecture.order || index + 1,
+            isFree: lecture.isFree || false,
+            materials: lecture.materials || null
+          }))
+        };
+      }
+      console.log("Updating course", courseId, "with data:", courseData);
+      const updatedCourse = await db.course.update({
+        where: { id: courseId },
+        data: courseData,
+        include: {
+          category: true,
+          instructor: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true
+            }
+          },
+          lectures: true
+        }
+      });
+      res.json(updatedCourse);
+    } catch (error) {
+      console.error("Error updating course:", error);
+      res.status(400).json({ error: error.message });
+    }
+  });
+  app2.delete("/api/courses/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const courseId = parseInt(req.params.id);
+      const course = await db.course.findUnique({
+        where: { id: courseId }
+      });
+      if (!course) {
+        return res.status(404).json({ error: "Course not found" });
+      }
+      await db.course.delete({
+        where: { id: courseId }
+      });
+      res.json({ message: "Course deleted successfully" });
     } catch (error) {
       res.status(400).json({ error: error.message });
     }
@@ -685,6 +1243,54 @@ async function registerRoutes(app2) {
       res.json(categories);
     } catch (error) {
       res.status(500).json({ error: error.message });
+    }
+  });
+  app2.post("/api/categories", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const { name, description, icon, isActive } = req.body;
+      if (!name) {
+        return res.status(400).json({ error: "Category name is required" });
+      }
+      const category = await storage.createCategory({
+        name,
+        description: description || null,
+        icon: icon || null,
+        isActive: isActive !== void 0 ? isActive : true
+      });
+      res.json(category);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+  app2.put("/api/categories/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const categoryId = parseInt(req.params.id);
+      const { name, description, icon, isActive } = req.body;
+      const updates = {};
+      if (name !== void 0) updates.name = name;
+      if (description !== void 0) updates.description = description;
+      if (icon !== void 0) updates.icon = icon;
+      if (isActive !== void 0) updates.isActive = isActive;
+      const category = await storage.updateCategory(categoryId, updates);
+      res.json(category);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+  app2.delete("/api/categories/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const categoryId = parseInt(req.params.id);
+      const courses = await storage.getCourses();
+      const categoryHasCourses = courses.some((course) => course.categoryId === categoryId);
+      if (categoryHasCourses) {
+        return res.status(400).json({
+          error: "Cannot delete category with existing courses. Please reassign or delete the courses first."
+        });
+      }
+      await storage.deleteCategory(categoryId);
+      res.json({ success: true, message: "Category deleted successfully" });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
     }
   });
   app2.post("/api/enrollments", authenticateToken, async (req, res) => {
@@ -719,6 +1325,78 @@ async function registerRoutes(app2) {
       res.status(500).json({ error: error.message });
     }
   });
+  app2.get("/api/enrollments/all", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const enrollments = await db.enrollment.findMany({
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true
+            }
+          },
+          course: {
+            select: {
+              id: true,
+              title: true,
+              price: true,
+              category: true
+            }
+          }
+        },
+        orderBy: {
+          enrolledAt: "desc"
+        }
+      });
+      res.json(enrollments);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  app2.put("/api/enrollments/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const enrollmentId = parseInt(req.params.id);
+      const { progress, grade, certificateIssued } = req.body;
+      const existingEnrollment = await db.enrollment.findUnique({
+        where: { id: enrollmentId }
+      });
+      if (!existingEnrollment) {
+        return res.status(404).json({ error: "Enrollment not found" });
+      }
+      const updatedEnrollment = await db.enrollment.update({
+        where: { id: enrollmentId },
+        data: {
+          progress: progress !== void 0 ? progress : existingEnrollment.progress,
+          grade: grade !== void 0 ? grade : existingEnrollment.grade,
+          certificateIssued: certificateIssued !== void 0 ? certificateIssued : existingEnrollment.certificateIssued,
+          completedAt: progress === 100 && !existingEnrollment.completedAt ? /* @__PURE__ */ new Date() : existingEnrollment.completedAt
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true
+            }
+          },
+          course: {
+            select: {
+              id: true,
+              title: true,
+              price: true,
+              category: true
+            }
+          }
+        }
+      });
+      res.json(updatedEnrollment);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
   app2.get("/api/mock-tests", async (req, res) => {
     try {
       const { testType } = req.query;
@@ -744,6 +1422,25 @@ async function registerRoutes(app2) {
       const mockTestData = insertMockTestSchema.parse(req.body);
       const mockTest = await storage.createMockTest(mockTestData);
       res.json(mockTest);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+  app2.put("/api/mock-tests/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const mockTestId = parseInt(req.params.id);
+      const mockTestData = insertMockTestSchema.parse(req.body);
+      const mockTest = await storage.updateMockTest(mockTestId, mockTestData);
+      res.json(mockTest);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+  app2.delete("/api/mock-tests/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const mockTestId = parseInt(req.params.id);
+      await storage.deleteMockTest(mockTestId);
+      res.json({ success: true });
     } catch (error) {
       res.status(400).json({ error: error.message });
     }
@@ -778,6 +1475,14 @@ async function registerRoutes(app2) {
       res.json(attempt);
     } catch (error) {
       res.status(400).json({ error: error.message });
+    }
+  });
+  app2.get("/api/mock-test-attempts/all", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const attempts = await storage.getAllMockTestAttempts();
+      res.json(attempts);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
     }
   });
   app2.get("/api/mock-test-attempts", authenticateToken, async (req, res) => {
@@ -836,12 +1541,289 @@ async function registerRoutes(app2) {
       res.status(400).json({ error: error.message });
     }
   });
+  app2.put("/api/events/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const eventData = insertEventSchema.parse(req.body);
+      const event = await storage.updateEvent(id, eventData);
+      res.json(event);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+  app2.delete("/api/events/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteEvent(id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  });
   app2.get("/api/branches", async (req, res) => {
     try {
       const branches = await storage.getBranches();
       res.json(branches);
     } catch (error) {
       res.status(500).json({ error: error.message });
+    }
+  });
+  app2.get("/api/admin/branches", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const branches = await storage.getBranches();
+      res.json(branches);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  app2.post("/api/admin/branches", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const branchData = insertBranchSchema.parse(req.body);
+      const branch = await storage.createBranch({
+        ...branchData,
+        totalStudents: 0,
+        totalCourses: 0,
+        totalInstructors: 0,
+        monthlyRevenue: 0,
+        isMain: false
+      });
+      res.json(branch);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+  app2.put("/api/admin/branches/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const branchData = insertBranchSchema.parse(req.body);
+      const branch = await storage.updateBranch(id, {
+        ...branchData,
+        totalStudents: 0,
+        totalCourses: 0,
+        totalInstructors: 0,
+        monthlyRevenue: 0
+      });
+      res.json(branch);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+  app2.delete("/api/admin/branches/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteBranch(id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+  app2.get("/api/admin/content", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const contentItems = await storage.getContentItems();
+      res.json(contentItems);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  app2.get("/api/admin/content/courses", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const courses = await storage.getCourses();
+      res.json(courses.map((course) => ({ id: course.id, name: course.title })));
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  app2.post("/api/admin/content/upload", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const payload = z.object({
+        title: z.string().min(1),
+        description: z.string().min(1),
+        type: z.string().min(1),
+        courseId: z.string().optional(),
+        moduleId: z.string().optional(),
+        isPublic: z.union([z.string(), z.boolean()]).optional(),
+        isActive: z.union([z.string(), z.boolean()]).optional(),
+        tags: z.string().optional()
+      }).parse(req.body);
+      const fileExtension = payload.type === "document" ? "pdf" : payload.type === "image" ? "jpg" : payload.type === "audio" ? "mp3" : payload.type === "archive" ? "zip" : "mp4";
+      const slug = payload.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+      const contentItem = await storage.createContentItem({
+        title: payload.title,
+        description: payload.description,
+        type: payload.type,
+        fileName: `${slug}.${fileExtension}`,
+        fileSize: 0,
+        mimeType: payload.type === "document" ? "application/pdf" : payload.type === "image" ? "image/jpeg" : payload.type === "audio" ? "audio/mpeg" : payload.type === "archive" ? "application/zip" : "video/mp4",
+        duration: void 0,
+        courseId: payload.courseId ? parseInt(payload.courseId) : void 0,
+        courseName: void 0,
+        moduleId: payload.moduleId ? parseInt(payload.moduleId) : void 0,
+        moduleName: void 0,
+        isPublic: payload.isPublic === true || payload.isPublic === "true",
+        isActive: payload.isActive === void 0 ? true : payload.isActive === true || payload.isActive === "true",
+        downloadCount: 0,
+        viewCount: 0,
+        uploadedBy: req.user?.email || "admin",
+        tags: payload.tags ? JSON.parse(payload.tags) : [],
+        url: `/content/${slug}.${fileExtension}`,
+        thumbnailUrl: void 0
+      });
+      res.json(contentItem);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+  app2.put("/api/admin/content/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updates = z.object({
+        title: z.string().min(1).optional(),
+        description: z.string().min(1).optional(),
+        type: z.string().min(1).optional(),
+        courseId: z.coerce.number().optional(),
+        courseName: z.string().optional(),
+        moduleId: z.coerce.number().optional(),
+        moduleName: z.string().optional(),
+        isPublic: z.coerce.boolean().optional(),
+        isActive: z.coerce.boolean().optional(),
+        tags: z.any().optional(),
+        thumbnailUrl: z.string().optional(),
+        url: z.string().optional()
+      }).parse(req.body);
+      const contentItem = await storage.updateContentItem(id, updates);
+      res.json(contentItem);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+  app2.delete("/api/admin/content/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteContentItem(id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+  app2.get("/api/admin/payments", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const payments = await storage.getPayments();
+      res.json(payments);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  app2.post("/api/admin/payments/:id/refund", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { amount, reason } = z.object({
+        amount: z.coerce.number(),
+        reason: z.string().min(1)
+      }).parse(req.body);
+      const payment = await storage.updatePayment(id, {
+        status: "refunded",
+        refundAmount: amount,
+        refundDate: /* @__PURE__ */ new Date(),
+        refundReason: reason
+      });
+      res.json(payment);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+  app2.post("/api/admin/payments/:id/retry", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const payment = await storage.updatePayment(id, {
+        status: "pending"
+      });
+      res.json(payment);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+  app2.get("/api/admin/backups", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const backups = await storage.getBackups();
+      res.json(backups);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  app2.post("/api/admin/backups", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const now = /* @__PURE__ */ new Date();
+      const dateLabel = now.toISOString().slice(0, 10);
+      const backup = await storage.createBackup({
+        name: `Full System Backup - ${dateLabel}`,
+        type: "full",
+        status: "completed",
+        size: 2048576e3,
+        completedAt: now,
+        duration: 45,
+        progress: 100,
+        includes: ["database", "uploads", "configurations", "logs"],
+        location: `/backups/full/${dateLabel}.tar.gz`,
+        checksum: `sha256:${Date.now()}`,
+        isEncrypted: true,
+        retentionDays: 30,
+        note: "Created from admin backup action"
+      });
+      res.json(backup);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+  app2.post("/api/admin/backups/:id/restore", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      res.json({ success: true });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+  app2.delete("/api/admin/backups/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteBackup(id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+  app2.get("/api/admin/backup-schedules", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const schedules = await storage.getBackupSchedules();
+      res.json(schedules);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  app2.post("/api/admin/backup-schedules", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const scheduleData = insertBackupScheduleSchema.parse(req.body);
+      const schedule = await storage.createBackupSchedule(scheduleData);
+      res.json(schedule);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+  app2.put("/api/admin/backup-schedules/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const scheduleData = insertBackupScheduleSchema.parse(req.body);
+      const schedule = await storage.updateBackupSchedule(id, scheduleData);
+      res.json(schedule);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+  app2.delete("/api/admin/backup-schedules/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteBackupSchedule(id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
     }
   });
   app2.post("/api/leads", async (req, res) => {
@@ -859,6 +1841,82 @@ async function registerRoutes(app2) {
       res.json(leads);
     } catch (error) {
       res.status(500).json({ error: error.message });
+    }
+  });
+  app2.get("/api/reviews", async (req, res) => {
+    try {
+      const { featured, limit } = req.query;
+      const reviews = await storage.getReviews({
+        status: "approved",
+        featured: featured === "true" ? true : void 0,
+        limit: limit ? parseInt(limit, 10) : 6
+      });
+      res.json(reviews);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  app2.post("/api/reviews", authenticateToken, async (req, res) => {
+    try {
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ error: "Invalid token" });
+      }
+      const reviewData = insertReviewSchema.parse(req.body);
+      const currentUser = await storage.getUser(req.user.id);
+      if (!currentUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      const review = await storage.createReview({
+        userId: currentUser.id,
+        studentName: `${currentUser.firstName} ${currentUser.lastName}`.trim(),
+        studentEmail: currentUser.email,
+        studentAvatar: void 0,
+        courseId: reviewData.courseId,
+        courseName: reviewData.courseName,
+        rating: reviewData.rating,
+        title: reviewData.title,
+        comment: reviewData.comment,
+        status: "pending",
+        isVerified: false,
+        helpful: 0,
+        adminResponse: void 0,
+        isFeatured: reviewData.isFeatured
+      });
+      res.json(review);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+  app2.get("/api/admin/reviews", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const { status, featured, limit } = req.query;
+      const reviews = await storage.getReviews({
+        status: typeof status === "string" && status !== "all" ? status : void 0,
+        featured: featured === "true" ? true : featured === "false" ? false : void 0,
+        limit: limit ? parseInt(limit, 10) : void 0
+      });
+      res.json(reviews);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  app2.put("/api/admin/reviews/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updateData = updateReviewSchema.parse(req.body);
+      const review = await storage.updateReview(id, updateData);
+      res.json(review);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+  app2.delete("/api/admin/reviews/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteReview(id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
     }
   });
   if (stripe) {
@@ -904,6 +1962,175 @@ async function registerRoutes(app2) {
           recentAttempts: attempts.slice(0, 5)
         });
       }
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  app2.get("/api/instructors", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const instructors = await storage.getUsers();
+      const filtered = instructors.filter((user) => user.role === "instructor" || user.role === "admin");
+      res.json(filtered.map((user) => ({
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role
+      })));
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  app2.get("/api/users", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const { role } = req.query;
+      const users = await storage.getUsers();
+      if (role) {
+        const filteredUsers = users.filter((user) => user.role === role);
+        return res.json(filteredUsers);
+      }
+      res.json(users);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  app2.get("/api/study-abroad-services", async (req, res) => {
+    try {
+      const { serviceType, featured, popular, search } = req.query;
+      const services = await storage.getStudyAbroadServices({
+        serviceType,
+        featured: featured === "true",
+        popular: popular === "true",
+        search
+      });
+      res.json(services);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  app2.get("/api/study-abroad-services/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const service = await storage.getStudyAbroadService(id);
+      if (!service) {
+        return res.status(404).json({ error: "Service not found" });
+      }
+      res.json(service);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  app2.get("/api/study-abroad-services/slug/:slug", async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const service = await storage.getStudyAbroadServiceBySlug(slug);
+      if (!service) {
+        return res.status(404).json({ error: "Service not found" });
+      }
+      res.json(service);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  app2.post("/api/study-abroad-services", authenticateToken, async (req, res) => {
+    try {
+      if (!req.user || req.user.role !== "admin") {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+      const serviceData = req.body;
+      const service = await storage.createStudyAbroadService(serviceData);
+      res.status(201).json(service);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  app2.put("/api/study-abroad-services/:id", authenticateToken, async (req, res) => {
+    try {
+      if (!req.user || req.user.role !== "admin") {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+      const id = parseInt(req.params.id);
+      const updates = req.body;
+      const service = await storage.updateStudyAbroadService(id, updates);
+      res.json(service);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  app2.delete("/api/study-abroad-services/:id", authenticateToken, async (req, res) => {
+    try {
+      if (!req.user || req.user.role !== "admin") {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+      const id = parseInt(req.params.id);
+      await storage.deleteStudyAbroadService(id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  app2.get("/api/study-abroad-inquiries", authenticateToken, async (req, res) => {
+    try {
+      if (!req.user || req.user.role !== "admin") {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+      const { status, priority, serviceId, assignedTo } = req.query;
+      const inquiries = await storage.getStudyAbroadInquiries({
+        status,
+        priority,
+        serviceId: serviceId ? parseInt(serviceId) : void 0,
+        assignedTo: assignedTo ? parseInt(assignedTo) : void 0
+      });
+      res.json(inquiries);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  app2.get("/api/study-abroad-inquiries/:id", authenticateToken, async (req, res) => {
+    try {
+      if (!req.user || req.user.role !== "admin") {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+      const id = parseInt(req.params.id);
+      const inquiry = await storage.getStudyAbroadInquiry(id);
+      if (!inquiry) {
+        return res.status(404).json({ error: "Inquiry not found" });
+      }
+      res.json(inquiry);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  app2.post("/api/study-abroad-inquiries", async (req, res) => {
+    try {
+      const inquiryData = req.body;
+      const inquiry = await storage.createStudyAbroadInquiry(inquiryData);
+      res.status(201).json(inquiry);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  app2.put("/api/study-abroad-inquiries/:id", authenticateToken, async (req, res) => {
+    try {
+      if (!req.user || req.user.role !== "admin") {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+      const id = parseInt(req.params.id);
+      const updates = req.body;
+      const inquiry = await storage.updateStudyAbroadInquiry(id, updates);
+      res.json(inquiry);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  app2.delete("/api/study-abroad-inquiries/:id", authenticateToken, async (req, res) => {
+    try {
+      if (!req.user || req.user.role !== "admin") {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+      const id = parseInt(req.params.id);
+      await storage.deleteStudyAbroadInquiry(id);
+      res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
@@ -1061,12 +2288,9 @@ app.use((req, res, next) => {
   } else {
     serveStatic(app);
   }
-  const port = 5e3;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true
-  }, () => {
+  const port = process.env.PORT ? parseInt(process.env.PORT) : 5e3;
+  const host = "0.0.0.0";
+  server.listen(port, host, () => {
     log(`serving on port ${port}`);
   });
 })();

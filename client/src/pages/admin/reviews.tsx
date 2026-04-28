@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Star, Eye, MessageSquare, CheckCircle, XCircle, AlertCircle, Search, Filter, Trash2, Reply } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 type Review = {
   id: string;
@@ -31,8 +32,6 @@ type Review = {
   adminResponse?: string;
 };
 
-const mockReviews: Review[] = [];
-
 export default function AdminReviews() {
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [isResponseDialogOpen, setIsResponseDialogOpen] = useState(false);
@@ -44,21 +43,21 @@ export default function AdminReviews() {
   const [ratingFilter, setRatingFilter] = useState<string>("all");
   const queryClient = useQueryClient();
 
-  // Mock API calls
   const { data: reviews = [], isLoading } = useQuery({
-    queryKey: ['admin-reviews'],
+    queryKey: ['admin-reviews', statusFilter, ratingFilter],
     queryFn: async () => {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return mockReviews;
+      const params = new URLSearchParams();
+      if (statusFilter !== "all") params.set("status", statusFilter);
+      if (ratingFilter !== "all") params.set("rating", ratingFilter);
+
+      const response = await fetch(`/api/admin/reviews?${params.toString()}`);
+      return response.json();
     }
   });
 
   const updateReviewMutation = useMutation({
     mutationFn: async ({ id, status, adminResponse }: { id: string; status: string; adminResponse?: string }) => {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return { id, status, adminResponse };
+      return apiRequest("PUT", `/api/admin/reviews/${id}`, { status, adminResponse, isVerified: status === "approved" });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-reviews'] });
@@ -78,9 +77,7 @@ export default function AdminReviews() {
 
   const deleteReviewMutation = useMutation({
     mutationFn: async (id: string) => {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return id;
+      return apiRequest("DELETE", `/api/admin/reviews/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-reviews'] });

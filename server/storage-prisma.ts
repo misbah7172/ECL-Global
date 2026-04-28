@@ -57,6 +57,26 @@ export interface Enrollment {
   isActive: boolean;
 }
 
+export interface Review {
+  id: number;
+  userId: number;
+  courseId?: number | null;
+  studentName: string;
+  studentEmail: string;
+  studentAvatar?: string;
+  courseName: string;
+  rating: number;
+  title: string;
+  comment: string;
+  status: string;
+  isVerified: boolean;
+  helpful: number;
+  adminResponse?: string;
+  isFeatured: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface MockTest {
   id: number;
   title: string;
@@ -233,6 +253,7 @@ export type InsertUser = Omit<User, 'id' | 'createdAt' | 'updatedAt'>;
 export type InsertCategory = Omit<Category, 'id'>;
 export type InsertCourse = Omit<Course, 'id' | 'createdAt' | 'updatedAt'>;
 export type InsertEnrollment = Omit<Enrollment, 'id' | 'enrolledAt'>;
+export type InsertReview = Omit<Review, 'id' | 'createdAt' | 'updatedAt'>;
 export type InsertMockTest = Omit<MockTest, 'id' | 'createdAt'>;
 export type InsertMockTestAttempt = Omit<MockTestAttempt, 'id' | 'startedAt'>;
 export type InsertEvent = Omit<Event, 'id' | 'createdAt'>;
@@ -271,6 +292,12 @@ export interface IStorage {
   getEnrollment(userId: number, courseId: number): Promise<Enrollment | null>;
   createEnrollment(insertEnrollment: InsertEnrollment): Promise<Enrollment>;
   updateEnrollment(id: number, updates: Partial<InsertEnrollment>): Promise<Enrollment>;
+
+  // Review methods
+  getReviews(filters?: { status?: string; featured?: boolean; limit?: number }): Promise<Review[]>;
+  createReview(insertReview: InsertReview): Promise<Review>;
+  updateReview(id: number, updates: Partial<InsertReview>): Promise<Review>;
+  deleteReview(id: number): Promise<void>;
 
   // Mock test methods
   getMockTests(testType?: string): Promise<MockTest[]>;
@@ -513,6 +540,64 @@ class PrismaStorage implements IStorage {
     return await prisma.enrollment.update({
       where: { id },
       data: updates
+    });
+  }
+
+  // Review methods
+  async getReviews(filters?: { status?: string; featured?: boolean; limit?: number }): Promise<Review[]> {
+    const where: any = {};
+
+    if (filters?.status) {
+      where.status = filters.status;
+    }
+
+    if (filters?.featured !== undefined) {
+      where.isFeatured = filters.featured;
+    }
+
+    return await prisma.review.findMany({
+      where,
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+        course: {
+          select: {
+            id: true,
+            title: true,
+            imageUrl: true,
+          },
+        },
+      },
+      orderBy: [
+        { isFeatured: 'desc' },
+        { createdAt: 'desc' },
+      ],
+      take: filters?.limit,
+    });
+  }
+
+  async createReview(insertReview: InsertReview): Promise<Review> {
+    return await prisma.review.create({
+      data: insertReview,
+    });
+  }
+
+  async updateReview(id: number, updates: Partial<InsertReview>): Promise<Review> {
+    return await prisma.review.update({
+      where: { id },
+      data: updates,
+    });
+  }
+
+  async deleteReview(id: number): Promise<void> {
+    await prisma.review.delete({
+      where: { id },
     });
   }
 
