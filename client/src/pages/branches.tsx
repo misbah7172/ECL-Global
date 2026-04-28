@@ -20,25 +20,7 @@ export default function Branches() {
     queryKey: ["/api/branches"],
   });
 
-  // Mock international offices data
-  const internationalOffices = [
-    {
-      id: 1,
-      name: "USA Office - New York",
-      address: "Manhattan, NY 10001",
-      country: "USA",
-      phone: "+1 (555) 123-4567",
-      email: "usa@ECL Globals.com.bd"
-    },
-    {
-      id: 2,
-      name: "Australia Office - Sydney",
-      address: "Sydney, NSW 2000",
-      country: "Australia",
-      phone: "+61 2 1234 5678",
-      email: "australia@ECL Globals.com.bd"
-    }
-  ];
+
 
   if (isLoading) {
     return (

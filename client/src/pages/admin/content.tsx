@@ -239,7 +239,6 @@ export default function AdminContentLibrary() {
   };
 
   const handleDownload = (content: ContentItem) => {
-    // Mock download functionality
     const link = document.createElement('a');
     link.href = content.url;
     link.download = content.fileName;

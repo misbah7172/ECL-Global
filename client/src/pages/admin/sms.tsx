@@ -49,89 +49,9 @@ type SMSTemplate = {
   createdAt: string;
 };
 
-const mockSMSMessages: SMSMessage[] = [
-  {
-    id: "1",
-    message: "Welcome to ECL Global! Your enrollment in Advanced JavaScript has been confirmed. Classes start Monday at 9 AM. Good luck!",
-    recipients: ["+1234567890", "+1234567891", "+1234567892"],
-    recipientCount: 3,
-    type: "transactional",
-    target: "students",
-    status: "delivered",
-    sentAt: "2024-01-15T09:00:00Z",
-    deliveredCount: 3,
-    failedCount: 0,
-    createdAt: "2024-01-15T08:30:00Z",
-    createdBy: "Admin",
-    cost: 0.15,
-    campaign: "Enrollment Confirmation"
-  },
-  {
-    id: "2",
-    message: "⏰ Reminder: Your React course exam is scheduled for tomorrow at 2 PM. Please be prepared with your materials.",
-    recipients: ["+1234567890", "+1234567891", "+1234567892", "+1234567893"],
-    recipientCount: 4,
-    type: "reminder",
-    target: "students",
-    status: "sent",
-    sentAt: "2024-01-14T16:00:00Z",
-    deliveredCount: 3,
-    failedCount: 1,
-    createdAt: "2024-01-14T15:30:00Z",
-    createdBy: "Course Manager",
-    cost: 0.20,
-    campaign: "Exam Reminders"
-  },
-  {
-    id: "3",
-    message: "🚀 New course alert! Advanced Machine Learning is now available. Early bird discount: 20% off until Friday!",
-    recipients: ["+1234567890", "+1234567891", "+1234567892", "+1234567893", "+1234567894"],
-    recipientCount: 5,
-    type: "promotional",
-    target: "all",
-    status: "pending",
-    scheduledAt: "2024-01-16T10:00:00Z",
-    deliveredCount: 0,
-    failedCount: 0,
-    createdAt: "2024-01-15T14:20:00Z",
-    createdBy: "Marketing",
-    cost: 0.25,
-    campaign: "New Course Launch"
-  }
-];
+const mockSMSMessages: SMSMessage[] = [];
 
-const mockSMSTemplates: SMSTemplate[] = [
-  {
-    id: "1",
-    name: "Course Enrollment",
-    content: "Welcome to ECL Global! Your enrollment in {course_name} has been confirmed. Classes start {start_date}. Good luck!",
-    type: "transactional",
-    variables: ["course_name", "start_date"],
-    isActive: true,
-    usageCount: 25,
-    createdAt: "2024-01-01T10:00:00Z"
-  },
-  {
-    id: "2",
-    name: "Exam Reminder",
-    content: "⏰ Reminder: Your {course_name} exam is scheduled for {exam_date}. Please be prepared with your materials.",
-    type: "reminder",
-    variables: ["course_name", "exam_date"],
-    isActive: true,
-    usageCount: 15,
-    createdAt: "2024-01-01T10:00:00Z"
-  },
-  {
-    id: "3",
-    name: "Payment Reminder",
-    content: "💰 Payment reminder: Your course fee of ${amount} is due in {days} days. Please pay to avoid interruption.",
-    type: "reminder",
-    variables: ["amount", "days"],
-    isActive: true,
-    usageCount: 8,
-    createdAt: "2024-01-01T10:00:00Z"
-  }
-];
+const mockSMSTemplates: SMSTemplate[] = [];
 
 export default function AdminSMS() {
   const [activeTab, setActiveTab] = useState<"messages" | "templates">("messages");

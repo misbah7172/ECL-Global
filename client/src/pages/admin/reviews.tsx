@@ -31,51 +31,7 @@ type Review = {
   adminResponse?: string;
 };
 
-const mockReviews: Review[] = [
-  {
-    id: "1",
-    studentName: "Alice Johnson",
-    studentEmail: "alice@example.com",
-    courseName: "Advanced JavaScript",
-    courseId: "course-1",
-    rating: 5,
-    title: "Excellent course!",
-    comment: "This course really helped me understand advanced JavaScript concepts. The instructor was very knowledgeable and the examples were practical.",
-    status: "approved",
-    createdAt: "2024-01-15T10:30:00Z",
-    isVerified: true,
-    helpful: 15,
-    adminResponse: "Thank you for your feedback! We're glad you found the course helpful."
-  },
-  {
-    id: "2",
-    studentName: "Bob Smith",
-    studentEmail: "bob@example.com",
-    courseName: "React Fundamentals",
-    courseId: "course-2",
-    rating: 4,
-    title: "Good course, but could be better",
-    comment: "The course content was good but I felt some topics could have been explained in more detail. Overall satisfied with the learning experience.",
-    status: "pending",
-    createdAt: "2024-01-14T14:20:00Z",
-    isVerified: false,
-    helpful: 8
-  },
-  {
-    id: "3",
-    studentName: "Carol Davis",
-    studentEmail: "carol@example.com",
-    courseName: "Python for Data Science",
-    courseId: "course-3",
-    rating: 2,
-    title: "Disappointing",
-    comment: "The course was outdated and the instructor seemed unprepared. I wouldn't recommend this to others.",
-    status: "rejected",
-    createdAt: "2024-01-13T09:15:00Z",
-    isVerified: false,
-    helpful: 3
-  }
-];
+const mockReviews: Review[] = [];
 
 export default function AdminReviews() {
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);

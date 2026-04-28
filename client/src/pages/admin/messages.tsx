@@ -39,72 +39,7 @@ type Message = {
   thread?: Message[];
 };
 
-const mockMessages: Message[] = [
-  {
-    id: "1",
-    subject: "Question about course enrollment",
-    content: "Hi, I'm interested in enrolling in the Advanced JavaScript course. Can you please provide more information about the prerequisites and schedule?",
-    senderName: "Alice Johnson",
-    senderEmail: "alice@example.com",
-    senderRole: "student",
-    recipientName: "Admin",
-    recipientEmail: "admin@ECL Global.com",
-    status: "unread",
-    priority: "normal",
-    type: "inquiry",
-    isStarred: false,
-    createdAt: "2024-01-15T10:30:00Z"
-  },
-  {
-    id: "2",
-    subject: "Technical issue with video player",
-    content: "I'm experiencing issues with the video player in the React course. The videos won't load properly. Can you help me resolve this?",
-    senderName: "Bob Smith",
-    senderEmail: "bob@example.com",
-    senderRole: "student",
-    recipientName: "Tech Support",
-    recipientEmail: "support@ECL Global.com",
-    status: "replied",
-    priority: "high",
-    type: "support",
-    isStarred: true,
-    createdAt: "2024-01-14T14:20:00Z",
-    readAt: "2024-01-14T15:00:00Z",
-    repliedAt: "2024-01-14T16:30:00Z"
-  },
-  {
-    id: "3",
-    subject: "Complaint about instructor behavior",
-    content: "I would like to file a complaint about the instructor's unprofessional behavior during yesterday's live session. This is unacceptable.",
-    senderName: "Carol Davis",
-    senderEmail: "carol@example.com",
-    senderRole: "student",
-    recipientName: "Admin",
-    recipientEmail: "admin@ECL Global.com",
-    status: "read",
-    priority: "urgent",
-    type: "complaint",
-    isStarred: true,
-    createdAt: "2024-01-13T09:15:00Z",
-    readAt: "2024-01-13T10:00:00Z"
-  },
-  {
-    id: "4",
-    subject: "Suggestion for new course",
-    content: "I would like to suggest adding a course on GraphQL. Many students are interested in this topic and it would be a great addition to your curriculum.",
-    senderName: "David Wilson",
-    senderEmail: "david@example.com",
-    senderRole: "instructor",
-    recipientName: "Course Manager",
-    recipientEmail: "courses@ECL Global.com",
-    status: "archived",
-    priority: "low",
-    type: "suggestion",
-    isStarred: false,
-    createdAt: "2024-01-12T16:45:00Z",
-    readAt: "2024-01-12T17:00:00Z"
-  }
-];
+const mockMessages: Message[] = [];
 
 export default function AdminMessages() {
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);

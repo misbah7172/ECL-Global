@@ -105,78 +105,7 @@ export default function AdminLeads() {
     },
   });
 
-  // Sample lead data for demo
-  const sampleLeads = [
-    {
-      id: 1,
-      fullName: "Sarah Johnson",
-      email: "sarah.johnson@example.com",
-      phone: "+1234567890",
-      interest: "IELTS Preparation",
-      status: "new",
-      message: "I'm interested in IELTS preparation course. Please contact me.",
-      preferredContactTime: "Morning",
-      source: "Website Form",
-      createdAt: "2024-01-15T10:30:00Z",
-      updatedAt: "2024-01-15T10:30:00Z",
-      assignedTo: null,
-      notes: []
-    },
-    {
-      id: 2,
-      fullName: "Ahmed Hassan",
-      email: "ahmed.hassan@example.com",
-      phone: "+1987654321",
-      interest: "SAT Preparation",
-      status: "contacted",
-      message: "Looking for SAT prep courses starting next month.",
-      preferredContactTime: "Evening",
-      source: "Google Ads",
-      createdAt: "2024-01-14T14:20:00Z",
-      updatedAt: "2024-01-15T09:15:00Z",
-      assignedTo: "Patel Khan",
-      notes: [
-        { text: "Called and discussed course options", date: "2024-01-15T09:15:00Z" }
-      ]
-    },
-    {
-      id: 3,
-      fullName: "Maria Rodriguez",
-      email: "maria.rodriguez@example.com",
-      phone: "+1122334455",
-      interest: "Study Abroad Counseling",
-      status: "qualified",
-      message: "Need help with university applications for Canada.",
-      preferredContactTime: "Afternoon",
-      source: "Facebook",
-      createdAt: "2024-01-13T16:45:00Z",
-      updatedAt: "2024-01-14T11:30:00Z",
-      assignedTo: "Jane Smith",
-      notes: [
-        { text: "Interested in Canadian universities", date: "2024-01-14T11:30:00Z" },
-        { text: "Scheduled consultation call", date: "2024-01-14T11:35:00Z" }
-      ]
-    },
-    {
-      id: 4,
-      fullName: "David Kim",
-      email: "david.kim@example.com",
-      phone: "+1555666777",
-      interest: "TOEFL Preparation",
-      status: "converted",
-      message: "Want to enroll in TOEFL intensive course.",
-      preferredContactTime: "Morning",
-      source: "Referral",
-      createdAt: "2024-01-12T09:00:00Z",
-      updatedAt: "2024-01-13T15:20:00Z",
-      assignedTo: "Patel Khan",
-      notes: [
-        { text: "Enrolled in TOEFL Intensive course", date: "2024-01-13T15:20:00Z" }
-      ]
-    }
-  ];
-
-  const displayLeads = leads || sampleLeads;
+  const displayLeads = leads || [];
 
   const getStatusColor = (status: string) => {
     switch (status) {

@@ -63,45 +63,13 @@ export default function Home() {
     queryKey: ["/api/branches"],
   });
 
-  // Mock instructors data for display
-  const instructors = [
-    {
-      id: 1,
-      name: "Dr. Ahmed Rahman",
-      specialization: "IELTS Expert",
-      experience: "8+ Years Experience",
-      rating: "4.9 (245 reviews)",
-      achievement: "Average student score: Band 7.5",
-      imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face"
+  const { data: instructors = [] } = useQuery({
+    queryKey: ["/api/instructors"],
+    queryFn: async () => {
+      const response = await fetch("/api/instructors");
+      return response.json();
     },
-    {
-      id: 2,
-      name: "Sarah Johnson",
-      specialization: "SAT Specialist",
-      experience: "12+ Years Experience",
-      rating: "4.8 (189 reviews)",
-      achievement: "Average score improvement: 280 points",
-      imageUrl: "https://images.unsplash.com/photo-1494790108755-2616b612b193?w=400&h=400&fit=crop&crop=face"
-    },
-    {
-      id: 3,
-      name: "Michael Chen",
-      specialization: "Study Abroad Counselor",
-      experience: "10+ Years Experience",
-      rating: "5.0 (156 reviews)",
-      achievement: "98% visa approval rate",
-      imageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face"
-    },
-    {
-      id: 4,
-      name: "Dr. Priya Sharma",
-      specialization: "English Language",
-      experience: "15+ Years Experience",
-      rating: "4.9 (312 reviews)",
-      achievement: "Cambridge certified trainer",
-      imageUrl: "https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=400&h=400&fit=crop&crop=face"
-    }
-  ];
+  });
 
   const services = [
     {
@@ -134,29 +102,7 @@ export default function Home() {
     }
   ];
 
-  const successStories = [
-    {
-      name: "Rashid Ahmed",
-      achievement: "IELTS Band 8.5",
-      university: "University of Toronto",
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face",
-      quote: "The personalized guidance helped me achieve my dream score and secure admission to my dream university."
-    },
-    {
-      name: "Fatima Khan",
-      achievement: "SAT Score 1550",
-      university: "MIT",
-      image: "https://images.unsplash.com/photo-1494790108755-2616b612b193?w=200&h=200&fit=crop&crop=face",
-      quote: "The strategic approach and comprehensive materials made all the difference in my preparation."
-    },
-    {
-      name: "Arif Hassan",
-      achievement: "Visa Success",
-      university: "University of Melbourne",
-      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face",
-      quote: "From application to visa approval, the support was exceptional throughout my journey."
-    }
-  ];
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -290,46 +236,6 @@ export default function Home() {
                     Learn More
                     <ChevronRight className="h-4 w-4 ml-2" />
                   </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Success Stories Section */}
-      <section className="py-20 bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="container">
-          <div className="text-center mb-16">
-            <Badge className="mb-4 bg-green-50 text-green-700 hover:bg-green-100">
-              Student Success Stories
-            </Badge>
-            <h2 className="text-4xl font-bold text-gray-900 mb-6">
-              Real Students, Real Success
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              See how our personalized guidance and expert coaching helped students achieve their dreams.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {successStories.map((story, index) => (
-              <Card key={index} className="bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <CardContent className="p-8 text-center">
-                  <div className="relative mb-6">
-                    <img 
-                      src={story.image} 
-                      alt={story.name}
-                      className="w-20 h-20 rounded-full mx-auto object-cover"
-                    />
-                    <div className="absolute -bottom-2 -right-2 bg-gradient-to-r from-green-400 to-blue-500 rounded-full p-2">
-                      <Trophy className="h-4 w-4 text-white" />
-                    </div>
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2">{story.name}</h3>
-                  <div className="text-lg font-bold text-blue-600 mb-1">{story.achievement}</div>
-                  <div className="text-sm text-gray-500 mb-4">{story.university}</div>
-                  <p className="text-gray-600 italic">"{story.quote}"</p>
                 </CardContent>
               </Card>
             ))}

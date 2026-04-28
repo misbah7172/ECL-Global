@@ -38,56 +38,7 @@ type Notification = {
   actionText?: string;
 };
 
-const mockNotifications: Notification[] = [
-  {
-    id: "1",
-    title: "Welcome to New Semester",
-    message: "Welcome back! The new semester starts on Monday. Check your schedule and course materials.",
-    type: "info",
-    target: "students",
-    status: "sent",
-    sentAt: "2024-01-15T09:00:00Z",
-    createdAt: "2024-01-14T16:30:00Z",
-    createdBy: "Admin",
-    recipients: 450,
-    readCount: 380,
-    clickCount: 45,
-    isActive: true,
-    actionUrl: "/dashboard",
-    actionText: "View Dashboard"
-  },
-  {
-    id: "2",
-    title: "System Maintenance",
-    message: "The system will be under maintenance on Saturday from 2 AM to 4 AM. Please plan accordingly.",
-    type: "warning",
-    target: "all",
-    status: "scheduled",
-    scheduledAt: "2024-01-20T02:00:00Z",
-    createdAt: "2024-01-15T10:00:00Z",
-    createdBy: "Tech Admin",
-    recipients: 750,
-    readCount: 0,
-    clickCount: 0,
-    isActive: true
-  },
-  {
-    id: "3",
-    title: "New Course Available",
-    message: "We're excited to announce our new Advanced Machine Learning course. Early bird discount available!",
-    type: "success",
-    target: "students",
-    status: "draft",
-    createdAt: "2024-01-15T14:20:00Z",
-    createdBy: "Course Manager",
-    recipients: 0,
-    readCount: 0,
-    clickCount: 0,
-    isActive: false,
-    actionUrl: "/courses/ml-advanced",
-    actionText: "View Course"
-  }
-];
+const mockNotifications: Notification[] = [];
 
 export default function AdminNotifications() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);

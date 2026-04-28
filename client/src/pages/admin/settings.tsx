@@ -87,90 +87,20 @@ type SystemSettings = {
   };
 };
 
-const mockSettings: SystemSettings = {
-  general: {
-    siteName: "ECL Global Learning Platform",
-    siteDescription: "Premium online learning platform for students and professionals",
-    adminEmail: "admin@ECL Global.com",
-    supportEmail: "support@ECL Global.com",
-    timezone: "UTC",
-    language: "en",
-    currency: "USD",
-    dateFormat: "MM/DD/YYYY",
-    timeFormat: "12h"
-  },
-  branding: {
-    logo: "/logo.png",
-    favicon: "/favicon.ico",
-    primaryColor: "#3B82F6",
-    secondaryColor: "#10B981",
-    fontFamily: "Inter",
-    customCSS: ""
-  },
-  email: {
-    smtpHost: "smtp.gmail.com",
-    smtpPort: 587,
-    smtpUser: "noreply@ECL Global.com",
-    smtpPassword: "********",
-    fromEmail: "noreply@ECL Global.com",
-    fromName: "ECL Global Platform",
-    useSSL: true,
-    isEnabled: true
-  },
-  notifications: {
-    emailNotifications: true,
-    smsNotifications: true,
-    pushNotifications: true,
-    digestFrequency: "daily",
-    adminNotifications: true
-  },
-  security: {
-    twoFactorAuth: true,
-    sessionTimeout: 30,
-    maxLoginAttempts: 5,
-    passwordMinLength: 8,
-    requirePasswordChange: false,
-    allowSelfRegistration: true,
-    emailVerificationRequired: true
-  },
-  payment: {
-    paymentGateway: "stripe",
-    stripePublishableKey: "pk_test_...",
-    stripeSecretKey: "sk_test_...",
-    paypalClientId: "",
-    paypalClientSecret: "",
-    currency: "USD",
-    taxRate: 0.08
-  },
-  storage: {
-    maxFileSize: 100,
-    allowedFileTypes: ["pdf", "doc", "docx", "jpg", "jpeg", "png", "gif", "mp4", "webm"],
-    storageProvider: "local",
-    s3Bucket: "",
-    s3Region: "us-east-1",
-    s3AccessKey: "",
-    s3SecretKey: ""
-  },
-  api: {
-    rateLimit: 100,
-    enableCors: true,
-    corsOrigins: "https://ECL Global.com",
-    apiKey: "api_key_...",
-    webhookSecret: "webhook_secret_..."
-  }
-};
+// Default empty settings - load from API in production
+const defaultSettings: SystemSettings = {} as SystemSettings;
 
 export default function AdminSettings() {
-  const [settings, setSettings] = useState<SystemSettings>(mockSettings);
+  const [settings, setSettings] = useState<SystemSettings>(defaultSettings);
   const [activeTab, setActiveTab] = useState("general");
   const queryClient = useQueryClient();
 
-  // Mock API calls
+  // Load settings from API
   const { isLoading } = useQuery({
     queryKey: ['admin-settings'],
     queryFn: async () => {
       await new Promise(resolve => setTimeout(resolve, 1000));
-      const data = mockSettings;
+      const data = defaultSettings;
       setSettings(data);
       return data;
     }
