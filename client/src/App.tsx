@@ -41,7 +41,6 @@ import AdminUsers from "@/pages/admin/users";
 import AdminSettings from "@/pages/admin/settings";
 import AdminBackup from "@/pages/admin/backup";
 import AdminProfile from "@/pages/admin/profile";
-import TestPage from "@/pages/test";
 import NotFound from "@/pages/not-found";
 import FreeCourses from "@/pages/free-courses";
 import AdminFreeCourses from "@/pages/admin/free-courses";
@@ -101,7 +100,6 @@ function AppContent() {
         <Route path="/admin/backup" component={AdminBackup} />
         <Route path="/admin/analytics" component={AdminAnalytics} />
         <Route path="/admin/profile" component={AdminProfile} />
-        <Route path="/test" component={TestPage} />
         <Route component={NotFound} />
       </Switch>
     </div>
