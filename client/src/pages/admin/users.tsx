@@ -52,9 +52,9 @@ type User = {
 const mockUsers: User[] = [
   {
     id: "1",
-    firstName: "John",
-    lastName: "Doe",
-    email: "john@example.com",
+    firstName: "Patel",
+    lastName: "Khan",
+    email: "patel@example.com",
     phone: "+1234567890",
     role: "admin",
     status: "active",

@@ -159,7 +159,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
                   <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                     <GraduationCap className="h-5 w-5 text-white" />
                   </div>
-                  <span className="font-bold text-xl hidden sm:block">Mentor Admin</span>
+                  <span className="font-bold text-xl hidden sm:block">ECL Global Admin</span>
                 </Link>
                 {title && (
                   <>

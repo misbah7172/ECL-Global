@@ -109,14 +109,111 @@ export interface EventRegistration {
 export interface Branch {
   id: number;
   name: string;
+  code: string;
+  description?: string;
   address: string;
   city: string;
+  state?: string;
+  zipCode?: string;
   country: string;
   phone?: string;
   email?: string;
+  managerName?: string;
+  managerPhone?: string;
+  managerEmail?: string;
+  establishedDate?: Date;
+  totalStudents: number;
+  totalCourses: number;
+  totalInstructors: number;
+  monthlyRevenue: number;
   hours?: string;
   isMain: boolean;
   isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ContentItem {
+  id: number;
+  title: string;
+  description: string;
+  type: string;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  duration?: number;
+  courseId?: number;
+  courseName?: string;
+  moduleId?: number;
+  moduleName?: string;
+  isPublic: boolean;
+  isActive: boolean;
+  downloadCount: number;
+  viewCount: number;
+  uploadedBy: string;
+  uploadedAt: Date;
+  updatedAt: Date;
+  tags: any;
+  url: string;
+  thumbnailUrl?: string;
+}
+
+export interface Payment {
+  id: number;
+  transactionId: string;
+  studentId: number;
+  studentName: string;
+  studentEmail: string;
+  courseId: number;
+  courseName: string;
+  amount: number;
+  currency: string;
+  paymentMethod: string;
+  status: string;
+  paymentDate: Date;
+  dueDate: Date;
+  description: string;
+  gatewayTransactionId?: string;
+  paymentGateway: string;
+  refundAmount?: number;
+  refundDate?: Date;
+  refundReason?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Backup {
+  id: number;
+  name: string;
+  type: string;
+  status: string;
+  size: number;
+  createdAt: Date;
+  completedAt?: Date;
+  duration?: number;
+  progress?: number;
+  includes: any;
+  location: string;
+  checksum: string;
+  isEncrypted: boolean;
+  retentionDays: number;
+  note?: string;
+}
+
+export interface BackupSchedule {
+  id: number;
+  name: string;
+  type: string;
+  frequency: string;
+  time: string;
+  isEnabled: boolean;
+  includes: any;
+  location: string;
+  retentionDays: number;
+  isEncrypted: boolean;
+  lastRun?: Date;
+  nextRun: Date;
+  createdAt: Date;
 }
 
 export interface Lead {
@@ -140,7 +237,11 @@ export type InsertMockTest = Omit<MockTest, 'id' | 'createdAt'>;
 export type InsertMockTestAttempt = Omit<MockTestAttempt, 'id' | 'startedAt'>;
 export type InsertEvent = Omit<Event, 'id' | 'createdAt'>;
 export type InsertEventRegistration = Omit<EventRegistration, 'id' | 'registeredAt'>;
-export type InsertBranch = Omit<Branch, 'id'>;
+export type InsertBranch = Omit<Branch, 'id' | 'createdAt' | 'updatedAt' | 'totalStudents' | 'totalCourses' | 'totalInstructors' | 'monthlyRevenue' | 'isMain'>;
+export type InsertContentItem = Omit<ContentItem, 'id' | 'uploadedAt' | 'updatedAt'>;
+export type InsertPayment = Omit<Payment, 'id' | 'createdAt' | 'updatedAt'>;
+export type InsertBackup = Omit<Backup, 'id' | 'createdAt'>;
+export type InsertBackupSchedule = Omit<BackupSchedule, 'id' | 'createdAt'>;
 export type InsertLead = Omit<Lead, 'id' | 'createdAt'>;
 
 export interface IStorage {
@@ -156,6 +257,7 @@ export interface IStorage {
   getCategory(id: number): Promise<Category | null>;
   createCategory(insertCategory: InsertCategory): Promise<Category>;
   updateCategory(id: number, updates: Partial<InsertCategory>): Promise<Category>;
+  deleteCategory(id: number): Promise<void>;
 
   // Course methods
   getCourses(filters?: { categoryId?: number; featured?: boolean; search?: string }): Promise<Course[]>;
@@ -174,7 +276,10 @@ export interface IStorage {
   getMockTests(testType?: string): Promise<MockTest[]>;
   getMockTest(id: number): Promise<MockTest | null>;
   createMockTest(insertMockTest: InsertMockTest): Promise<MockTest>;
+  updateMockTest(id: number, insertMockTest: InsertMockTest): Promise<MockTest>;
+  deleteMockTest(id: number): Promise<void>;
   getMockTestAttempts(userId: number): Promise<MockTestAttempt[]>;
+  getAllMockTestAttempts(): Promise<MockTestAttempt[]>;
   createMockTestAttempt(insertAttempt: InsertMockTestAttempt): Promise<MockTestAttempt>;
   updateMockTestAttempt(id: number, updates: Partial<InsertMockTestAttempt>): Promise<MockTestAttempt>;
 
@@ -182,6 +287,8 @@ export interface IStorage {
   getEvents(upcoming?: boolean): Promise<Event[]>;
   getEvent(id: number): Promise<Event | null>;
   createEvent(insertEvent: InsertEvent): Promise<Event>;
+  updateEvent(id: number, insertEvent: InsertEvent): Promise<Event>;
+  deleteEvent(id: number): Promise<Event>;
   registerForEvent(userId: number, eventId: number): Promise<EventRegistration>;
   getEventRegistrations(eventId: number): Promise<EventRegistration[]>;
   getUserEventRegistrations(userId: number): Promise<EventRegistration[]>;
@@ -191,6 +298,28 @@ export interface IStorage {
   getBranch(id: number): Promise<Branch | null>;
   createBranch(insertBranch: InsertBranch): Promise<Branch>;
   updateBranch(id: number, updates: Partial<InsertBranch>): Promise<Branch>;
+  deleteBranch(id: number): Promise<void>;
+
+  // Content methods
+  getContentItems(): Promise<ContentItem[]>;
+  createContentItem(insertContentItem: InsertContentItem): Promise<ContentItem>;
+  updateContentItem(id: number, updates: Partial<InsertContentItem>): Promise<ContentItem>;
+  deleteContentItem(id: number): Promise<void>;
+
+  // Payment methods
+  getPayments(): Promise<Payment[]>;
+  updatePayment(id: number, updates: Partial<InsertPayment>): Promise<Payment>;
+
+  // Backup methods
+  getBackups(): Promise<Backup[]>;
+  createBackup(insertBackup: InsertBackup): Promise<Backup>;
+  deleteBackup(id: number): Promise<void>;
+
+  // Backup schedule methods
+  getBackupSchedules(): Promise<BackupSchedule[]>;
+  createBackupSchedule(insertBackupSchedule: InsertBackupSchedule): Promise<BackupSchedule>;
+  updateBackupSchedule(id: number, updates: Partial<InsertBackupSchedule>): Promise<BackupSchedule>;
+  deleteBackupSchedule(id: number): Promise<void>;
 
   // Lead methods
   getLeads(): Promise<Lead[]>;
@@ -254,6 +383,12 @@ class PrismaStorage implements IStorage {
     return await prisma.category.update({
       where: { id },
       data: updates
+    });
+  }
+
+  async deleteCategory(id: number): Promise<void> {
+    await prisma.category.delete({
+      where: { id }
     });
   }
 
@@ -383,7 +518,7 @@ class PrismaStorage implements IStorage {
 
   // Mock test methods
   async getMockTests(testType?: string): Promise<MockTest[]> {
-    const where: any = { isActive: true };
+    const where: any = {};
     
     if (testType) {
       where.testType = testType;
@@ -391,6 +526,11 @@ class PrismaStorage implements IStorage {
 
     return await prisma.mockTest.findMany({
       where,
+      include: {
+        _count: {
+          select: { attempts: true }
+        }
+      },
       orderBy: { createdAt: 'desc' }
     });
   }
@@ -407,11 +547,40 @@ class PrismaStorage implements IStorage {
     });
   }
 
+  async updateMockTest(id: number, insertMockTest: InsertMockTest): Promise<MockTest> {
+    return await prisma.mockTest.update({
+      where: { id },
+      data: insertMockTest
+    });
+  }
+
+  async deleteMockTest(id: number): Promise<void> {
+    await prisma.mockTest.delete({
+      where: { id }
+    });
+  }
+
   async getMockTestAttempts(userId: number): Promise<MockTestAttempt[]> {
     return await prisma.mockTestAttempt.findMany({
       where: { userId },
       include: {
         mockTest: true
+      },
+      orderBy: { startedAt: 'desc' }
+    });
+  }
+
+  async getAllMockTestAttempts(): Promise<MockTestAttempt[]> {
+    return await prisma.mockTestAttempt.findMany({
+      include: {
+        mockTest: true,
+        user: {
+          select: {
+            id: true,
+            username: true,
+            email: true
+          }
+        }
       },
       orderBy: { startedAt: 'desc' }
     });
@@ -453,6 +622,19 @@ class PrismaStorage implements IStorage {
   async createEvent(insertEvent: InsertEvent): Promise<Event> {
     return await prisma.event.create({
       data: insertEvent
+    });
+  }
+
+  async updateEvent(id: number, insertEvent: InsertEvent): Promise<Event> {
+    return await prisma.event.update({
+      where: { id },
+      data: insertEvent
+    });
+  }
+
+  async deleteEvent(id: number): Promise<Event> {
+    return await prisma.event.delete({
+      where: { id }
     });
   }
 
@@ -499,7 +681,7 @@ class PrismaStorage implements IStorage {
   // Branch methods
   async getBranches(): Promise<Branch[]> {
     return await prisma.branch.findMany({
-      where: { isActive: true }
+      orderBy: { createdAt: 'desc' }
     });
   }
 
@@ -519,6 +701,97 @@ class PrismaStorage implements IStorage {
     return await prisma.branch.update({
       where: { id },
       data: updates
+    });
+  }
+
+  async deleteBranch(id: number): Promise<void> {
+    await prisma.branch.delete({
+      where: { id }
+    });
+  }
+
+  // Content methods
+  async getContentItems(): Promise<ContentItem[]> {
+    return await prisma.contentItem.findMany({
+      orderBy: { uploadedAt: 'desc' }
+    });
+  }
+
+  async createContentItem(insertContentItem: InsertContentItem): Promise<ContentItem> {
+    return await prisma.contentItem.create({
+      data: insertContentItem
+    });
+  }
+
+  async updateContentItem(id: number, updates: Partial<InsertContentItem>): Promise<ContentItem> {
+    return await prisma.contentItem.update({
+      where: { id },
+      data: updates
+    });
+  }
+
+  async deleteContentItem(id: number): Promise<void> {
+    await prisma.contentItem.delete({
+      where: { id }
+    });
+  }
+
+  // Payment methods
+  async getPayments(): Promise<Payment[]> {
+    return await prisma.payment.findMany({
+      orderBy: { paymentDate: 'desc' }
+    });
+  }
+
+  async updatePayment(id: number, updates: Partial<InsertPayment>): Promise<Payment> {
+    return await prisma.payment.update({
+      where: { id },
+      data: updates
+    });
+  }
+
+  // Backup methods
+  async getBackups(): Promise<Backup[]> {
+    return await prisma.backup.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+  }
+
+  async createBackup(insertBackup: InsertBackup): Promise<Backup> {
+    return await prisma.backup.create({
+      data: insertBackup
+    });
+  }
+
+  async deleteBackup(id: number): Promise<void> {
+    await prisma.backup.delete({
+      where: { id }
+    });
+  }
+
+  // Backup schedule methods
+  async getBackupSchedules(): Promise<BackupSchedule[]> {
+    return await prisma.backupSchedule.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+  }
+
+  async createBackupSchedule(insertBackupSchedule: InsertBackupSchedule): Promise<BackupSchedule> {
+    return await prisma.backupSchedule.create({
+      data: insertBackupSchedule
+    });
+  }
+
+  async updateBackupSchedule(id: number, updates: Partial<InsertBackupSchedule>): Promise<BackupSchedule> {
+    return await prisma.backupSchedule.update({
+      where: { id },
+      data: updates
+    });
+  }
+
+  async deleteBackupSchedule(id: number): Promise<void> {
+    await prisma.backupSchedule.delete({
+      where: { id }
     });
   }
 

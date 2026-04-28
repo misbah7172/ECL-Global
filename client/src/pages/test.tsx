@@ -54,11 +54,11 @@ export default function TestPage() {
                   <div className="space-y-3 text-sm">
                     <div>
                       <p className="font-medium">Admin</p>
-                      <p className="text-gray-600">admin@mentor.com / admin123</p>
+                      <p className="text-gray-600">admin@ECL Global.com / admin123</p>
                     </div>
                     <div>
                       <p className="font-medium">Student</p>
-                      <p className="text-gray-600">user@mentor.com / user123</p>
+                      <p className="text-gray-600">user@ECL Global.com / user123</p>
                     </div>
                   </div>
                 </CardContent>

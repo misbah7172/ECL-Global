@@ -58,7 +58,7 @@ app.use((req, res, next) => {
 
   // Use PORT from environment variable (for Render) or default to 5000
   const port = process.env.PORT ? parseInt(process.env.PORT) : 5000;
-  const host = process.env.NODE_ENV === "production" ? "0.0.0.0" : "0.0.0.0";
+  const host = "0.0.0.0";
   
   server.listen(port, host, () => {
     log(`serving on port ${port}`);

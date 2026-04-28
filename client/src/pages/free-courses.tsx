@@ -384,7 +384,7 @@ export default function FreeCourses() {
             Ready to Upgrade Your Learning?
           </h2>
           <p className="text-xl text-blue-100 mb-8">
-            Love our free courses? Explore our premium courses for advanced certifications and personalized mentorship.
+            Love our free courses? Explore our premium courses for advanced certifications and personalized ECL Globalship.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 

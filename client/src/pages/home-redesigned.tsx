@@ -168,7 +168,7 @@ export default function HomeRedesigned() {
       title: "Test Preparation",
       description: "Expert coaching for IELTS, TOEFL, SAT, GRE, GMAT with guaranteed score improvement",
       features: [
-        "Personal mentoring from certified experts",
+        "Personal ECL Globaling from certified experts",
         "Comprehensive practice tests & materials",
         "Score improvement guarantee",
         "Flexible online & offline classes"
@@ -619,7 +619,7 @@ export default function HomeRedesigned() {
                   {
                     icon: Target,
                     title: "Personalized Guidance",
-                    description: "Customized study plans and one-on-one mentoring tailored to your unique goals."
+                    description: "Customized study plans and one-on-one ECL Globaling tailored to your unique goals."
                   },
                   {
                     icon: Headphones,

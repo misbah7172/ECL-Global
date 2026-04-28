@@ -300,7 +300,7 @@ export default function Register() {
                             <FormControl>
                               <div className="relative">
                                 <Mail className="absolute left-3 top-3 h-5 w-5" style={{ color: COLORS.skyBlue }} />
-                                <Input type="email" placeholder="john@example.com" className="pl-11 h-11" {...field} />
+                                <Input type="email" placeholder="patel@example.com" className="pl-11 h-11" {...field} />
                               </div>
                             </FormControl>
                             <FormMessage />

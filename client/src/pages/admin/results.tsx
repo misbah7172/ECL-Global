@@ -1,637 +1,498 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import AdminLayout from "@/components/admin/admin-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
-import { toast } from "@/hooks/use-toast";
-import { Search, Filter, BarChart, TrendingUp, TrendingDown, Users, Award, Download, Eye, Mail, FileText } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { useToast } from "@/hooks/use-toast";
+import { Search, BarChart, TrendingUp, Award, FileText, CheckCircle2, Clock, Users } from "lucide-react";
 
-interface Result {
+interface MockTest {
   id: number;
-  studentId: number;
-  studentName: string;
-  studentEmail: string;
-  assessmentId: number;
-  assessmentTitle: string;
-  assessmentType: 'assignment' | 'quiz' | 'project' | 'exam';
-  courseId: number;
-  courseName: string;
-  instructorName: string;
-  totalMarks: number;
-  obtainedMarks: number;
-  percentage: number;
-  grade: string;
-  status: 'pass' | 'fail' | 'pending';
-  submittedAt: string;
-  gradedAt?: string;
-  feedback?: string;
-  attempts: number;
-  timeSpent?: number; // in minutes
+  title: string;
+  description: string | null;
+  testType: string;
+  duration: number;
+  totalQuestions: number;
+  questions: any;
+  isActive: boolean;
+  createdAt: Date;
 }
 
-const gradeColors = {
-  'A+': 'bg-green-100 text-green-800',
-  'A': 'bg-green-100 text-green-800',
-  'B+': 'bg-blue-100 text-blue-800',
-  'B': 'bg-blue-100 text-blue-800',
-  'C+': 'bg-yellow-100 text-yellow-800',
-  'C': 'bg-yellow-100 text-yellow-800',
-  'D': 'bg-orange-100 text-orange-800',
-  'F': 'bg-red-100 text-red-800',
-};
+interface MockTestAttempt {
+  id: number;
+  userId: number;
+  mockTestId: number;
+  answers: any;
+  score: number | null;
+  completedAt: Date | null;
+  timeSpent: number | null;
+  isCompleted: boolean;
+  startedAt: Date;
+  user?: {
+    id: number;
+    username: string;
+    email: string;
+  };
+  mockTest?: MockTest;
+}
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+interface User {
+  id: number;
+  username: string;
+  email: string;
+}
 
 export default function AdminResults() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [courseFilter, setCourseFilter] = useState("all");
-  const [assessmentFilter, setAssessmentFilter] = useState("all");
+  const [testFilter, setTestFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [gradeFilter, setGradeFilter] = useState("all");
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [selectedResult, setSelectedResult] = useState<Result | null>(null);
-
+  const [selectedAttempt, setSelectedAttempt] = useState<MockTestAttempt | null>(null);
+  const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: results, isLoading } = useQuery({
-    queryKey: ['/api/admin/results'],
+  const { data: attempts, isLoading } = useQuery<MockTestAttempt[]>({
+    queryKey: ['/api/mock-test-attempts/all'],
     queryFn: async () => {
-      // Mock data - in real app, this would fetch from API
-      const mockData: Result[] = [
-        {
-          id: 1,
-          studentId: 101,
-          studentName: "Alice Johnson",
-          studentEmail: "alice@example.com",
-          assessmentId: 1,
-          assessmentTitle: "JavaScript Fundamentals Quiz",
-          assessmentType: 'quiz',
-          courseId: 1,
-          courseName: "Full Stack Web Development",
-          instructorName: "Sarah Johnson",
-          totalMarks: 100,
-          obtainedMarks: 87,
-          percentage: 87,
-          grade: "A",
-          status: 'pass',
-          submittedAt: "2024-01-15T14:30:00Z",
-          gradedAt: "2024-01-15T16:00:00Z",
-          feedback: "Excellent work! Good understanding of JavaScript concepts.",
-          attempts: 1,
-          timeSpent: 42,
-        },
-        {
-          id: 2,
-          studentId: 102,
-          studentName: "Bob Smith",
-          studentEmail: "bob@example.com",
-          assessmentId: 1,
-          assessmentTitle: "JavaScript Fundamentals Quiz",
-          assessmentType: 'quiz',
-          courseId: 1,
-          courseName: "Full Stack Web Development",
-          instructorName: "Sarah Johnson",
-          totalMarks: 100,
-          obtainedMarks: 72,
-          percentage: 72,
-          grade: "B",
-          status: 'pass',
-          submittedAt: "2024-01-15T15:45:00Z",
-          gradedAt: "2024-01-15T17:30:00Z",
-          feedback: "Good effort! Review arrow functions and closures.",
-          attempts: 2,
-          timeSpent: 55,
-        },
-        {
-          id: 3,
-          studentId: 103,
-          studentName: "Charlie Brown",
-          studentEmail: "charlie@example.com",
-          assessmentId: 2,
-          assessmentTitle: "Web Development Project",
-          assessmentType: 'project',
-          courseId: 1,
-          courseName: "Full Stack Web Development",
-          instructorName: "Sarah Johnson",
-          totalMarks: 200,
-          obtainedMarks: 45,
-          percentage: 22.5,
-          grade: "F",
-          status: 'fail',
-          submittedAt: "2024-01-20T23:59:00Z",
-          gradedAt: "2024-01-22T10:00:00Z",
-          feedback: "Project incomplete. Missing authentication and database integration.",
-          attempts: 1,
-          timeSpent: 120,
-        },
-        {
-          id: 4,
-          studentId: 104,
-          studentName: "Diana Prince",
-          studentEmail: "diana@example.com",
-          assessmentId: 3,
-          assessmentTitle: "Data Analysis Assignment",
-          assessmentType: 'assignment',
-          courseId: 2,
-          courseName: "Data Science Bootcamp",
-          instructorName: "Mike Chen",
-          totalMarks: 100,
-          obtainedMarks: 92,
-          percentage: 92,
-          grade: "A+",
-          status: 'pass',
-          submittedAt: "2024-01-25T18:00:00Z",
-          gradedAt: "2024-01-26T09:00:00Z",
-          feedback: "Outstanding analysis! Excellent use of visualization techniques.",
-          attempts: 1,
-          timeSpent: 180,
-        },
-      ];
-      return mockData;
+      const response = await fetch('/api/mock-test-attempts/all', {
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Failed to fetch results');
+      return response.json();
     },
   });
 
-  const { data: courses } = useQuery({
-    queryKey: ['/api/courses'],
+  const { data: mockTests } = useQuery<MockTest[]>({
+    queryKey: ['/api/mock-tests'],
     queryFn: async () => {
-      return [
-        { id: 1, name: "Full Stack Web Development" },
-        { id: 2, name: "Data Science Bootcamp" },
-        { id: 3, name: "Mobile App Development" },
-      ];
+      const response = await fetch('/api/mock-tests');
+      if (!response.ok) throw new Error('Failed to fetch tests');
+      return response.json();
     },
   });
 
-  const { data: assessments } = useQuery({
-    queryKey: ['/api/assessments'],
+  const { data: users } = useQuery<User[]>({
+    queryKey: ['/api/users'],
     queryFn: async () => {
-      return [
-        { id: 1, title: "JavaScript Fundamentals Quiz" },
-        { id: 2, title: "Web Development Project" },
-        { id: 3, title: "Data Analysis Assignment" },
-      ];
+      const response = await fetch('/api/users', {
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Failed to fetch users');
+      return response.json();
     },
   });
 
-  const filteredResults = results?.filter(result => {
-    const matchesSearch = result.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         result.studentEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         result.assessmentTitle.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCourse = courseFilter === "all" || result.courseName === courseFilter;
-    const matchesAssessment = assessmentFilter === "all" || result.assessmentTitle === assessmentFilter;
-    const matchesStatus = statusFilter === "all" || result.status === statusFilter;
-    const matchesGrade = gradeFilter === "all" || result.grade === gradeFilter;
+  const enrichedAttempts = useMemo(() => {
+    if (!attempts || !mockTests || !users) return [];
     
-    return matchesSearch && matchesCourse && matchesAssessment && matchesStatus && matchesGrade;
-  });
+    return attempts.map(attempt => {
+      const test = mockTests.find(t => t.id === attempt.mockTestId);
+      const user = users.find(u => u.id === attempt.userId);
+      
+      return {
+        ...attempt,
+        mockTest: test,
+        user: user,
+      };
+    });
+  }, [attempts, mockTests, users]);
 
-  // Statistics calculations
-  const totalResults = results?.length || 0;
-  const passRate = results?.length ? (results.filter(r => r.status === 'pass').length / results.length) * 100 : 0;
-  const averageScore = results?.length ? 
-    results.reduce((sum, r) => sum + r.percentage, 0) / results.length : 0;
-  const averageTime = results?.length ? 
-    results.filter(r => r.timeSpent).reduce((sum, r) => sum + (r.timeSpent || 0), 0) / results.filter(r => r.timeSpent).length : 0;
+  const filteredResults = useMemo(() => {
+    if (!enrichedAttempts) return [];
+    
+    return enrichedAttempts.filter(attempt => {
+      const matchesSearch = 
+        attempt.user?.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        attempt.user?.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        attempt.mockTest?.title.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesTest = testFilter === "all" || 
+        (attempt.mockTest && attempt.mockTest.id.toString() === testFilter);
+      
+      const matchesStatus = statusFilter === "all" || 
+        (statusFilter === "completed" && attempt.isCompleted) ||
+        (statusFilter === "in-progress" && !attempt.isCompleted);
+      
+      return matchesSearch && matchesTest && matchesStatus;
+    });
+  }, [enrichedAttempts, searchTerm, testFilter, statusFilter]);
 
-  // Grade distribution for pie chart
-  const gradeDistribution = results?.reduce((acc, result) => {
-    acc[result.grade] = (acc[result.grade] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  const stats = useMemo(() => {
+    if (!attempts) return {
+      totalAttempts: 0,
+      completedAttempts: 0,
+      averageScore: 0,
+      passRate: 0,
+    };
+    
+    const totalAttempts = attempts.length;
+    const completedAttempts = attempts.filter(a => a.isCompleted).length;
+    const scoredAttempts = attempts.filter(a => a.isCompleted && a.score !== null);
+    const averageScore = scoredAttempts.length > 0
+      ? scoredAttempts.reduce((sum, a) => sum + (Number(a.score) || 0), 0) / scoredAttempts.length
+      : 0;
+    const passRate = scoredAttempts.length > 0
+      ? (scoredAttempts.filter(a => Number(a.score) >= 60).length / scoredAttempts.length) * 100
+      : 0;
 
-  const gradeChartData = Object.entries(gradeDistribution || {}).map(([grade, count]) => ({
-    name: grade,
-    value: count,
-  }));
+    return {
+      totalAttempts,
+      completedAttempts,
+      averageScore: Math.round(averageScore),
+      passRate: Math.round(passRate),
+    };
+  }, [attempts]);
 
-  // Performance trend data
-  const performanceTrend = [
-    { month: 'Jan', average: 78, passRate: 85 },
-    { month: 'Feb', average: 82, passRate: 88 },
-    { month: 'Mar', average: 79, passRate: 83 },
-    { month: 'Apr', average: 85, passRate: 92 },
-    { month: 'May', average: 87, passRate: 95 },
-    { month: 'Jun', average: 84, passRate: 90 },
-  ];
+  const testOptions = useMemo(() => {
+    if (!mockTests) return [];
+    return mockTests;
+  }, [mockTests]);
 
-  const handleViewDetails = (result: Result) => {
-    setSelectedResult(result);
+  const getGrade = (score: number | null): string => {
+    if (score === null) return "N/A";
+    if (score >= 90) return "A+";
+    if (score >= 80) return "A";
+    if (score >= 70) return "B";
+    if (score >= 60) return "C";
+    if (score >= 50) return "D";
+    return "F";
+  };
+
+  const getGradeColor = (grade: string): string => {
+    if (grade === "A+" || grade === "A") return "bg-green-100 text-green-800";
+    if (grade === "B") return "bg-blue-100 text-blue-800";
+    if (grade === "C") return "bg-yellow-100 text-yellow-800";
+    if (grade === "D") return "bg-orange-100 text-orange-800";
+    if (grade === "F") return "bg-red-100 text-red-800";
+    return "bg-gray-100 text-gray-800";
+  };
+
+  const handleViewDetails = (attempt: MockTestAttempt) => {
+    setSelectedAttempt(attempt);
     setIsDetailModalOpen(true);
   };
 
-  const sendResultEmail = (result: Result) => {
-    // Mock email sending functionality
-    toast({ 
-      title: "Email Sent", 
-      description: `Result notification sent to ${result.studentEmail}` 
-    });
-  };
-
-  const exportResults = () => {
-    const csvContent = "data:text/csv;charset=utf-8," + 
-      "Student Name,Student Email,Assessment,Course,Instructor,Total Marks,Obtained Marks,Percentage,Grade,Status,Submitted At,Graded At,Attempts,Time Spent\n" +
-      filteredResults?.map(result => 
-        `"${result.studentName}","${result.studentEmail}","${result.assessmentTitle}","${result.courseName}","${result.instructorName}",${result.totalMarks},${result.obtainedMarks},${result.percentage}%,${result.grade},${result.status},"${result.submittedAt}","${result.gradedAt || 'N/A'}",${result.attempts},${result.timeSpent || 'N/A'}`
-      ).join("\n");
-    
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "results.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="relative w-32 h-32">
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-24 h-24 border-8 border-[#1C4E9C] border-t-transparent rounded-full animate-spin" style={{ animationDelay: '0ms' }}></div>
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-16 h-16 border-8 border-[#33A9D9] border-t-transparent rounded-full animate-spin" style={{ animationDelay: '75ms' }}></div>
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-8 h-8 border-4 border-[#2A7CCD] border-t-transparent rounded-full animate-spin" style={{ animationDelay: '150ms' }}></div>
+            </div>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
-    <AdminLayout title="Results Management">
+    <AdminLayout>
       <div className="space-y-6">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
+        {/* Hero Section */}
+        <div className="bg-gradient-to-r from-[#1C4E9C] to-[#2A7CCD] text-white rounded-lg p-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <BarChart className="h-8 w-8" />
+                <h1 className="text-3xl font-bold">Results & Performance</h1>
+              </div>
+              <p className="text-blue-100">Track student test results and performance analytics</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Card className="border-l-4 border-l-[#1C4E9C]">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Results</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Total Attempts</CardTitle>
+              <FileText className="h-5 w-5 text-[#1C4E9C]" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{totalResults}</div>
-              <p className="text-xs text-muted-foreground">
-                This month
-              </p>
+              <div className="text-2xl font-bold text-[#1C4E9C]">{stats.totalAttempts}</div>
+              <p className="text-xs text-muted-foreground mt-1">All test submissions</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-l-4 border-l-[#33A9D9]">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Completed</CardTitle>
+              <CheckCircle2 className="h-5 w-5 text-[#33A9D9]" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-[#33A9D9]">{stats.completedAttempts}</div>
+              <p className="text-xs text-muted-foreground mt-1">Finished attempts</p>
+            </CardContent>
+          </Card>
+          <Card className="border-l-4 border-l-green-500">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Pass Rate</CardTitle>
-              <Award className="h-4 w-4 text-muted-foreground" />
+              <TrendingUp className="h-5 w-5 text-green-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{passRate.toFixed(1)}%</div>
-              <p className="text-xs text-muted-foreground">
-                <TrendingUp className="inline h-3 w-3 mr-1" />
-                +2.1% from last month
-              </p>
+              <div className="text-2xl font-bold text-green-600">{stats.passRate}%</div>
+              <p className="text-xs text-muted-foreground mt-1">Students passing</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-l-4 border-l-[#FFD700]">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Average Score</CardTitle>
-              <BarChart className="h-4 w-4 text-muted-foreground" />
+              <Award className="h-5 w-5 text-[#FFD700]" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{averageScore.toFixed(1)}%</div>
-              <p className="text-xs text-muted-foreground">
-                Across all assessments
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Avg Time Spent</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{averageTime.toFixed(0)} min</div>
-              <p className="text-xs text-muted-foreground">
-                Per assessment
-              </p>
+              <div className="text-2xl font-bold text-[#FFD700]">{stats.averageScore}%</div>
+              <p className="text-xs text-muted-foreground mt-1">Overall performance</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Performance Trend</CardTitle>
-              <CardDescription>Average scores and pass rates over time</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={performanceTrend}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="average" stroke="#8884d8" name="Average Score" />
-                  <Line type="monotone" dataKey="passRate" stroke="#82ca9d" name="Pass Rate" />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Grade Distribution</CardTitle>
-              <CardDescription>Distribution of grades across all assessments</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={gradeChartData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, value }) => `${name}: ${value}`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {gradeChartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Filters and Results Table */}
+        {/* Filters */}
         <Card>
           <CardHeader>
-            <div className="flex justify-between items-center">
-              <div>
-                <CardTitle>Assessment Results</CardTitle>
-                <CardDescription>
-                  Track and analyze student performance across all assessments
-                </CardDescription>
-              </div>
-              <div className="flex gap-2">
-                <Button onClick={exportResults} variant="outline">
-                  <Download className="mr-2 h-4 w-4" />
-                  Export
-                </Button>
-              </div>
-            </div>
+            <CardTitle className="text-[#1C4E9C]">Filter Results</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1">
                 <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
-                    placeholder="Search students or assessments..."
+                    placeholder="Search by student or test..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
                   />
                 </div>
               </div>
-              <Select value={courseFilter} onValueChange={setCourseFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filter by course" />
+              <Select value={testFilter} onValueChange={setTestFilter}>
+                <SelectTrigger className="w-full md:w-64">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Courses</SelectItem>
-                  {courses?.map(course => (
-                    <SelectItem key={course.id} value={course.name}>
-                      {course.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={assessmentFilter} onValueChange={setAssessmentFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filter by assessment" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Assessments</SelectItem>
-                  {assessments?.map(assessment => (
-                    <SelectItem key={assessment.id} value={assessment.title}>
-                      {assessment.title}
+                  <SelectItem value="all">All Tests</SelectItem>
+                  {testOptions.map((test) => (
+                    <SelectItem key={test.id} value={test.id.toString()}>
+                      {test.title}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[120px]">
-                  <SelectValue placeholder="Status" />
+                <SelectTrigger className="w-full md:w-40">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="pass">Pass</SelectItem>
-                  <SelectItem value="fail">Fail</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="in-progress">In Progress</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={gradeFilter} onValueChange={setGradeFilter}>
-                <SelectTrigger className="w-[100px]">
-                  <SelectValue placeholder="Grade" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Grades</SelectItem>
-                  <SelectItem value="A+">A+</SelectItem>
-                  <SelectItem value="A">A</SelectItem>
-                  <SelectItem value="B+">B+</SelectItem>
-                  <SelectItem value="B">B</SelectItem>
-                  <SelectItem value="C+">C+</SelectItem>
-                  <SelectItem value="C">C</SelectItem>
-                  <SelectItem value="D">D</SelectItem>
-                  <SelectItem value="F">F</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Results Table */}
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Student</TableHead>
-                    <TableHead>Assessment</TableHead>
-                    <TableHead>Course</TableHead>
-                    <TableHead>Score</TableHead>
-                    <TableHead>Grade</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Submitted</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={8} className="text-center">
-                        Loading...
-                      </TableCell>
-                    </TableRow>
-                  ) : filteredResults?.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={8} className="text-center">
-                        No results found
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredResults?.map((result) => (
-                      <TableRow key={result.id}>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">{result.studentName}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {result.studentEmail}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">{result.assessmentTitle}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {result.assessmentType}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <div>{result.courseName}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {result.instructorName}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <div className="text-sm">
-                              {result.obtainedMarks}/{result.totalMarks}
-                            </div>
-                            <Progress value={result.percentage} className="h-2" />
-                            <div className="text-xs text-muted-foreground">
-                              {result.percentage.toFixed(1)}%
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={gradeColors[result.grade as keyof typeof gradeColors]}>
-                            {result.grade}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={result.status === 'pass' ? 'default' : 
-                                        result.status === 'fail' ? 'destructive' : 'secondary'}>
-                            {result.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            {new Date(result.submittedAt).toLocaleDateString()}
-                            <div className="text-muted-foreground">
-                              {result.attempts > 1 && `${result.attempts} attempts`}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => handleViewDetails(result)}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => sendResultEmail(result)}
-                            >
-                              <Mail className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
             </div>
           </CardContent>
         </Card>
 
-        {/* Result Details Modal */}
+        {/* Results Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-[#1C4E9C]">Test Results</CardTitle>
+            <CardDescription>
+              {filteredResults.length} results found
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Student</TableHead>
+                  <TableHead>Test</TableHead>
+                  <TableHead>Score</TableHead>
+                  <TableHead>Grade</TableHead>
+                  <TableHead>Time Spent</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredResults.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center text-muted-foreground">
+                      No results found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredResults.map((attempt) => {
+                    const grade = getGrade(attempt.score);
+                    return (
+                      <TableRow key={attempt.id}>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{attempt.user?.username || "Unknown"}</div>
+                            <div className="text-sm text-muted-foreground">{attempt.user?.email}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-medium">{attempt.mockTest?.title || "Unknown Test"}</div>
+                        </TableCell>
+                        <TableCell>
+                          {attempt.isCompleted ? (
+                            <div className="flex items-center gap-2">
+                              <Progress value={attempt.score || 0} className="w-20" />
+                              <span className="font-medium">{attempt.score}%</span>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {attempt.isCompleted ? (
+                            <Badge className={getGradeColor(grade)}>
+                              {grade}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {attempt.timeSpent ? (
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-4 w-4 text-muted-foreground" />
+                              <span>{Math.round(attempt.timeSpent / 60)} min</span>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge 
+                            className={attempt.isCompleted 
+                              ? "bg-green-500 hover:bg-green-600" 
+                              : "bg-yellow-500 hover:bg-yellow-600"
+                            }
+                          >
+                            {attempt.isCompleted ? "Completed" : "In Progress"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm text-muted-foreground">
+                            {new Date(attempt.startedAt).toLocaleDateString()}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleViewDetails(attempt)}
+                            disabled={!attempt.isCompleted}
+                          >
+                            View
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        {/* Detail Modal */}
         <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Result Details</DialogTitle>
+              <DialogTitle className="text-[#1C4E9C]">Test Result Details</DialogTitle>
               <DialogDescription>
-                Detailed information about the assessment result
+                Complete information about this test attempt
               </DialogDescription>
             </DialogHeader>
-            {selectedResult && (
+            {selectedAttempt && (
               <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-sm font-medium">Student</Label>
-                    <p className="text-sm">{selectedResult.studentName}</p>
-                    <p className="text-xs text-muted-foreground">{selectedResult.studentEmail}</p>
+                    <p className="text-sm font-medium text-muted-foreground">Student</p>
+                    <p className="text-base font-semibold">{selectedAttempt.user?.username}</p>
+                    <p className="text-sm text-muted-foreground">{selectedAttempt.user?.email}</p>
                   </div>
                   <div>
-                    <Label className="text-sm font-medium">Assessment</Label>
-                    <p className="text-sm">{selectedResult.assessmentTitle}</p>
-                    <p className="text-xs text-muted-foreground">{selectedResult.assessmentType}</p>
+                    <p className="text-sm font-medium text-muted-foreground">Test</p>
+                    <p className="text-base font-semibold">{selectedAttempt.mockTest?.title}</p>
+                    <p className="text-sm text-muted-foreground">{selectedAttempt.mockTest?.testType}</p>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Score</p>
+                    <p className="text-2xl font-bold text-[#1C4E9C]">{selectedAttempt.score}%</p>
                   </div>
                   <div>
-                    <Label className="text-sm font-medium">Course</Label>
-                    <p className="text-sm">{selectedResult.courseName}</p>
-                    <p className="text-xs text-muted-foreground">{selectedResult.instructorName}</p>
+                    <p className="text-sm font-medium text-muted-foreground">Grade</p>
+                    <Badge className={`text-lg ${getGradeColor(getGrade(selectedAttempt.score))}`}>
+                      {getGrade(selectedAttempt.score)}
+                    </Badge>
                   </div>
                   <div>
-                    <Label className="text-sm font-medium">Score</Label>
-                    <p className="text-sm">{selectedResult.obtainedMarks}/{selectedResult.totalMarks}</p>
-                    <Progress value={selectedResult.percentage} className="h-2 mt-1" />
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium">Grade & Status</Label>
-                    <div className="flex gap-2 mt-1">
-                      <Badge className={gradeColors[selectedResult.grade as keyof typeof gradeColors]}>
-                        {selectedResult.grade}
-                      </Badge>
-                      <Badge variant={selectedResult.status === 'pass' ? 'default' : 
-                                    selectedResult.status === 'fail' ? 'destructive' : 'secondary'}>
-                        {selectedResult.status}
-                      </Badge>
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium">Submission Details</Label>
-                    <p className="text-sm">Submitted: {new Date(selectedResult.submittedAt).toLocaleString()}</p>
-                    {selectedResult.gradedAt && (
-                      <p className="text-sm">Graded: {new Date(selectedResult.gradedAt).toLocaleString()}</p>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      Attempts: {selectedResult.attempts}
-                      {selectedResult.timeSpent && ` | Time spent: ${selectedResult.timeSpent} min`}
+                    <p className="text-sm font-medium text-muted-foreground">Time Spent</p>
+                    <p className="text-xl font-bold">
+                      {selectedAttempt.timeSpent ? Math.round(selectedAttempt.timeSpent / 60) : 0} min
                     </p>
                   </div>
                 </div>
-                {selectedResult.feedback && (
+
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-2">Progress</p>
+                  <Progress value={selectedAttempt.score || 0} className="h-3" />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-sm font-medium">Feedback</Label>
-                    <p className="text-sm mt-1 p-3 bg-muted rounded-md">
-                      {selectedResult.feedback}
+                    <p className="text-sm font-medium text-muted-foreground">Started At</p>
+                    <p className="text-base">{new Date(selectedAttempt.startedAt).toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Completed At</p>
+                    <p className="text-base">
+                      {selectedAttempt.completedAt 
+                        ? new Date(selectedAttempt.completedAt).toLocaleString()
+                        : "Not completed"}
                     </p>
                   </div>
-                )}
+                </div>
+
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-2">Test Details</p>
+                  <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-sm">Duration:</span>
+                      <span className="text-sm font-medium">{selectedAttempt.mockTest?.duration} minutes</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm">Total Questions:</span>
+                      <span className="text-sm font-medium">{selectedAttempt.mockTest?.totalQuestions}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm">Status:</span>
+                      <Badge className={selectedAttempt.isCompleted ? "bg-green-500" : "bg-yellow-500"}>
+                        {selectedAttempt.isCompleted ? "Completed" : "In Progress"}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDetailModalOpen(false)}>
-                Close
-              </Button>
-              {selectedResult && (
-                <Button onClick={() => sendResultEmail(selectedResult)}>
-                  <Mail className="mr-2 h-4 w-4" />
-                  Send Result
-                </Button>
-              )}
-            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>

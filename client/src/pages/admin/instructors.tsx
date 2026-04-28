@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -33,32 +33,27 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Edit, Eye, Search, GraduationCap, Star, Mail, Phone, MapPin, Calendar, Users, BookOpen, Clock, Award, MoreHorizontal, Trash2 } from "lucide-react";
+import { Plus, Edit, Eye, Search, GraduationCap, Star, Mail, Phone, MapPin, Users, BookOpen, Award, TrendingUp } from "lucide-react";
+
+// ECL Global Color Palette
+const COLORS = {
+  deepBlue: '#1C4E9C',
+  skyBlue: '#33A9D9',
+  midBlue: '#2A7CCD',
+  darkGrey: '#4F4F4F',
+  offWhite: '#F8F8F8',
+};
 
 const instructorSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   email: z.string().email("Invalid email address"),
   phone: z.string().optional(),
-  bio: z.string().optional(),
-  specialization: z.string().min(1, "Specialization is required"),
-  experience: z.string().min(1, "Experience is required"),
-  qualifications: z.string().optional(),
-  hourlyRate: z.string().min(1, "Hourly rate is required"),
-  availableHours: z.string().optional(),
-  languages: z.string().optional(),
-  location: z.string().optional(),
+  username: z.string().min(3, "Username must be at least 3 characters").optional(),
+  password: z.string().min(6, "Password must be at least 6 characters").optional(),
 });
 
 type InstructorFormData = z.infer<typeof instructorSchema>;
@@ -68,24 +63,73 @@ export default function AdminInstructors() {
   const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [editingInstructor, setEditingInstructor] = useState<any>(null);
 
   if (!isAdmin) {
     return <Redirect to="/dashboard" />;
   }
 
-  const { data: instructors, isLoading } = useQuery({
-    queryKey: ["/api/instructors", { search, status: statusFilter }],
+  // Fetch real users data
+  const { data: users = [], isLoading: loadingUsers } = useQuery({
+    queryKey: ["/api/users"],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (search) params.append("search", search);
-      if (statusFilter !== "all") params.append("status", statusFilter);
-      
-      const url = `/api/instructors${params.toString() ? `?${params.toString()}` : ""}`;
-      const response = await fetch(url);
+      const response = await fetch("/api/users", {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (!response.ok) throw new Error("Failed to fetch users");
       return response.json();
     },
   });
+
+  // Fetch courses to calculate instructor stats
+  const { data: courses = [], isLoading: loadingCourses } = useQuery({
+    queryKey: ["/api/courses"],
+    queryFn: async () => {
+      const response = await fetch("/api/courses");
+      if (!response.ok) throw new Error("Failed to fetch courses");
+      return response.json();
+    },
+  });
+
+  // Fetch enrollments for student counts
+  const { data: allEnrollments = [], isLoading: loadingEnrollments } = useQuery({
+    queryKey: ["/api/enrollments/all"],
+    queryFn: async () => {
+      const response = await fetch("/api/enrollments/all", {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (!response.ok) return [];
+      return response.json();
+    },
+  });
+
+  // Calculate instructor statistics
+  const instructorsWithStats = useMemo(() => {
+    const instructorsList = users.filter((u: any) => u.role === 'instructor' || u.role === 'admin');
+    
+    return instructorsList.map((instructor: any) => {
+      const instructorCourses = courses.filter((c: any) => c.instructorId === instructor.id);
+      const instructorEnrollments = allEnrollments.filter((e: any) => 
+        instructorCourses.some((c: any) => c.id === e.courseId)
+      );
+      const uniqueStudents = new Set(instructorEnrollments.map((e: any) => e.userId)).size;
+      const avgRating = instructorCourses.length > 0
+        ? instructorCourses.reduce((sum: number, c: any) => sum + parseFloat(c.rating || 0), 0) / instructorCourses.length
+        : 0;
+
+      return {
+        ...instructor,
+        totalCourses: instructorCourses.length,
+        totalStudents: uniqueStudents,
+        totalEnrollments: instructorEnrollments.length,
+        rating: avgRating,
+      };
+    });
+  }, [users, courses, allEnrollments]);
 
   const form = useForm<InstructorFormData>({
     resolver: zodResolver(instructorSchema),
@@ -94,32 +138,46 @@ export default function AdminInstructors() {
       lastName: "",
       email: "",
       phone: "",
-      bio: "",
-      specialization: "",
-      experience: "",
-      qualifications: "",
-      hourlyRate: "",
-      availableHours: "",
-      languages: "",
-      location: "",
+      username: "",
+      password: "",
     },
   });
 
+  // Handle edit instructor
+  const handleEditInstructor = (instructor: any) => {
+    setEditingInstructor(instructor);
+    form.reset({
+      firstName: instructor.firstName || "",
+      lastName: instructor.lastName || "",
+      email: instructor.email || "",
+      phone: instructor.phone || "",
+      username: instructor.username || "",
+      password: "", // Don't pre-fill password
+    });
+    setIsDialogOpen(true);
+  };
+
   const createInstructorMutation = useMutation({
-    mutationFn: (data: any) => apiRequest("POST", "/api/instructors", data),
+    mutationFn: (data: any) => 
+      editingInstructor
+        ? apiRequest("PUT", `/api/users/${editingInstructor.id}`, data)
+        : apiRequest("POST", "/api/users", data),
     onSuccess: () => {
       toast({
-        title: "Instructor Added",
-        description: "New instructor has been added successfully.",
+        title: editingInstructor ? "Instructor Updated" : "Instructor Added",
+        description: editingInstructor
+          ? "Instructor has been updated successfully."
+          : "New instructor has been added successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/instructors"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       setIsDialogOpen(false);
+      setEditingInstructor(null);
       form.reset();
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to add instructor",
+        description: error.message || `Failed to ${editingInstructor ? 'update' : 'add'} instructor`,
         variant: "destructive",
       });
     },
@@ -128,98 +186,177 @@ export default function AdminInstructors() {
   const onSubmit = (data: InstructorFormData) => {
     const instructorData = {
       ...data,
-      hourlyRate: parseFloat(data.hourlyRate),
-      availableHours: data.availableHours || "0",
-      languages: data.languages ? data.languages.split(',').map(lang => lang.trim()) : [],
-      qualifications: data.qualifications ? data.qualifications.split('\n').filter(q => q.trim()) : [],
+      role: 'instructor',
+      isActive: true,
     };
+    
+    // Remove password field if empty during edit
+    if (editingInstructor && !data.password) {
+      delete instructorData.password;
+    }
+    
     createInstructorMutation.mutate(instructorData);
   };
+
+  const isLoading = loadingUsers || loadingCourses || loadingEnrollments;
 
   if (isLoading) {
     return (
       <AdminLayout title="Instructor Management">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+        <div className="flex items-center justify-center min-h-[500px]">
+          <div className="relative w-24 h-24">
+            <div className="absolute inset-0 rounded-full animate-ping opacity-75" style={{ backgroundColor: COLORS.skyBlue }} />
+            <div className="absolute inset-2 rounded-full animate-pulse" style={{ backgroundColor: COLORS.midBlue }} />
+            <div className="absolute inset-4 rounded-full flex items-center justify-center" style={{ backgroundColor: COLORS.deepBlue }}>
+              <GraduationCap className="h-8 w-8 text-white animate-pulse" />
+            </div>
+          </div>
         </div>
       </AdminLayout>
     );
   }
 
-  // Sample instructor data for demo
-  const sampleInstructors = [
-    {
-      id: 1,
-      firstName: "Sarah",
-      lastName: "Johnson",
-      email: "sarah.johnson@example.com",
-      phone: "+1234567890",
-      specialization: "IELTS Preparation",
-      experience: "5 years",
-      rating: 4.8,
-      totalCourses: 12,
-      totalStudents: 245,
-      hourlyRate: 50,
-      status: "active",
-      location: "New York, USA",
-      languages: ["English", "Spanish"]
-    },
-    {
-      id: 2,
-      firstName: "Ahmed",
-      lastName: "Rahman",
-      email: "ahmed.rahman@example.com",
-      phone: "+1987654321",
-      specialization: "SAT Math",
-      experience: "7 years",
-      rating: 4.9,
-      totalCourses: 8,
-      totalStudents: 180,
-      hourlyRate: 60,
-      status: "active",
-      location: "Dubai, UAE",
-      languages: ["English", "Arabic"]
-    },
-    {
-      id: 3,
-      firstName: "Dr. Emily",
-      lastName: "Chen",
-      email: "emily.chen@example.com",
-      phone: "+1122334455",
-      specialization: "TOEFL Preparation",
-      experience: "10 years",
-      rating: 4.7,
-      totalCourses: 15,
-      totalStudents: 320,
-      hourlyRate: 75,
-      status: "active",
-      location: "Toronto, Canada",
-      languages: ["English", "Mandarin"]
-    },
-  ];
-
-  const displayInstructors = instructors || sampleInstructors;
+  // Filter instructors
+  const filteredInstructors = instructorsWithStats.filter((instructor: any) => {
+    const searchLower = search.toLowerCase();
+    return (
+      instructor.firstName.toLowerCase().includes(searchLower) ||
+      instructor.lastName.toLowerCase().includes(searchLower) ||
+      instructor.email.toLowerCase().includes(searchLower)
+    );
+  });
 
   return (
     <AdminLayout title="Instructor Management">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Instructor Management</h1>
-            <p className="text-gray-600 mt-1">Manage instructors and their assignments</p>
+      <div className="space-y-8">
+        {/* Hero Section */}
+        <div 
+          className="relative rounded-2xl p-8 overflow-hidden"
+          style={{
+            background: `linear-gradient(135deg, ${COLORS.deepBlue} 0%, ${COLORS.midBlue} 50%, ${COLORS.skyBlue} 100%)`
+          }}
+        >
+          <div className="relative z-10 flex justify-between items-start">
+            <div>
+              <h1 className="text-4xl font-bold text-white mb-2">Instructor Management</h1>
+              <p className="text-white/90 text-lg">Manage instructors and monitor their performance</p>
+            </div>
+            <div className="absolute top-8 right-8 w-20 h-20 rounded-full flex items-center justify-center" 
+                 style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}>
+              <GraduationCap className="h-10 w-10 text-white" />
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Card className="border-l-4 hover:shadow-lg transition-shadow" style={{ borderColor: COLORS.deepBlue }}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Total Instructors</p>
+                  <p className="text-3xl font-bold" style={{ color: COLORS.deepBlue }}>
+                    {instructorsWithStats.length}
+                  </p>
+                </div>
+                <div className="w-12 h-12 rounded-full flex items-center justify-center" 
+                     style={{ backgroundColor: COLORS.deepBlue }}>
+                  <GraduationCap className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 hover:shadow-lg transition-shadow" style={{ borderColor: COLORS.skyBlue }}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Total Courses</p>
+                  <p className="text-3xl font-bold" style={{ color: COLORS.skyBlue }}>
+                    {instructorsWithStats.reduce((sum: number, i: any) => sum + i.totalCourses, 0)}
+                  </p>
+                </div>
+                <div className="w-12 h-12 rounded-full flex items-center justify-center" 
+                     style={{ backgroundColor: COLORS.skyBlue }}>
+                  <BookOpen className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 hover:shadow-lg transition-shadow" style={{ borderColor: COLORS.midBlue }}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Total Students</p>
+                  <p className="text-3xl font-bold" style={{ color: COLORS.midBlue }}>
+                    {instructorsWithStats.reduce((sum: number, i: any) => sum + i.totalStudents, 0)}
+                  </p>
+                </div>
+                <div className="w-12 h-12 rounded-full flex items-center justify-center" 
+                     style={{ backgroundColor: COLORS.midBlue }}>
+                  <Users className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 hover:shadow-lg transition-shadow" style={{ borderColor: '#FFD700' }}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Avg Rating</p>
+                  <p className="text-3xl font-bold" style={{ color: '#FFD700' }}>
+                    {instructorsWithStats.length > 0
+                      ? (instructorsWithStats.reduce((sum: number, i: any) => sum + i.rating, 0) / instructorsWithStats.length).toFixed(1)
+                      : '0.0'}
+                  </p>
+                </div>
+                <div className="w-12 h-12 rounded-full flex items-center justify-center" 
+                     style={{ backgroundColor: '#FFD700' }}>
+                  <Star className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Action Bar */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="relative flex-1 md:w-80">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+            <Input
+              placeholder="Search instructors by name or email..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10"
+            />
           </div>
           
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog 
+            open={isDialogOpen} 
+            onOpenChange={(open) => {
+              setIsDialogOpen(open);
+              if (!open) {
+                setEditingInstructor(null);
+                form.reset();
+              }
+            }}
+          >
             <DialogTrigger asChild>
-              <Button>
+              <Button 
+                style={{ backgroundColor: COLORS.deepBlue }}
+                className="text-white hover:opacity-90"
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Add New Instructor
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Add New Instructor</DialogTitle>
+                <DialogTitle style={{ color: COLORS.deepBlue }}>
+                  {editingInstructor ? 'Edit Instructor' : 'Add New Instructor'}
+                </DialogTitle>
               </DialogHeader>
               
               <Form {...form}>
@@ -274,7 +411,7 @@ export default function AdminInstructors() {
                       name="phone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Phone</FormLabel>
+                          <FormLabel>Phone (Optional)</FormLabel>
                           <FormControl>
                             <Input placeholder="Enter phone number" {...field} />
                           </FormControl>
@@ -284,143 +421,75 @@ export default function AdminInstructors() {
                     />
                   </div>
 
-                  <FormField
-                    control={form.control}
-                    name="specialization"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Specialization</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select specialization" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="ielts">IELTS Preparation</SelectItem>
-                            <SelectItem value="sat">SAT Preparation</SelectItem>
-                            <SelectItem value="toefl">TOEFL Preparation</SelectItem>
-                            <SelectItem value="gre">GRE Preparation</SelectItem>
-                            <SelectItem value="gmat">GMAT Preparation</SelectItem>
-                            <SelectItem value="english">English Language</SelectItem>
-                            <SelectItem value="math">Mathematics</SelectItem>
-                            <SelectItem value="counseling">Study Abroad Counseling</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  {!editingInstructor && (
+                    <>
+                      <FormField
+                        control={form.control}
+                        name="username"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Username</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Enter username" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                  <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Password</FormLabel>
+                            <FormControl>
+                              <Input type="password" placeholder="Enter password" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </>
+                  )}
+
+                  {editingInstructor && (
                     <FormField
                       control={form.control}
-                      name="experience"
+                      name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Experience</FormLabel>
+                          <FormLabel>New Password (Optional)</FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g., 5 years" {...field} />
+                            <Input type="password" placeholder="Leave blank to keep current password" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-
-                    <FormField
-                      control={form.control}
-                      name="hourlyRate"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Hourly Rate (USD)</FormLabel>
-                          <FormControl>
-                            <Input type="number" placeholder="50" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="languages"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Languages (comma-separated)</FormLabel>
-                          <FormControl>
-                            <Input placeholder="English, Spanish, French" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="location"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Location</FormLabel>
-                          <FormControl>
-                            <Input placeholder="City, Country" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name="bio"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Bio</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="Brief bio about the instructor"
-                            rows={3}
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="qualifications"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Qualifications (one per line)</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="Masters in Education&#10;TESOL Certified&#10;IELTS Band 9"
-                            rows={3}
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  )}
 
                   <div className="flex justify-end space-x-2 pt-4">
                     <Button 
                       type="button" 
                       variant="outline"
-                      onClick={() => setIsDialogOpen(false)}
+                      onClick={() => {
+                        setIsDialogOpen(false);
+                        setEditingInstructor(null);
+                        form.reset();
+                      }}
                     >
                       Cancel
                     </Button>
                     <Button 
                       type="submit"
                       disabled={createInstructorMutation.isPending}
+                      style={{ backgroundColor: COLORS.deepBlue }}
+                      className="text-white hover:opacity-90"
                     >
-                      {createInstructorMutation.isPending ? "Adding..." : "Add Instructor"}
+                      {createInstructorMutation.isPending 
+                        ? (editingInstructor ? "Updating..." : "Adding...") 
+                        : (editingInstructor ? "Update Instructor" : "Add Instructor")}
                     </Button>
                   </div>
                 </form>
@@ -428,174 +497,158 @@ export default function AdminInstructors() {
             </DialogContent>
           </Dialog>
         </div>
-      </div>
 
-      {/* Filters */}
-      <div className="mb-8">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-            <Input
-              placeholder="Search instructors..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="bg-blue-100 p-3 rounded-lg mr-4">
-                <GraduationCap className="h-6 w-6 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">
-                  {displayInstructors.length}
-                </p>
-                <p className="text-gray-600 text-sm">Total Instructors</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="bg-green-100 p-3 rounded-lg mr-4">
-                <BookOpen className="h-6 w-6 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">
-                  {displayInstructors.reduce((sum: number, instructor: any) => sum + instructor.totalCourses, 0)}
-                </p>
-                <p className="text-gray-600 text-sm">Total Courses</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="bg-purple-100 p-3 rounded-lg mr-4">
-                <Users className="h-6 w-6 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">
-                  {displayInstructors.reduce((sum: number, instructor: any) => sum + instructor.totalStudents, 0)}
-                </p>
-                <p className="text-gray-600 text-sm">Total Students</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="bg-yellow-100 p-3 rounded-lg mr-4">
-                <Star className="h-6 w-6 text-yellow-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">
-                  {(displayInstructors.reduce((sum: number, instructor: any) => sum + instructor.rating, 0) / displayInstructors.length).toFixed(1)}
-                </p>
-                <p className="text-gray-600 text-sm">Average Rating</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Instructors List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Instructors</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {displayInstructors.map((instructor: any) => (
-              <div key={instructor.id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center space-x-4">
-                  <Avatar className="h-12 w-12">
-                    <AvatarFallback>
-                      {instructor.firstName[0]}{instructor.lastName[0]}
-                    </AvatarFallback>
-                  </Avatar>
-                  
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2">
-                      <h3 className="font-semibold text-gray-900">
-                        {instructor.firstName} {instructor.lastName}
-                      </h3>
-                      <Badge variant={instructor.status === 'active' ? 'default' : 'secondary'}>
-                        {instructor.status}
-                      </Badge>
+        {/* Instructors Grid */}
+        <div className="grid grid-cols-1 gap-6">
+          {filteredInstructors.length > 0 ? (
+            filteredInstructors.map((instructor: any) => (
+              <Card 
+                key={instructor.id}
+                className="hover:shadow-xl transition-all duration-300 border-l-4"
+                style={{ borderLeftColor: instructor.isActive ? COLORS.deepBlue : COLORS.darkGrey }}
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start space-x-4 flex-1">
+                      {/* Avatar */}
+                      <Avatar className="h-16 w-16">
+                        <AvatarFallback 
+                          className="text-lg font-bold text-white"
+                          style={{ backgroundColor: COLORS.deepBlue }}
+                        >
+                          {instructor.firstName[0]}{instructor.lastName[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      
+                      <div className="flex-1">
+                        {/* Instructor Header */}
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <div className="flex items-center gap-3 mb-2">
+                              <h3 
+                                className="text-2xl font-bold"
+                                style={{ color: COLORS.deepBlue }}
+                              >
+                                {instructor.firstName} {instructor.lastName}
+                              </h3>
+                              <Badge 
+                                variant={instructor.isActive ? "default" : "secondary"}
+                                style={instructor.isActive ? { backgroundColor: COLORS.skyBlue } : {}}
+                              >
+                                {instructor.isActive ? 'Active' : 'Inactive'}
+                              </Badge>
+                              {instructor.role === 'admin' && (
+                                <Badge variant="outline" style={{ borderColor: COLORS.deepBlue, color: COLORS.deepBlue }}>
+                                  Admin
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
+                              <span className="flex items-center">
+                                <Mail className="h-4 w-4 mr-1" />
+                                {instructor.email}
+                              </span>
+                              {instructor.phone && (
+                                <span className="flex items-center">
+                                  <Phone className="h-4 w-4 mr-1" />
+                                  {instructor.phone}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Instructor Stats Grid */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 rounded-lg"
+                             style={{ backgroundColor: COLORS.offWhite }}>
+                          <div>
+                            <span className="text-xs text-gray-500 block mb-1">Courses</span>
+                            <p className="font-bold text-lg flex items-center" style={{ color: COLORS.deepBlue }}>
+                              <BookOpen className="h-4 w-4 mr-1" />
+                              {instructor.totalCourses}
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-xs text-gray-500 block mb-1">Students</span>
+                            <p className="font-bold text-lg flex items-center" style={{ color: COLORS.skyBlue }}>
+                              <Users className="h-4 w-4 mr-1" />
+                              {instructor.totalStudents}
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-xs text-gray-500 block mb-1">Enrollments</span>
+                            <p className="font-bold text-lg flex items-center" style={{ color: COLORS.midBlue }}>
+                              <TrendingUp className="h-4 w-4 mr-1" />
+                              {instructor.totalEnrollments}
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-xs text-gray-500 block mb-1">Rating</span>
+                            <div className="flex items-center">
+                              <Star className="h-4 w-4 mr-1 fill-yellow-400 text-yellow-400" />
+                              <span className="font-bold text-lg">
+                                {instructor.rating > 0 ? instructor.rating.toFixed(1) : 'N/A'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                     
-                    <div className="flex items-center space-x-4 mt-1 text-sm text-gray-600">
-                      <span className="flex items-center">
-                        <Mail className="h-4 w-4 mr-1" />
-                        {instructor.email}
-                      </span>
-                      <span className="flex items-center">
-                        <GraduationCap className="h-4 w-4 mr-1" />
-                        {instructor.specialization}
-                      </span>
-                      <span className="flex items-center">
-                        <Star className="h-4 w-4 mr-1" />
-                        {instructor.rating}
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
-                      <span>{instructor.totalCourses} courses</span>
-                      <span>{instructor.totalStudents} students</span>
-                      <span>${instructor.hourlyRate}/hour</span>
-                      <span className="flex items-center">
-                        <MapPin className="h-4 w-4 mr-1" />
-                        {instructor.location}
-                      </span>
+                    {/* Action Buttons */}
+                    <div className="flex flex-col space-y-2 ml-4">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleEditInstructor(instructor)}
+                        className="border-2"
+                        style={{ borderColor: COLORS.deepBlue, color: COLORS.deepBlue }}
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        Details
+                      </Button>
                     </div>
                   </div>
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <Button variant="outline" size="sm">
-                    <Eye className="h-4 w-4 mr-2" />
-                    View
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Schedule
-                  </Button>
-                </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <div className="text-center py-16">
+              <div 
+                className="w-24 h-24 rounded-full mx-auto mb-6 flex items-center justify-center"
+                style={{ backgroundColor: COLORS.offWhite }}
+              >
+                <GraduationCap className="h-12 w-12" style={{ color: COLORS.deepBlue }} />
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              <h3 className="text-2xl font-bold mb-2" style={{ color: COLORS.deepBlue }}>
+                No instructors found
+              </h3>
+              <p className="text-gray-600 mb-6">
+                {search
+                  ? "Try adjusting your search criteria"
+                  : "Add your first instructor to get started"}
+              </p>
+              {!search && (
+                <Button 
+                  onClick={() => setIsDialogOpen(true)}
+                  style={{ backgroundColor: COLORS.deepBlue }}
+                  className="text-white hover:opacity-90"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add First Instructor
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
     </AdminLayout>
   );
 }

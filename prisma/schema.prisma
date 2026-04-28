@@ -194,18 +194,123 @@ model EventRegistration {
 }
 
 model Branch {
-  id       Int     @id @default(autoincrement())
-  name     String  @db.VarChar(100)
-  address  String  @db.Text
-  city     String  @db.VarChar(50)
-  country  String  @db.VarChar(50)
-  phone    String? @db.VarChar(20)
-  email    String? @db.VarChar(100)
-  hours    String? @db.VarChar(100)
-  isMain   Boolean @default(false) @map("is_main")
-  isActive Boolean @default(true) @map("is_active")
+  id                Int      @id @default(autoincrement())
+  name              String   @db.VarChar(100)
+  code              String   @unique @db.VarChar(20)
+  description       String?  @db.Text
+  address           String   @db.Text
+  city              String   @db.VarChar(50)
+  state             String?  @db.VarChar(50)
+  zipCode           String?  @map("zip_code") @db.VarChar(20)
+  country           String   @db.VarChar(50)
+  phone             String?  @db.VarChar(20)
+  email             String?  @db.VarChar(100)
+  managerName       String?  @map("manager_name") @db.VarChar(100)
+  managerPhone      String?  @map("manager_phone") @db.VarChar(20)
+  managerEmail      String?  @map("manager_email") @db.VarChar(100)
+  establishedDate   DateTime? @map("established_date")
+  totalStudents     Int      @default(0) @map("total_students")
+  totalCourses      Int      @default(0) @map("total_courses")
+  totalInstructors  Int      @default(0) @map("total_instructors")
+  monthlyRevenue    Int      @default(0) @map("monthly_revenue")
+  hours             String?  @db.VarChar(100)
+  isMain            Boolean  @default(false) @map("is_main")
+  isActive          Boolean  @default(true) @map("is_active")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@map("branches")
+}
+
+model ContentItem {
+  id            Int      @id @default(autoincrement())
+  title         String   @db.VarChar(200)
+  description   String   @db.Text
+  type          String   @db.VarChar(20)
+  fileName      String   @map("file_name") @db.VarChar(255)
+  fileSize      Int      @map("file_size")
+  mimeType      String   @map("mime_type") @db.VarChar(100)
+  duration      Int?
+  courseId      Int?     @map("course_id")
+  courseName    String?  @map("course_name") @db.VarChar(200)
+  moduleId      Int?     @map("module_id")
+  moduleName    String?  @map("module_name") @db.VarChar(200)
+  isPublic      Boolean  @default(false) @map("is_public")
+  isActive      Boolean  @default(true) @map("is_active")
+  downloadCount Int      @default(0) @map("download_count")
+  viewCount     Int      @default(0) @map("view_count")
+  uploadedBy    String   @map("uploaded_by") @db.VarChar(200)
+  uploadedAt    DateTime @default(now()) @map("uploaded_at")
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
+  tags          Json
+  url           String   @db.Text
+  thumbnailUrl  String?  @map("thumbnail_url") @db.Text
+
+  @@map("content_items")
+}
+
+model Payment {
+  id                  Int      @id @default(autoincrement())
+  transactionId       String   @unique @map("transaction_id") @db.VarChar(100)
+  studentId           Int      @map("student_id")
+  studentName         String   @map("student_name") @db.VarChar(200)
+  studentEmail        String   @map("student_email") @db.VarChar(255)
+  courseId            Int      @map("course_id")
+  courseName          String   @map("course_name") @db.VarChar(200)
+  amount              Int
+  currency            String   @db.VarChar(10)
+  paymentMethod       String   @map("payment_method") @db.VarChar(50)
+  status              String   @db.VarChar(20)
+  paymentDate         DateTime @map("payment_date")
+  dueDate             DateTime @map("due_date")
+  description         String   @db.Text
+  gatewayTransactionId String?  @map("gateway_transaction_id") @db.VarChar(200)
+  paymentGateway      String   @map("payment_gateway") @db.VarChar(50)
+  refundAmount        Int?     @map("refund_amount")
+  refundDate          DateTime? @map("refund_date")
+  refundReason        String?  @map("refund_reason") @db.Text
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("payments")
+}
+
+model Backup {
+  id            Int      @id @default(autoincrement())
+  name          String   @db.VarChar(200)
+  type          String   @db.VarChar(20)
+  status        String   @db.VarChar(20)
+  size          Int
+  createdAt     DateTime @default(now()) @map("created_at")
+  completedAt   DateTime? @map("completed_at")
+  duration      Int?
+  progress      Int?
+  includes      Json
+  location      String   @db.Text
+  checksum      String   @db.VarChar(255)
+  isEncrypted   Boolean  @default(true) @map("is_encrypted")
+  retentionDays Int      @map("retention_days")
+  note          String?  @db.Text
+
+  @@map("backups")
+}
+
+model BackupSchedule {
+  id            Int      @id @default(autoincrement())
+  name          String   @db.VarChar(200)
+  type          String   @db.VarChar(20)
+  frequency     String   @db.VarChar(20)
+  time          String   @db.VarChar(10)
+  isEnabled     Boolean  @default(true) @map("is_enabled")
+  includes      Json
+  location      String   @db.Text
+  retentionDays Int      @map("retention_days")
+  isEncrypted   Boolean  @default(true) @map("is_encrypted")
+  lastRun       DateTime? @map("last_run")
+  nextRun       DateTime @map("next_run")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("backup_schedules")
 }
 
 model Lead {

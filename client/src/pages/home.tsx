@@ -108,7 +108,7 @@ export default function Home() {
       icon: ClipboardCheck,
       title: "Test Preparation",
       description: "IELTS, TOEFL, SAT, GRE, GMAT preparation with expert guidance",
-      features: ["Personal mentoring", "Practice tests", "Score guarantee"],
+      features: ["Personal ECL Globaling", "Practice tests", "Score guarantee"],
       color: "from-blue-500 to-blue-600"
     },
     {
@@ -349,7 +349,7 @@ export default function Home() {
                 Your Success is Our Mission
               </h2>
               <p className="text-xl text-gray-600 mb-8">
-                We combine cutting-edge technology with personalized mentoring to deliver exceptional results for every student.
+                We combine cutting-edge technology with personalized ECL Globaling to deliver exceptional results for every student.
               </p>
               
               <div className="space-y-6">

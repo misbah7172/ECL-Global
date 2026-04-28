@@ -134,7 +134,7 @@ export default function AdminLeads() {
       source: "Google Ads",
       createdAt: "2024-01-14T14:20:00Z",
       updatedAt: "2024-01-15T09:15:00Z",
-      assignedTo: "John Doe",
+      assignedTo: "Patel Khan",
       notes: [
         { text: "Called and discussed course options", date: "2024-01-15T09:15:00Z" }
       ]
@@ -169,7 +169,7 @@ export default function AdminLeads() {
       source: "Referral",
       createdAt: "2024-01-12T09:00:00Z",
       updatedAt: "2024-01-13T15:20:00Z",
-      assignedTo: "John Doe",
+      assignedTo: "Patel Khan",
       notes: [
         { text: "Enrolled in TOEFL Intensive course", date: "2024-01-13T15:20:00Z" }
       ]

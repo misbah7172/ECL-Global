@@ -28,7 +28,7 @@ export default function Branches() {
       address: "Manhattan, NY 10001",
       country: "USA",
       phone: "+1 (555) 123-4567",
-      email: "usa@mentors.com.bd"
+      email: "usa@ECL Globals.com.bd"
     },
     {
       id: 2,
@@ -36,7 +36,7 @@ export default function Branches() {
       address: "Sydney, NSW 2000",
       country: "Australia",
       phone: "+61 2 1234 5678",
-      email: "australia@mentors.com.bd"
+      email: "australia@ECL Globals.com.bd"
     }
   ];
 

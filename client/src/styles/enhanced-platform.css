@@ -2,15 +2,15 @@
 
 /* Custom Color Palette for Educational Platform */
 :root {
-  --mentor-primary: #2563eb;
-  --mentor-secondary: #7c3aed;
-  --mentor-accent: #f59e0b;
-  --mentor-success: #10b981;
-  --mentor-warning: #f97316;
-  --mentor-error: #ef4444;
-  --mentor-neutral: #6b7280;
-  --mentor-bg-primary: #f8fafc;
-  --mentor-bg-secondary: #f1f5f9;
+  --ECL Global-primary: #2563eb;
+  --ECL Global-secondary: #7c3aed;
+  --ECL Global-accent: #f59e0b;
+  --ECL Global-success: #10b981;
+  --ECL Global-warning: #f97316;
+  --ECL Global-error: #ef4444;
+  --ECL Global-neutral: #6b7280;
+  --ECL Global-bg-primary: #f8fafc;
+  --ECL Global-bg-secondary: #f1f5f9;
 }
 
 /* Enhanced Hero Section with Particles Effect */
@@ -73,7 +73,7 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, var(--mentor-primary), var(--mentor-secondary));
+  background: linear-gradient(90deg, var(--ECL Global-primary), var(--ECL Global-secondary));
   transform: scaleX(0);
   transition: transform 0.3s ease;
 }
@@ -85,7 +85,7 @@
 .service-card:hover {
   transform: translateY(-10px);
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  border-color: var(--mentor-primary);
+  border-color: var(--ECL Global-primary);
 }
 
 /* Success Story Cards with Modern Design */
@@ -118,7 +118,7 @@
 
 /* Enhanced Button Styles */
 .btn-primary-modern {
-  background: linear-gradient(135deg, var(--mentor-primary) 0%, var(--mentor-secondary) 100%);
+  background: linear-gradient(135deg, var(--ECL Global-primary) 0%, var(--ECL Global-secondary) 100%);
   border: none;
   color: white;
   padding: 0.75rem 2rem;
@@ -159,7 +159,7 @@
 }
 
 .progress-fill {
-  background: linear-gradient(90deg, var(--mentor-primary), var(--mentor-secondary));
+  background: linear-gradient(90deg, var(--ECL Global-primary), var(--ECL Global-secondary));
   height: 100%;
   border-radius: 10px;
   position: relative;
@@ -192,7 +192,7 @@
 
 .nav-link {
   position: relative;
-  color: var(--mentor-neutral);
+  color: var(--ECL Global-neutral);
   transition: all 0.3s ease;
   padding: 0.5rem 1rem;
   border-radius: 8px;
@@ -205,7 +205,7 @@
   left: 50%;
   width: 0;
   height: 2px;
-  background: var(--mentor-primary);
+  background: var(--ECL Global-primary);
   transition: all 0.3s ease;
   transform: translateX(-50%);
 }
@@ -216,7 +216,7 @@
 }
 
 .nav-link:hover {
-  color: var(--mentor-primary);
+  color: var(--ECL Global-primary);
   background: rgba(37, 99, 235, 0.05);
 }
 
@@ -239,7 +239,7 @@
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, var(--mentor-accent), var(--mentor-success));
+  background: linear-gradient(90deg, var(--ECL Global-accent), var(--ECL Global-success));
   transform: scaleX(0);
   transition: transform 0.3s ease;
 }
@@ -251,7 +251,7 @@
 .stat-number {
   font-size: 3rem;
   font-weight: 800;
-  background: linear-gradient(135deg, var(--mentor-primary), var(--mentor-secondary));
+  background: linear-gradient(135deg, var(--ECL Global-primary), var(--ECL Global-secondary));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -740,7 +740,7 @@
 
 /* Accessibility Improvements */
 .focus-visible {
-  outline: 2px solid var(--mentor-primary);
+  outline: 2px solid var(--ECL Global-primary);
   outline-offset: 2px;
 }
 

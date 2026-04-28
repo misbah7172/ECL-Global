@@ -55,8 +55,8 @@ const fetchAdminProfile = async (): Promise<AdminProfile> => {
     setTimeout(() => {
       resolve({
         id: "admin-001",
-        name: "John Administrator",
-        email: "admin@mentors.com",
+        name: "Patel Administrator",
+        email: "admin@ECL Globals.com",
         phone: "+1234567890",
         role: "Super Admin",
         department: "Administration",
@@ -115,8 +115,8 @@ const updateAdminProfile = async (profile: Partial<AdminProfile>): Promise<Admin
     setTimeout(() => {
       resolve({
         id: "admin-001",
-        name: profile.name || "John Administrator",
-        email: profile.email || "admin@mentors.com",
+        name: profile.name || "Patel Administrator",
+        email: profile.email || "admin@ECL Globals.com",
         phone: profile.phone || "+1234567890",
         role: "Super Admin",
         department: "Administration",

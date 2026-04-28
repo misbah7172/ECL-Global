@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { Plus, Pencil, Trash2, Search, Filter, FileVideo, Play, Download, Eye, Upload, File, Video, Image, FileText, Music, Archive } from "lucide-react";
 
 interface ContentItem {
@@ -84,98 +85,37 @@ export default function AdminContentLibrary() {
   const { data: contentItems, isLoading } = useQuery({
     queryKey: ['/api/admin/content'],
     queryFn: async () => {
-      // Mock data - in real app, this would fetch from API
-      const mockData: ContentItem[] = [
-        {
-          id: 1,
-          title: "Introduction to JavaScript",
-          description: "A comprehensive introduction to JavaScript programming language",
-          type: 'video',
-          fileName: "javascript-intro.mp4",
-          fileSize: 157286400, // 150MB
-          mimeType: "video/mp4",
-          duration: 1800, // 30 minutes
-          courseId: 1,
-          courseName: "Full Stack Web Development",
-          moduleId: 1,
-          moduleName: "JavaScript Fundamentals",
-          isPublic: true,
-          isActive: true,
-          downloadCount: 45,
-          viewCount: 234,
-          uploadedBy: "Sarah Johnson",
-          uploadedAt: "2024-01-10T10:00:00Z",
-          updatedAt: "2024-01-15T14:30:00Z",
-          tags: ["javascript", "programming", "web-development"],
-          url: "/content/videos/javascript-intro.mp4",
-          thumbnailUrl: "/content/thumbnails/javascript-intro.jpg",
-        },
-        {
-          id: 2,
-          title: "React Components Guide",
-          description: "Complete guide to building React components with examples",
-          type: 'document',
-          fileName: "react-components-guide.pdf",
-          fileSize: 5242880, // 5MB
-          mimeType: "application/pdf",
-          courseId: 1,
-          courseName: "Full Stack Web Development",
-          moduleId: 2,
-          moduleName: "React Framework",
-          isPublic: false,
-          isActive: true,
-          downloadCount: 78,
-          viewCount: 156,
-          uploadedBy: "Sarah Johnson",
-          uploadedAt: "2024-01-12T09:30:00Z",
-          updatedAt: "2024-01-18T11:45:00Z",
-          tags: ["react", "components", "javascript", "guide"],
-          url: "/content/documents/react-components-guide.pdf",
-        },
-        {
-          id: 3,
-          title: "Python Data Analysis Workshop",
-          description: "Hands-on workshop materials for data analysis using Python",
-          type: 'archive',
-          fileName: "python-data-analysis.zip",
-          fileSize: 104857600, // 100MB
-          mimeType: "application/zip",
-          courseId: 2,
-          courseName: "Data Science Bootcamp",
-          moduleId: 3,
-          moduleName: "Data Analysis",
-          isPublic: true,
-          isActive: true,
-          downloadCount: 123,
-          viewCount: 89,
-          uploadedBy: "Mike Chen",
-          uploadedAt: "2024-01-08T14:20:00Z",
-          updatedAt: "2024-01-20T16:00:00Z",
-          tags: ["python", "data-analysis", "workshop", "pandas"],
-          url: "/content/archives/python-data-analysis.zip",
-        },
-      ];
-      return mockData;
+      const response = await apiRequest('GET', '/api/admin/content');
+      if (!response.ok) {
+        throw new Error('Failed to load content items');
+      }
+      return response.json();
     },
   });
 
   const { data: courses } = useQuery({
     queryKey: ['/api/courses'],
     queryFn: async () => {
-      return [
-        { id: 1, name: "Full Stack Web Development" },
-        { id: 2, name: "Data Science Bootcamp" },
-        { id: 3, name: "Mobile App Development" },
-      ];
+      const response = await fetch('/api/courses');
+      if (!response.ok) {
+        throw new Error('Failed to load courses');
+      }
+      const courses = await response.json();
+      return courses.map((course: any) => ({ id: course.id, name: course.title }));
     },
   });
 
   const uploadMutation = useMutation({
-    mutationFn: async (data: FormData) => {
-      // Simulate upload progress
-      const response = await fetch('/api/admin/content/upload', {
-        method: 'POST',
-        body: data,
+    mutationFn: async (data: typeof formData) => {
+      const response = await apiRequest('POST', '/api/admin/content/upload', {
+        title: data.title,
+        description: data.description,
+        type: data.type,
+        courseId: data.courseId,
+        moduleId: data.moduleId,
+        isPublic: data.isPublic,
+        isActive: data.isActive,
+        tags: JSON.stringify(data.tags),
       });
       if (!response.ok) throw new Error('Failed to upload content');
       return response.json();
@@ -193,11 +133,7 @@ export default function AdminContentLibrary() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<ContentItem> }) => {
-      const response = await fetch(`/api/admin/content/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+      const response = await apiRequest('PUT', `/api/admin/content/${id}`, data);
       if (!response.ok) throw new Error('Failed to update content');
       return response.json();
     },
@@ -214,9 +150,7 @@ export default function AdminContentLibrary() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await fetch(`/api/admin/content/${id}`, {
-        method: 'DELETE',
-      });
+      const response = await apiRequest('DELETE', `/api/admin/content/${id}`);
       if (!response.ok) throw new Error('Failed to delete content');
       return response.json();
     },
@@ -294,18 +228,7 @@ export default function AdminContentLibrary() {
         },
       });
     } else {
-      // Handle file upload
-      const formDataObj = new FormData();
-      formDataObj.append('title', formData.title);
-      formDataObj.append('description', formData.description);
-      formDataObj.append('type', formData.type);
-      formDataObj.append('courseId', formData.courseId);
-      formDataObj.append('moduleId', formData.moduleId);
-      formDataObj.append('isPublic', formData.isPublic.toString());
-      formDataObj.append('isActive', formData.isActive.toString());
-      formDataObj.append('tags', JSON.stringify(formData.tags));
-      
-      uploadMutation.mutate(formDataObj);
+      uploadMutation.mutate(formData);
     }
   };
 

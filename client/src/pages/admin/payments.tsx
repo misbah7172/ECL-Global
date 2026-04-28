@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { Search, Filter, DollarSign, CreditCard, Download, Eye, RefreshCw, Calendar as CalendarIcon, TrendingUp, AlertCircle, CheckCircle, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -74,102 +75,17 @@ export default function AdminPayments() {
   const { data: payments, isLoading } = useQuery({
     queryKey: ['/api/admin/payments'],
     queryFn: async () => {
-      // Mock data - in real app, this would fetch from API
-      const mockData: Payment[] = [
-        {
-          id: 1,
-          transactionId: "TXN001",
-          studentId: 101,
-          studentName: "Alice Johnson",
-          studentEmail: "alice@example.com",
-          courseId: 1,
-          courseName: "Full Stack Web Development",
-          amount: 1200,
-          currency: "USD",
-          paymentMethod: 'credit_card',
-          status: 'completed',
-          paymentDate: "2024-01-15T10:30:00Z",
-          dueDate: "2024-01-10T23:59:59Z",
-          description: "Course enrollment fee",
-          gatewayTransactionId: "ch_1234567890",
-          paymentGateway: 'stripe',
-          createdAt: "2024-01-15T10:30:00Z",
-          updatedAt: "2024-01-15T10:30:00Z",
-        },
-        {
-          id: 2,
-          transactionId: "TXN002",
-          studentId: 102,
-          studentName: "Bob Smith",
-          studentEmail: "bob@example.com",
-          courseId: 2,
-          courseName: "Data Science Bootcamp",
-          amount: 1500,
-          currency: "USD",
-          paymentMethod: 'paypal',
-          status: 'pending',
-          paymentDate: "2024-01-20T14:45:00Z",
-          dueDate: "2024-01-25T23:59:59Z",
-          description: "Course enrollment fee",
-          gatewayTransactionId: "PAYID-123456",
-          paymentGateway: 'paypal',
-          createdAt: "2024-01-20T14:45:00Z",
-          updatedAt: "2024-01-20T14:45:00Z",
-        },
-        {
-          id: 3,
-          transactionId: "TXN003",
-          studentId: 103,
-          studentName: "Charlie Brown",
-          studentEmail: "charlie@example.com",
-          courseId: 3,
-          courseName: "Mobile App Development",
-          amount: 1000,
-          currency: "USD",
-          paymentMethod: 'bank_transfer',
-          status: 'failed',
-          paymentDate: "2024-01-18T09:15:00Z",
-          dueDate: "2024-01-15T23:59:59Z",
-          description: "Course enrollment fee",
-          paymentGateway: 'manual',
-          createdAt: "2024-01-18T09:15:00Z",
-          updatedAt: "2024-01-18T09:15:00Z",
-        },
-        {
-          id: 4,
-          transactionId: "TXN004",
-          studentId: 104,
-          studentName: "Diana Prince",
-          studentEmail: "diana@example.com",
-          courseId: 1,
-          courseName: "Full Stack Web Development",
-          amount: 1200,
-          currency: "USD",
-          paymentMethod: 'credit_card',
-          status: 'refunded',
-          paymentDate: "2024-01-12T16:20:00Z",
-          dueDate: "2024-01-08T23:59:59Z",
-          description: "Course enrollment fee",
-          gatewayTransactionId: "ch_9876543210",
-          paymentGateway: 'stripe',
-          refundAmount: 1200,
-          refundDate: "2024-01-22T11:30:00Z",
-          refundReason: "Course cancellation requested by student",
-          createdAt: "2024-01-12T16:20:00Z",
-          updatedAt: "2024-01-22T11:30:00Z",
-        },
-      ];
-      return mockData;
+      const response = await apiRequest('GET', '/api/admin/payments');
+      if (!response.ok) {
+        throw new Error('Failed to load payments');
+      }
+      return response.json();
     },
   });
 
   const refundMutation = useMutation({
     mutationFn: async ({ id, amount, reason }: { id: number; amount: number; reason: string }) => {
-      const response = await fetch(`/api/admin/payments/${id}/refund`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount, reason }),
-      });
+      const response = await apiRequest('POST', `/api/admin/payments/${id}/refund`, { amount, reason });
       if (!response.ok) throw new Error('Failed to process refund');
       return response.json();
     },
@@ -187,9 +103,7 @@ export default function AdminPayments() {
 
   const retryPaymentMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await fetch(`/api/admin/payments/${id}/retry`, {
-        method: 'POST',
-      });
+      const response = await apiRequest('POST', `/api/admin/payments/${id}/retry`);
       if (!response.ok) throw new Error('Failed to retry payment');
       return response.json();
     },
@@ -236,15 +150,33 @@ export default function AdminPayments() {
     value: count,
   }));
 
-  // Revenue trend (mock data)
-  const revenueTrend = [
-    { month: 'Jan', revenue: 45000, transactions: 38 },
-    { month: 'Feb', revenue: 52000, transactions: 45 },
-    { month: 'Mar', revenue: 48000, transactions: 42 },
-    { month: 'Apr', revenue: 58000, transactions: 52 },
-    { month: 'May', revenue: 65000, transactions: 58 },
-    { month: 'Jun', revenue: 72000, transactions: 65 },
-  ];
+  const revenueTrend = (() => {
+    const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthlyStats = new Map<string, { revenue: number; transactions: number }>();
+
+    (payments || []).forEach((payment) => {
+      if (payment.status !== 'completed') {
+        return;
+      }
+      const date = new Date(payment.paymentDate);
+      const key = `${date.getFullYear()}-${date.getMonth()}`;
+      const current = monthlyStats.get(key) || { revenue: 0, transactions: 0 };
+      current.revenue += payment.amount;
+      current.transactions += 1;
+      monthlyStats.set(key, current);
+    });
+
+    const sortedKeys = Array.from(monthlyStats.keys()).sort();
+    return sortedKeys.slice(-6).map((key) => {
+      const [year, monthIndex] = key.split('-').map(Number);
+      const stats = monthlyStats.get(key)!;
+      return {
+        month: `${monthLabels[monthIndex]} ${String(year).slice(2)}`,
+        revenue: stats.revenue,
+        transactions: stats.transactions,
+      };
+    });
+  })();
 
   const handleRefund = (payment: Payment) => {
     setSelectedPayment(payment);

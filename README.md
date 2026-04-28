@@ -34,7 +34,7 @@ ECL Global is a comprehensive educational consultancy platform designed to help 
 1. **Clone the repository**
    ```bash
    git clone <your-repo-url>
-   cd Mentor
+   cd ECL Global
    ```
 
 2. **Install dependencies**
@@ -67,19 +67,6 @@ ECL Global is a comprehensive educational consultancy platform designed to help 
 
 6. **Access the application**
    - Open http://localhost:5000
-
-## Deployment
-
-### Deploy to Render
-
-See [RENDER_DEPLOYMENT.md](./RENDER_DEPLOYMENT.md) for detailed deployment instructions.
-
-**Quick Deploy:**
-1. Push your code to GitHub
-2. Connect repository to Render
-3. Render will auto-detect `render.yaml`
-4. Configure Stripe environment variables
-5. Deploy!
 
 ## Project Structure
 

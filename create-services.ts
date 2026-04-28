@@ -170,14 +170,14 @@ async function createStudyAbroadServices() {
           'Academic pathway mapping',
           'Skills gap identification',
           'Action plan development',
-          'Ongoing mentorship'
+          'Ongoing ECL Globalship'
         ],
         benefits: [
           'Clear career direction',
           'Industry-specific guidance',
           'Academic pathway clarity',
           'Professional networking',
-          'Long-term mentorship'
+          'Long-term ECL Globalship'
         ],
         isActive: true,
         isFeatured: false,

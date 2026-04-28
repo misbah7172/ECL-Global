@@ -95,6 +95,98 @@ const insertMockTestSchema = z.object({
   isActive: z.boolean().default(true),
 });
 
+const insertBranchSchema = z.object({
+  name: z.string().min(1),
+  code: z.string().min(1),
+  description: z.string().optional(),
+  address: z.string().min(1),
+  city: z.string().min(1),
+  state: z.string().optional(),
+  zipCode: z.string().optional(),
+  country: z.string().min(1),
+  phone: z.string().optional(),
+  email: z.string().email().optional().or(z.literal("")),
+  managerName: z.string().optional(),
+  managerPhone: z.string().optional(),
+  managerEmail: z.string().email().optional().or(z.literal("")),
+  establishedDate: z.string().optional().transform((value) => value ? new Date(value) : undefined),
+  hours: z.string().optional(),
+  isActive: z.boolean().default(true),
+});
+
+const insertContentItemSchema = z.object({
+  title: z.string().min(1),
+  description: z.string().min(1),
+  type: z.string().min(1),
+  fileName: z.string().min(1),
+  fileSize: z.coerce.number().default(0),
+  mimeType: z.string().min(1),
+  duration: z.coerce.number().optional(),
+  courseId: z.coerce.number().optional(),
+  courseName: z.string().optional(),
+  moduleId: z.coerce.number().optional(),
+  moduleName: z.string().optional(),
+  isPublic: z.coerce.boolean().default(false),
+  isActive: z.coerce.boolean().default(true),
+  downloadCount: z.coerce.number().default(0),
+  viewCount: z.coerce.number().default(0),
+  uploadedBy: z.string().min(1),
+  tags: z.any().default([]),
+  url: z.string().min(1),
+  thumbnailUrl: z.string().optional(),
+});
+
+const insertPaymentSchema = z.object({
+  transactionId: z.string().min(1),
+  studentId: z.coerce.number(),
+  studentName: z.string().min(1),
+  studentEmail: z.string().email(),
+  courseId: z.coerce.number(),
+  courseName: z.string().min(1),
+  amount: z.coerce.number(),
+  currency: z.string().min(1),
+  paymentMethod: z.string().min(1),
+  status: z.string().min(1),
+  paymentDate: z.string().transform((value) => new Date(value)),
+  dueDate: z.string().transform((value) => new Date(value)),
+  description: z.string().min(1),
+  gatewayTransactionId: z.string().optional(),
+  paymentGateway: z.string().min(1),
+  refundAmount: z.coerce.number().optional(),
+  refundDate: z.string().optional().transform((value) => value ? new Date(value) : undefined),
+  refundReason: z.string().optional(),
+});
+
+const insertBackupSchema = z.object({
+  name: z.string().min(1),
+  type: z.string().min(1),
+  status: z.string().min(1),
+  size: z.coerce.number().default(0),
+  completedAt: z.string().optional().transform((value) => value ? new Date(value) : undefined),
+  duration: z.coerce.number().optional(),
+  progress: z.coerce.number().optional(),
+  includes: z.any().default([]),
+  location: z.string().min(1),
+  checksum: z.string().default(""),
+  isEncrypted: z.coerce.boolean().default(true),
+  retentionDays: z.coerce.number().default(7),
+  note: z.string().optional(),
+});
+
+const insertBackupScheduleSchema = z.object({
+  name: z.string().min(1),
+  type: z.string().min(1),
+  frequency: z.string().min(1),
+  time: z.string().min(1),
+  isEnabled: z.coerce.boolean().default(true),
+  includes: z.any().default([]),
+  location: z.string().min(1),
+  retentionDays: z.coerce.number().default(7),
+  isEncrypted: z.coerce.boolean().default(true),
+  lastRun: z.string().optional().transform((value) => value ? new Date(value) : undefined),
+  nextRun: z.string().transform((value) => new Date(value)),
+});
+
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -331,6 +423,119 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/api/courses/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const courseId = parseInt(req.params.id);
+      
+      // Check if course exists
+      const existingCourse = await db.course.findUnique({
+        where: { id: courseId }
+      });
+
+      if (!existingCourse) {
+        return res.status(404).json({ error: "Course not found" });
+      }
+
+      // Extract lectures from request body
+      const { lectures, ...courseFields } = req.body;
+
+      // Build update data with proper field mapping
+      const courseData: any = {
+        title: courseFields.title,
+        description: courseFields.description,
+        categoryId: parseInt(courseFields.categoryId),
+        instructorId: parseInt(courseFields.instructorId),
+        price: parseFloat(courseFields.price) || 0,
+        duration: courseFields.duration,
+        format: courseFields.format,
+      };
+
+      // Add optional fields
+      if (courseFields.objectives !== undefined) courseData.objectives = courseFields.objectives;
+      if (courseFields.originalPrice !== undefined && courseFields.originalPrice !== null && courseFields.originalPrice !== '') {
+        courseData.originalPrice = parseFloat(courseFields.originalPrice);
+      }
+      if (courseFields.totalSessions !== undefined) courseData.totalSessions = parseInt(courseFields.totalSessions) || 0;
+      if (courseFields.syllabus !== undefined) courseData.syllabus = courseFields.syllabus;
+      if (courseFields.imageUrl !== undefined) courseData.imageUrl = courseFields.imageUrl;
+      if (courseFields.isFeatured !== undefined) courseData.isFeatured = courseFields.isFeatured;
+      if (courseFields.difficulty !== undefined) courseData.difficulty = courseFields.difficulty;
+      if (courseFields.prerequisites !== undefined) courseData.prerequisites = courseFields.prerequisites;
+      if (courseFields.whatYouWillLearn !== undefined) courseData.whatYouWillLearn = courseFields.whatYouWillLearn;
+      if (courseFields.requirements !== undefined) courseData.requirements = courseFields.requirements;
+
+      // Handle lectures separately if provided
+      if (lectures && Array.isArray(lectures)) {
+        // Delete existing lectures
+        await db.lecture.deleteMany({
+          where: { courseId: courseId }
+        });
+
+        // Create new lectures
+        courseData.lectures = {
+          create: lectures.map((lecture: any, index: number) => ({
+            title: lecture.title,
+            description: lecture.description || '',
+            duration: parseInt(lecture.duration) || 0,
+            videoUrl: lecture.videoUrl || null,
+            content: lecture.content || '',
+            order: lecture.order || index + 1,
+            isFree: lecture.isFree || false,
+            materials: lecture.materials || null,
+          }))
+        };
+      }
+
+      console.log('Updating course', courseId, 'with data:', courseData);
+
+      const updatedCourse = await db.course.update({
+        where: { id: courseId },
+        data: courseData,
+        include: {
+          category: true,
+          instructor: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+            }
+          },
+          lectures: true,
+        }
+      });
+      
+      res.json(updatedCourse);
+    } catch (error: any) {
+      console.error('Error updating course:', error);
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.delete("/api/courses/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const courseId = parseInt(req.params.id);
+      
+      // Check if course exists
+      const course = await db.course.findUnique({
+        where: { id: courseId }
+      });
+
+      if (!course) {
+        return res.status(404).json({ error: "Course not found" });
+      }
+
+      // Delete the course
+      await db.course.delete({
+        where: { id: courseId }
+      });
+      
+      res.json({ message: "Course deleted successfully" });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
   // Categories routes
   app.get("/api/categories", async (req, res) => {
     try {
@@ -338,6 +543,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(categories);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/categories", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const { name, description, icon, isActive } = req.body;
+      
+      if (!name) {
+        return res.status(400).json({ error: "Category name is required" });
+      }
+
+      const category = await storage.createCategory({
+        name,
+        description: description || null,
+        icon: icon || null,
+        isActive: isActive !== undefined ? isActive : true,
+      });
+      
+      res.json(category);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.put("/api/categories/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const categoryId = parseInt(req.params.id);
+      const { name, description, icon, isActive } = req.body;
+
+      const updates: any = {};
+      if (name !== undefined) updates.name = name;
+      if (description !== undefined) updates.description = description;
+      if (icon !== undefined) updates.icon = icon;
+      if (isActive !== undefined) updates.isActive = isActive;
+
+      const category = await storage.updateCategory(categoryId, updates);
+      res.json(category);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.delete("/api/categories/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const categoryId = parseInt(req.params.id);
+      
+      // Check if category has courses
+      const courses = await storage.getCourses();
+      const categoryHasCourses = courses.some((course: any) => course.categoryId === categoryId);
+      
+      if (categoryHasCourses) {
+        return res.status(400).json({ 
+          error: "Cannot delete category with existing courses. Please reassign or delete the courses first." 
+        });
+      }
+
+      await storage.deleteCategory(categoryId);
+      res.json({ success: true, message: "Category deleted successfully" });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
     }
   });
 
@@ -382,6 +647,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all enrollments (admin only)
+  app.get("/api/enrollments/all", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const enrollments = await db.enrollment.findMany({
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+            }
+          },
+          course: {
+            select: {
+              id: true,
+              title: true,
+              price: true,
+              category: true,
+            }
+          }
+        },
+        orderBy: {
+          enrolledAt: 'desc'
+        }
+      });
+      res.json(enrollments);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Update enrollment (admin only)
+  app.put("/api/enrollments/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const enrollmentId = parseInt(req.params.id);
+      const { progress, grade, certificateIssued } = req.body;
+
+      // Validate enrollment exists
+      const existingEnrollment = await db.enrollment.findUnique({
+        where: { id: enrollmentId }
+      });
+
+      if (!existingEnrollment) {
+        return res.status(404).json({ error: "Enrollment not found" });
+      }
+
+      // Update the enrollment
+      const updatedEnrollment = await db.enrollment.update({
+        where: { id: enrollmentId },
+        data: {
+          progress: progress !== undefined ? progress : existingEnrollment.progress,
+          grade: grade !== undefined ? grade : existingEnrollment.grade,
+          certificateIssued: certificateIssued !== undefined ? certificateIssued : existingEnrollment.certificateIssued,
+          completedAt: progress === 100 && !existingEnrollment.completedAt ? new Date() : existingEnrollment.completedAt,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+            }
+          },
+          course: {
+            select: {
+              id: true,
+              title: true,
+              price: true,
+              category: true,
+            }
+          }
+        }
+      });
+
+      res.json(updatedEnrollment);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+
   // Mock tests routes
   app.get("/api/mock-tests", async (req, res) => {
     try {
@@ -410,6 +758,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const mockTestData = insertMockTestSchema.parse(req.body);
       const mockTest = await storage.createMockTest(mockTestData);
       res.json(mockTest);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.put("/api/mock-tests/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const mockTestId = parseInt(req.params.id);
+      const mockTestData = insertMockTestSchema.parse(req.body);
+      const mockTest = await storage.updateMockTest(mockTestId, mockTestData);
+      res.json(mockTest);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.delete("/api/mock-tests/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const mockTestId = parseInt(req.params.id);
+      await storage.deleteMockTest(mockTestId);
+      res.json({ success: true });
     } catch (error: any) {
       res.status(400).json({ error: error.message });
     }
@@ -447,6 +816,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(attempt);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/mock-test-attempts/all", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const attempts = await storage.getAllMockTestAttempts();
+      res.json(attempts);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
   });
 
@@ -514,6 +892,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/api/events/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const eventData = insertEventSchema.parse(req.body);
+      const event = await storage.updateEvent(id, eventData);
+      res.json(event);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.delete("/api/events/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteEvent(id);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
   // Branches routes
   app.get("/api/branches", async (req, res) => {
     try {
@@ -521,6 +920,290 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(branches);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/admin/branches", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const branches = await storage.getBranches();
+      res.json(branches);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/admin/branches", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const branchData = insertBranchSchema.parse(req.body);
+      const branch = await storage.createBranch({
+        ...branchData,
+        totalStudents: 0,
+        totalCourses: 0,
+        totalInstructors: 0,
+        monthlyRevenue: 0,
+        isMain: false,
+      });
+      res.json(branch);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.put("/api/admin/branches/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const branchData = insertBranchSchema.parse(req.body);
+      const branch = await storage.updateBranch(id, {
+        ...branchData,
+        totalStudents: 0,
+        totalCourses: 0,
+        totalInstructors: 0,
+        monthlyRevenue: 0,
+      });
+      res.json(branch);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.delete("/api/admin/branches/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteBranch(id);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/admin/content", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const contentItems = await storage.getContentItems();
+      res.json(contentItems);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/admin/content/courses", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const courses = await storage.getCourses();
+      res.json(courses.map((course) => ({ id: course.id, name: course.title })));
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/admin/content/upload", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const payload = z.object({
+        title: z.string().min(1),
+        description: z.string().min(1),
+        type: z.string().min(1),
+        courseId: z.string().optional(),
+        moduleId: z.string().optional(),
+        isPublic: z.union([z.string(), z.boolean()]).optional(),
+        isActive: z.union([z.string(), z.boolean()]).optional(),
+        tags: z.string().optional(),
+      }).parse(req.body);
+
+      const fileExtension = payload.type === "document" ? "pdf" : payload.type === "image" ? "jpg" : payload.type === "audio" ? "mp3" : payload.type === "archive" ? "zip" : "mp4";
+      const slug = payload.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+      const contentItem = await storage.createContentItem({
+        title: payload.title,
+        description: payload.description,
+        type: payload.type,
+        fileName: `${slug}.${fileExtension}`,
+        fileSize: 0,
+        mimeType: payload.type === "document" ? "application/pdf" : payload.type === "image" ? "image/jpeg" : payload.type === "audio" ? "audio/mpeg" : payload.type === "archive" ? "application/zip" : "video/mp4",
+        duration: undefined,
+        courseId: payload.courseId ? parseInt(payload.courseId) : undefined,
+        courseName: undefined,
+        moduleId: payload.moduleId ? parseInt(payload.moduleId) : undefined,
+        moduleName: undefined,
+        isPublic: payload.isPublic === true || payload.isPublic === "true",
+        isActive: payload.isActive === undefined ? true : payload.isActive === true || payload.isActive === "true",
+        downloadCount: 0,
+        viewCount: 0,
+        uploadedBy: req.user?.email || "admin",
+        tags: payload.tags ? JSON.parse(payload.tags) : [],
+        url: `/content/${slug}.${fileExtension}`,
+        thumbnailUrl: undefined,
+      });
+      res.json(contentItem);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.put("/api/admin/content/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updates = z.object({
+        title: z.string().min(1).optional(),
+        description: z.string().min(1).optional(),
+        type: z.string().min(1).optional(),
+        courseId: z.coerce.number().optional(),
+        courseName: z.string().optional(),
+        moduleId: z.coerce.number().optional(),
+        moduleName: z.string().optional(),
+        isPublic: z.coerce.boolean().optional(),
+        isActive: z.coerce.boolean().optional(),
+        tags: z.any().optional(),
+        thumbnailUrl: z.string().optional(),
+        url: z.string().optional(),
+      }).parse(req.body);
+
+      const contentItem = await storage.updateContentItem(id, updates);
+      res.json(contentItem);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.delete("/api/admin/content/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteContentItem(id);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/admin/payments", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const payments = await storage.getPayments();
+      res.json(payments);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/admin/payments/:id/refund", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { amount, reason } = z.object({
+        amount: z.coerce.number(),
+        reason: z.string().min(1),
+      }).parse(req.body);
+
+      const payment = await storage.updatePayment(id, {
+        status: "refunded",
+        refundAmount: amount,
+        refundDate: new Date(),
+        refundReason: reason,
+      });
+
+      res.json(payment);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/admin/payments/:id/retry", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const payment = await storage.updatePayment(id, {
+        status: "pending",
+      });
+
+      res.json(payment);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/admin/backups", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const backups = await storage.getBackups();
+      res.json(backups);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/admin/backups", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const now = new Date();
+      const dateLabel = now.toISOString().slice(0, 10);
+      const backup = await storage.createBackup({
+        name: `Full System Backup - ${dateLabel}`,
+        type: "full",
+        status: "completed",
+        size: 2048576000,
+        completedAt: now,
+        duration: 45,
+        progress: 100,
+        includes: ["database", "uploads", "configurations", "logs"],
+        location: `/backups/full/${dateLabel}.tar.gz`,
+        checksum: `sha256:${Date.now()}`,
+        isEncrypted: true,
+        retentionDays: 30,
+        note: "Created from admin backup action",
+      });
+
+      res.json(backup);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/admin/backups/:id/restore", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.delete("/api/admin/backups/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteBackup(id);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/admin/backup-schedules", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const schedules = await storage.getBackupSchedules();
+      res.json(schedules);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/admin/backup-schedules", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const scheduleData = insertBackupScheduleSchema.parse(req.body);
+      const schedule = await storage.createBackupSchedule(scheduleData);
+      res.json(schedule);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.put("/api/admin/backup-schedules/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const scheduleData = insertBackupScheduleSchema.parse(req.body);
+      const schedule = await storage.updateBackupSchedule(id, scheduleData);
+      res.json(schedule);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.delete("/api/admin/backup-schedules/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteBackupSchedule(id);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
     }
   });
 

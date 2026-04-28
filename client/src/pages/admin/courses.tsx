@@ -36,13 +36,26 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { courseSchema, CourseFormData } from "@/types/course";
-import { Plus, Edit, Eye, Search, BookOpen, Video, Play } from "lucide-react";
+import { Plus, Edit, Eye, Search, BookOpen, Video, Play, Users, TrendingUp, Star, GraduationCap, Trophy, CheckCircle2, Clock, Trash2 } from "lucide-react";
+
+// ECL Global Color Palette
+const COLORS = {
+  deepBlue: '#1C4E9C',
+  skyBlue: '#33A9D9',
+  midBlue: '#2A7CCD',
+  darkGrey: '#4F4F4F',
+  offWhite: '#F8F8F8',
+  gold: '#FFD700',
+  red: '#EF4444',
+};
 
 export default function AdminCourses() {
   const { isAdmin } = useAuth();
   const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingCourse, setEditingCourse] = useState<any>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   if (!isAdmin) {
     return <Redirect to="/dashboard" />;
@@ -105,73 +118,347 @@ export default function AdminCourses() {
     },
   });
 
+  // Reset form when dialog closes
+  const handleDialogChange = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      setEditingCourse(null);
+      form.reset({
+        title: "",
+        description: "",
+        objectives: "",
+        categoryId: "",
+        instructorId: "",
+        price: "",
+        originalPrice: "",
+        duration: "",
+        format: "",
+        totalSessions: "",
+        syllabus: "",
+        lectures: [],
+        thumbnail: "",
+        featured: false,
+        difficulty: "Beginner",
+        prerequisites: "",
+        whatYouWillLearn: [],
+        requirements: [],
+      });
+    }
+  };
+
+  // Reset form when editing a course
+  const handleEditCourse = (course: any) => {
+    setEditingCourse(course);
+    form.reset({
+      title: course.title || "",
+      description: course.description || "",
+      objectives: course.objectives || "",
+      categoryId: course.categoryId?.toString() || "",
+      instructorId: course.instructorId?.toString() || "",
+      price: course.price?.toString() || "",
+      originalPrice: course.originalPrice?.toString() || "",
+      duration: course.duration || "",
+      format: course.format || "",
+      totalSessions: course.totalSessions?.toString() || "",
+      syllabus: Array.isArray(course.syllabus) ? course.syllabus.join('\n') : "",
+      lectures: course.lectures || [],
+      thumbnail: course.imageUrl || "",
+      featured: course.isFeatured || false,
+      difficulty: course.difficulty || "Beginner",
+      prerequisites: course.prerequisites || "",
+      whatYouWillLearn: course.whatYouWillLearn || [],
+      requirements: course.requirements || [],
+    });
+    setIsDialogOpen(true);
+  };
+
   const createCourseMutation = useMutation({
-    mutationFn: (data: any) => apiRequest("POST", "/api/courses", data),
-    onSuccess: () => {
+    mutationFn: async ({ data, courseId }: { data: any; courseId?: number }) => {
+      const response = courseId 
+        ? await apiRequest("PUT", `/api/courses/${courseId}`, data)
+        : await apiRequest("POST", "/api/courses", data);
+      return response.json();
+    },
+    onSuccess: (response, variables) => {
+      console.log('Course save success:', response);
       toast({
-        title: "Course Created",
-        description: "New course has been created successfully.",
+        title: variables.courseId ? "Course Updated" : "Course Created",
+        description: variables.courseId 
+          ? "Course has been updated successfully."
+          : "New course has been created successfully.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/courses"] });
       setIsDialogOpen(false);
+      setEditingCourse(null);
       form.reset();
     },
-    onError: (error: any) => {
+    onError: (error: any, variables) => {
+      console.error('Mutation error:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to create course",
+        description: error.message || `Failed to ${variables.courseId ? 'update' : 'create'} course`,
         variant: "destructive",
       });
     },
   });
 
-  const onSubmit = (data: CourseFormData) => {
-    const courseData = {
-      ...data,
-      categoryId: parseInt(data.categoryId),
-      instructorId: parseInt(data.instructorId),
-      price: parseFloat(data.price),
-      originalPrice: data.originalPrice ? parseFloat(data.originalPrice) : null,
-      totalSessions: data.totalSessions ? parseInt(data.totalSessions) : 0,
-      syllabus: data.syllabus ? data.syllabus.split('\n').filter(item => item.trim()) : [],
-    };
-    createCourseMutation.mutate(courseData);
+  const deleteMutation = useMutation({
+    mutationFn: (courseId: number) => 
+      apiRequest("DELETE", `/api/courses/${courseId}`),
+    onSuccess: () => {
+      toast({
+        title: "Course Deleted",
+        description: "Course has been deleted successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/courses"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete course",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeleteCourse = (courseId: number, courseTitle: string) => {
+    if (window.confirm(`Are you sure you want to delete "${courseTitle}"? This action cannot be undone.`)) {
+      deleteMutation.mutate(courseId);
+    }
+  };
+
+  const onSubmit = async (data: CourseFormData) => {
+    try {
+      console.log('=== FORM SUBMIT STARTED ===');
+      console.log('Form data:', data);
+      console.log('Editing course:', editingCourse);
+      console.log('Is editing:', !!editingCourse);
+      
+      // Transform lectures data to ensure proper types
+      const transformedLectures = (data.lectures || []).map((lecture: any, index: number) => ({
+        title: lecture.title || '',
+        description: lecture.description || '',
+        duration: typeof lecture.duration === 'number' ? lecture.duration : parseInt(lecture.duration) || 0,
+        videoUrl: lecture.videoUrl || '',
+        content: lecture.content || '',
+        order: lecture.order || index + 1,
+        isFree: lecture.isFree || false,
+        materials: lecture.materials || [],
+      }));
+      
+      const courseData = {
+        title: data.title,
+        description: data.description,
+        objectives: data.objectives || '',
+        categoryId: parseInt(data.categoryId),
+        instructorId: parseInt(data.instructorId),
+        price: parseFloat(data.price),
+        originalPrice: data.originalPrice ? parseFloat(data.originalPrice) : null,
+        duration: data.duration,
+        format: data.format,
+        totalSessions: data.totalSessions ? parseInt(data.totalSessions) : 0,
+        syllabus: data.syllabus ? data.syllabus.split('\n').filter(item => item.trim()) : [],
+        lectures: transformedLectures,
+        imageUrl: data.thumbnail || null,
+        isFeatured: data.featured || false,
+        difficulty: data.difficulty || 'Beginner',
+        prerequisites: data.prerequisites || '',
+        whatYouWillLearn: data.whatYouWillLearn || [],
+        requirements: data.requirements || [],
+      };
+      
+      console.log('Submitting course data:', courseData);
+      console.log('Course ID for update:', editingCourse?.id);
+      
+      await createCourseMutation.mutateAsync({ 
+        data: courseData, 
+        courseId: editingCourse?.id 
+      });
+      
+      console.log('=== FORM SUBMIT COMPLETED ===');
+    } catch (error) {
+      console.error('=== FORM SUBMIT ERROR ===', error);
+    }
   };
 
   if (isLoading) {
     return (
       <AdminLayout title="Course Management">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+        <div className="flex items-center justify-center min-h-[500px]">
+          <div className="relative w-24 h-24">
+            <div className="absolute inset-0 rounded-full animate-ping opacity-75" style={{ backgroundColor: COLORS.skyBlue }} />
+            <div className="absolute inset-2 rounded-full animate-pulse" style={{ backgroundColor: COLORS.midBlue }} />
+            <div className="absolute inset-4 rounded-full flex items-center justify-center" style={{ backgroundColor: COLORS.deepBlue }}>
+              <BookOpen className="h-8 w-8 text-white animate-pulse" />
+            </div>
+          </div>
         </div>
       </AdminLayout>
     );
   }
 
+  // Filter courses
+  const filteredCourses = courses?.filter((course: any) => {
+    const matchesSearch = course.title.toLowerCase().includes(search.toLowerCase()) ||
+                         course.description.toLowerCase().includes(search.toLowerCase());
+    const matchesCategory = selectedCategory === "all" || course.categoryId?.toString() === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
   return (
     <AdminLayout title="Course Management">
-      {/* Course Management Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Course Management</h1>
-            <p className="text-gray-600 mt-1">Create and manage platform courses</p>
+      <div className="space-y-8">
+        {/* Hero Section */}
+        <div 
+          className="relative rounded-2xl p-8 md:p-12 overflow-hidden"
+          style={{
+            background: `linear-gradient(135deg, ${COLORS.deepBlue} 0%, ${COLORS.midBlue} 100%)`
+          }}
+        >
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full -ml-24 -mb-24" />
+          <div className="relative z-10 flex justify-between items-start">
+            <div>
+              <Badge className="mb-4 bg-white/20 text-white border-0 px-4 py-1">
+                <Trophy className="h-3 w-3 mr-1" />
+                Admin Dashboard
+              </Badge>
+              <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">Course Management</h1>
+              <p className="text-white/90 text-lg">Create, edit, and manage all platform courses with ease</p>
+            </div>
+            <div className="hidden md:flex w-20 h-20 rounded-full items-center justify-center" 
+                 style={{ backgroundColor: COLORS.red }}>
+              <GraduationCap className="h-10 w-10 text-white" />
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Card className="border-0 hover:shadow-xl transition-all hover:scale-105" style={{ backgroundColor: 'white' }}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1 font-medium">Total Courses</p>
+                  <p className="text-3xl font-bold" style={{ color: COLORS.deepBlue }}>
+                    {courses?.length || 0}
+                  </p>
+                </div>
+                <div className="w-14 h-14 rounded-xl flex items-center justify-center" 
+                     style={{ backgroundColor: COLORS.deepBlue }}>
+                  <BookOpen className="h-7 w-7 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 hover:shadow-xl transition-all hover:scale-105" style={{ backgroundColor: 'white' }}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1 font-medium">Active Courses</p>
+                  <p className="text-3xl font-bold" style={{ color: COLORS.skyBlue }}>
+                    {courses?.filter((c: any) => c.isActive).length || 0}
+                  </p>
+                </div>
+                <div className="w-14 h-14 rounded-xl flex items-center justify-center" 
+                     style={{ backgroundColor: COLORS.skyBlue }}>
+                  <CheckCircle2 className="h-7 w-7 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 hover:shadow-xl transition-all hover:scale-105" style={{ backgroundColor: 'white' }}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1 font-medium">Total Enrollments</p>
+                  <p className="text-3xl font-bold" style={{ color: COLORS.red }}>
+                    {courses?.reduce((sum: number, c: any) => sum + (c.enrolledCount || 0), 0) || 0}
+                  </p>
+                </div>
+                <div className="w-14 h-14 rounded-xl flex items-center justify-center" 
+                     style={{ backgroundColor: COLORS.red }}>
+                  <Users className="h-7 w-7 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 hover:shadow-xl transition-all hover:scale-105" style={{ backgroundColor: 'white' }}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1 font-medium">Avg Rating</p>
+                  <p className="text-3xl font-bold" style={{ color: COLORS.gold }}>
+                    {courses?.length > 0 
+                      ? (courses.reduce((sum: number, c: any) => sum + parseFloat(c.rating || 0), 0) / courses.length).toFixed(1)
+                      : '0.0'}
+                  </p>
+                </div>
+                <div className="w-14 h-14 rounded-xl flex items-center justify-center" 
+                     style={{ backgroundColor: COLORS.gold }}>
+                  <Star className="h-7 w-7 text-white fill-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Action Bar */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+            <div className="relative flex-1 md:w-80">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <Input
+                placeholder="Search courses by title or description..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="w-full sm:w-48">
+                <SelectValue placeholder="All Categories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {categories?.map((category: any) => (
+                  <SelectItem key={category.id} value={category.id.toString()}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog 
+            open={isDialogOpen} 
+            onOpenChange={handleDialogChange}
+          >
             <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
+              <Button 
+                size="lg"
+                style={{ backgroundColor: COLORS.red }}
+                className="text-white hover:opacity-90 font-semibold shadow-lg"
+              >
+                <Plus className="h-5 w-5 mr-2" />
                 Add New Course
               </Button>
             </DialogTrigger>
               <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>Create New Course</DialogTitle>
+                  <DialogTitle style={{ color: COLORS.deepBlue }}>
+                    {editingCourse ? 'Edit Course' : 'Create New Course'}
+                  </DialogTitle>
                 </DialogHeader>
                 
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
+                    console.log('=== FORM VALIDATION FAILED ===');
+                    console.log('Validation errors:', errors);
+                  })} className="space-y-4">
                     <FormField
                       control={form.control}
                       name="title"
@@ -211,7 +498,10 @@ export default function AdminCourses() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Category</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select 
+                              onValueChange={field.onChange} 
+                              value={field.value}
+                            >
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select category" />
@@ -236,7 +526,10 @@ export default function AdminCourses() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Instructor</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select 
+                              onValueChange={field.onChange} 
+                              value={field.value}
+                            >
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select instructor" />
@@ -310,7 +603,10 @@ export default function AdminCourses() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Format</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select 
+                              onValueChange={field.onChange} 
+                              value={field.value}
+                            >
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select format" />
@@ -378,6 +674,76 @@ export default function AdminCourses() {
                       )}
                     />
 
+                    <FormField
+                      control={form.control}
+                      name="thumbnail"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Course Image URL</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="https://example.com/image.jpg"
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="difficulty"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Difficulty Level</FormLabel>
+                            <Select 
+                              onValueChange={field.onChange} 
+                              value={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select difficulty" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="Beginner">Beginner</SelectItem>
+                                <SelectItem value="Intermediate">Intermediate</SelectItem>
+                                <SelectItem value="Advanced">Advanced</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="featured"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                            <FormControl>
+                              <input
+                                type="checkbox"
+                                checked={field.value}
+                                onChange={field.onChange}
+                                className="h-4 w-4 rounded border-gray-300"
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>
+                                Featured Course
+                              </FormLabel>
+                              <p className="text-sm text-muted-foreground">
+                                Display this course in the featured section
+                              </p>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
                     {/* Lecture Manager */}
                     <div className="border-t pt-6">
                       <LectureManager control={form.control} />
@@ -387,15 +753,30 @@ export default function AdminCourses() {
                       <Button 
                         type="button" 
                         variant="outline"
-                        onClick={() => setIsDialogOpen(false)}
+                        onClick={() => {
+                          console.log('Cancel button clicked');
+                          handleDialogChange(false);
+                        }}
                       >
                         Cancel
                       </Button>
                       <Button 
                         type="submit"
                         disabled={createCourseMutation.isPending}
+                        onClick={() => {
+                          console.log('=== UPDATE BUTTON CLICKED ===');
+                          console.log('Form state:', form.formState);
+                          console.log('Form errors:', form.formState.errors);
+                          console.log('Form values:', form.getValues());
+                          console.log('Is valid:', form.formState.isValid);
+                          console.log('Mutation pending:', createCourseMutation.isPending);
+                        }}
+                        style={{ backgroundColor: COLORS.red }}
+                        className="text-white hover:opacity-90 font-semibold"
                       >
-                        {createCourseMutation.isPending ? "Creating..." : "Create Course"}
+                        {createCourseMutation.isPending 
+                          ? (editingCourse ? "Updating..." : "Creating...") 
+                          : (editingCourse ? "Update Course" : "Create Course")}
                       </Button>
                     </div>
                   </form>
@@ -403,112 +784,232 @@ export default function AdminCourses() {
               </DialogContent>
             </Dialog>
           </div>
-        </div>
 
-        {/* Search and Filters */}
-        <div className="mb-8">
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-            <Input
-              placeholder="Search courses..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
-
-        {/* Courses List */}
-        <div className="space-y-6">
-          {courses && courses.length > 0 ? (
-            courses.map((course: any) => (
-              <Card key={course.id}>
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <h3 className="text-xl font-semibold text-gray-900">{course.title}</h3>
-                        <Badge variant={course.isActive ? "default" : "secondary"}>
-                          {course.isActive ? "Active" : "Inactive"}
-                        </Badge>
-                        {course.isFeatured && (
-                          <Badge variant="outline">Featured</Badge>
-                        )}
+        {/* Courses Grid */}
+        <div className="grid grid-cols-1 gap-6">
+          {filteredCourses && filteredCourses.length > 0 ? (
+            filteredCourses.map((course: any) => (
+              <Card 
+                key={course.id}
+                className="hover:shadow-xl transition-all duration-300 border-0 overflow-hidden"
+                style={{ backgroundColor: 'white' }}
+              >
+                <CardContent className="p-0">
+                  {/* Course Image/Thumbnail */}
+                  <div className="relative h-48 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
+                    {course.imageUrl ? (
+                      <img 
+                        src={course.imageUrl} 
+                        alt={course.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center"
+                           style={{ background: `linear-gradient(135deg, ${COLORS.deepBlue} 0%, ${COLORS.skyBlue} 100%)` }}>
+                        <BookOpen className="h-16 w-16 text-white opacity-50" />
                       </div>
+                    )}
+                    {course.isFeatured && (
+                      <Badge 
+                        className="absolute top-3 left-3 text-white font-semibold"
+                        style={{ backgroundColor: COLORS.red }}
+                      >
+                        <Trophy className="h-3 w-3 mr-1" />
+                        FEATURED
+                      </Badge>
+                    )}
+                    <Badge 
+                      className="absolute top-3 right-3 font-semibold"
+                      variant={course.isActive ? "default" : "secondary"}
+                      style={course.isActive ? { backgroundColor: '#00C49F', color: 'white' } : {}}
+                    >
+                      {course.isActive ? "Active" : "Inactive"}
+                    </Badge>
+                    {course.isFree && (
+                      <Badge 
+                        className="absolute bottom-3 left-3 font-semibold text-white"
+                        style={{ backgroundColor: COLORS.gold }}
+                      >
+                        FREE COURSE
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  <div className="p-6">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        {/* Course Header */}
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Badge 
+                                variant="outline" 
+                                className="text-xs"
+                                style={{ borderColor: COLORS.skyBlue, color: COLORS.skyBlue }}
+                              >
+                                {course.category?.name || 'Uncategorized'}
+                              </Badge>
+                            </div>
+                            <h3 
+                              className="text-2xl font-bold mb-2"
+                              style={{ color: COLORS.deepBlue }}
+                            >
+                              {course.title}
+                            </h3>
+                            <p className="text-gray-600 mb-3 line-clamp-2">{course.description}</p>
+                          </div>
+                        </div>
                       
-                      <p className="text-gray-600 mb-3 line-clamp-2">{course.description}</p>
-                      
-                      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
-                        <div>
-                          <span className="text-gray-500">Price:</span>
-                          <p className="font-medium">৳{course.price}</p>
+                      {/* Course Stats Grid */}
+                      <div className="grid grid-cols-3 md:grid-cols-6 gap-3 mb-4">
+                        <div className="text-center p-3 rounded-lg" style={{ backgroundColor: COLORS.offWhite }}>
+                          <p className="font-bold text-xl" style={{ color: COLORS.deepBlue }}>
+                            ৳{parseFloat(course.price).toLocaleString()}
+                          </p>
+                          <span className="text-xs text-gray-500">Price</span>
+                          {course.originalPrice && parseFloat(course.originalPrice) > parseFloat(course.price) && (
+                            <p className="text-xs text-gray-400 line-through mt-1">
+                              ৳{parseFloat(course.originalPrice).toLocaleString()}
+                            </p>
+                          )}
                         </div>
-                        <div>
-                          <span className="text-gray-500">Duration:</span>
-                          <p className="font-medium">{course.duration}</p>
+                        <div className="text-center p-3 rounded-lg" style={{ backgroundColor: COLORS.offWhite }}>
+                          <div className="flex items-center justify-center mb-1">
+                            <Clock className="h-4 w-4" style={{ color: COLORS.skyBlue }} />
+                          </div>
+                          <p className="font-semibold text-sm">{course.duration}</p>
+                          <span className="text-xs text-gray-500">Duration</span>
                         </div>
-                        <div>
-                          <span className="text-gray-500">Format:</span>
-                          <p className="font-medium capitalize">{course.format}</p>
+                        <div className="text-center p-3 rounded-lg" style={{ backgroundColor: COLORS.offWhite }}>
+                          <p className="font-semibold text-sm capitalize">{course.format}</p>
+                          <span className="text-xs text-gray-500">Format</span>
                         </div>
+                        <div className="text-center p-3 rounded-lg" style={{ backgroundColor: COLORS.offWhite }}>
+                          <p className="font-semibold text-sm">{course.difficulty}</p>
+                          <span className="text-xs text-gray-500">Level</span>
+                        </div>
+                        <div className="text-center p-3 rounded-lg" style={{ backgroundColor: COLORS.offWhite }}>
+                          <div className="flex items-center justify-center gap-1 mb-1">
+                            <Video className="h-4 w-4" style={{ color: COLORS.red }} />
+                            <p className="font-bold text-lg">{course.lectures?.length || 0}</p>
+                          </div>
+                          <span className="text-xs text-gray-500">Lectures</span>
+                        </div>
+                        <div className="text-center p-3 rounded-lg" style={{ backgroundColor: COLORS.offWhite }}>
+                          <div className="flex items-center justify-center gap-1 mb-1">
+                            <Users className="h-4 w-4" style={{ color: COLORS.midBlue }} />
+                            <p className="font-bold text-lg">{course.enrolledCount || 0}</p>
+                          </div>
+                          <span className="text-xs text-gray-500">Enrolled</span>
+                        </div>
+                      </div>
+
+                      {/* Course Details */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
-                          <span className="text-gray-500">Lectures:</span>
-                          <p className="font-medium flex items-center">
-                            <Video className="h-3 w-3 mr-1" />
-                            {course.lectures?.length || 0}
+                          <span className="text-xs text-gray-500 block mb-1">Instructor</span>
+                          <p className="font-medium">
+                            {course.instructor 
+                              ? `${course.instructor.firstName} ${course.instructor.lastName}`
+                              : 'Not assigned'}
                           </p>
                         </div>
                         <div>
-                          <span className="text-gray-500">Enrolled:</span>
-                          <p className="font-medium">{course.enrolledCount}</p>
+                          <span className="text-xs text-gray-500 block mb-1">Rating</span>
+                          <div className="flex items-center">
+                            <Star className="h-4 w-4 mr-1 fill-yellow-400 text-yellow-400" />
+                            <span className="font-semibold">
+                              {parseFloat(course.rating || 0).toFixed(1)} / 5.0
+                            </span>
+                          </div>
                         </div>
                       </div>
                       
-                      {course.lectures && course.lectures.length > 0 && (
+                      {/* Free Preview Badge */}
+                      {course.lectures && course.lectures.length > 0 && course.lectures.some((l: any) => l.isFree) && (
                         <div className="mt-3 pt-3 border-t">
-                          <div className="flex items-center space-x-2 text-sm">
+                          <div className="flex items-center space-x-2">
                             <Badge variant="secondary" className="text-xs">
                               <Play className="h-3 w-3 mr-1" />
                               Free Preview Available
                             </Badge>
-                            <span className="text-gray-500">
-                              First lecture: "{course.lectures[0].title}"
+                            <span className="text-sm text-gray-500">
+                              {course.lectures.filter((l: any) => l.isFree).length} free lecture(s)
                             </span>
                           </div>
                         </div>
                       )}
                     </div>
                     
-                    <div className="flex space-x-2 ml-4">
-                      <Button variant="outline" size="sm">
-                        <Eye className="h-4 w-4 mr-2" />
-                        View
-                      </Button>
-                      <Button variant="outline" size="sm">
+                    {/* Action Buttons */}
+                    <div className="flex flex-col space-y-2 ml-4">
+                      <Button 
+                        size="sm"
+                        onClick={() => handleEditCourse(course)}
+                        className="text-white font-semibold"
+                        style={{ backgroundColor: COLORS.deepBlue }}
+                      >
                         <Edit className="h-4 w-4 mr-2" />
                         Edit
                       </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => window.open(`/courses/${course.id}`, '_blank')}
+                        className="border-2"
+                        style={{ borderColor: COLORS.skyBlue, color: COLORS.skyBlue }}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        Preview
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleDeleteCourse(course.id, course.title)}
+                        className="border-2 hover:bg-red-50"
+                        style={{ borderColor: COLORS.red, color: COLORS.red }}
+                        disabled={deleteMutation.isPending}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete
+                      </Button>
                     </div>
+                  </div>
                   </div>
                 </CardContent>
               </Card>
             ))
           ) : (
             <div className="text-center py-16">
-              <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">No courses found</h3>
-              <p className="text-gray-600 mb-4">
-                {search ? "Try adjusting your search criteria" : "Create your first course to get started"}
+              <div 
+                className="w-24 h-24 rounded-xl mx-auto mb-6 flex items-center justify-center"
+                style={{ backgroundColor: COLORS.offWhite }}
+              >
+                <BookOpen className="h-12 w-12" style={{ color: COLORS.deepBlue }} />
+              </div>
+              <h3 className="text-2xl font-bold mb-2" style={{ color: COLORS.deepBlue }}>
+                No courses found
+              </h3>
+              <p className="text-gray-600 mb-6">
+                {search || selectedCategory !== "all"
+                  ? "Try adjusting your search or filter criteria"
+                  : "Create your first course to get started"}
               </p>
-              {!search && (
-                <Button onClick={() => setIsDialogOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
+              {!search && selectedCategory === "all" && (
+                <Button 
+                  onClick={() => setIsDialogOpen(true)}
+                  style={{ backgroundColor: COLORS.red }}
+                  className="text-white hover:opacity-90 font-semibold"
+                  size="lg"
+                >
+                  <Plus className="h-5 w-5 mr-2" />
                   Create First Course
                 </Button>
               )}
             </div>
           )}
         </div>
-      </AdminLayout>
-    );
-  }
+      </div>
+    </AdminLayout>
+  );
+}

@@ -14,6 +14,7 @@ import { Progress } from "@/components/ui/progress";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Database, Download, Upload, Plus, Trash2, RefreshCw, CheckCircle, XCircle, AlertCircle, Clock, Calendar, HardDrive, Settings, Play, Pause, Archive, FileText, Shield } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 type BackupStatus = "completed" | "failed" | "in_progress" | "scheduled";
 type BackupType = "full" | "incremental" | "differential";
@@ -51,85 +52,6 @@ type BackupSchedule = {
   nextRun: string;
 };
 
-const mockBackups: Backup[] = [
-  {
-    id: "1",
-    name: "Full System Backup - 2024-01-15",
-    type: "full",
-    status: "completed",
-    size: 2048576000, // 2GB in bytes
-    createdAt: "2024-01-15T02:00:00Z",
-    completedAt: "2024-01-15T02:45:00Z",
-    duration: 45,
-    includes: ["database", "uploads", "configurations", "logs"],
-    location: "/backups/full/2024-01-15.tar.gz",
-    checksum: "sha256:abc123...",
-    isEncrypted: true,
-    retentionDays: 30,
-    note: "Monthly full backup"
-  },
-  {
-    id: "2",
-    name: "Incremental Backup - 2024-01-16",
-    type: "incremental",
-    status: "completed",
-    size: 104857600, // 100MB in bytes
-    createdAt: "2024-01-16T02:00:00Z",
-    completedAt: "2024-01-16T02:05:00Z",
-    duration: 5,
-    includes: ["database", "uploads"],
-    location: "/backups/incremental/2024-01-16.tar.gz",
-    checksum: "sha256:def456...",
-    isEncrypted: true,
-    retentionDays: 7
-  },
-  {
-    id: "3",
-    name: "Database Backup - 2024-01-17",
-    type: "incremental",
-    status: "in_progress",
-    size: 52428800, // 50MB in bytes
-    createdAt: "2024-01-17T02:00:00Z",
-    progress: 65,
-    includes: ["database"],
-    location: "/backups/incremental/2024-01-17.tar.gz",
-    checksum: "",
-    isEncrypted: true,
-    retentionDays: 7
-  }
-];
-
-const mockSchedules: BackupSchedule[] = [
-  {
-    id: "1",
-    name: "Daily Database Backup",
-    type: "incremental",
-    frequency: "daily",
-    time: "02:00",
-    isEnabled: true,
-    includes: ["database"],
-    location: "/backups/daily/",
-    retentionDays: 7,
-    isEncrypted: true,
-    lastRun: "2024-01-17T02:00:00Z",
-    nextRun: "2024-01-18T02:00:00Z"
-  },
-  {
-    id: "2",
-    name: "Weekly Full Backup",
-    type: "full",
-    frequency: "weekly",
-    time: "01:00",
-    isEnabled: true,
-    includes: ["database", "uploads", "configurations", "logs"],
-    location: "/backups/weekly/",
-    retentionDays: 30,
-    isEncrypted: true,
-    lastRun: "2024-01-15T01:00:00Z",
-    nextRun: "2024-01-22T01:00:00Z"
-  }
-];
-
 export default function AdminBackup() {
   const [activeTab, setActiveTab] = useState<"backups" | "schedules">("backups");
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
@@ -152,27 +74,35 @@ export default function AdminBackup() {
 
   const queryClient = useQueryClient();
 
-  // Mock API calls
   const { data: backups = [], isLoading: isLoadingBackups } = useQuery({
     queryKey: ['admin-backups'],
     queryFn: async () => {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return mockBackups;
+      const response = await apiRequest('GET', '/api/admin/backups');
+      if (!response.ok) {
+        throw new Error('Failed to load backups');
+      }
+      return response.json();
     }
   });
 
   const { data: schedules = [], isLoading: isLoadingSchedules } = useQuery({
     queryKey: ['admin-backup-schedules'],
     queryFn: async () => {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return mockSchedules;
+      const response = await apiRequest('GET', '/api/admin/backup-schedules');
+      if (!response.ok) {
+        throw new Error('Failed to load backup schedules');
+      }
+      return response.json();
     }
   });
 
   const createBackupMutation = useMutation({
     mutationFn: async () => {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      return { id: Date.now().toString(), status: "completed" };
+      const response = await apiRequest('POST', '/api/admin/backups');
+      if (!response.ok) {
+        throw new Error('Failed to create backup');
+      }
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-backups'] });
@@ -194,8 +124,11 @@ export default function AdminBackup() {
 
   const createScheduleMutation = useMutation({
     mutationFn: async (data: any) => {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return { id: Date.now().toString(), ...data };
+      const response = await apiRequest('POST', '/api/admin/backup-schedules', data);
+      if (!response.ok) {
+        throw new Error('Failed to create schedule');
+      }
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-backup-schedules'] });
@@ -217,8 +150,11 @@ export default function AdminBackup() {
 
   const deleteBackupMutation = useMutation({
     mutationFn: async (id: string) => {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return id;
+      const response = await apiRequest('DELETE', `/api/admin/backups/${id}`);
+      if (!response.ok) {
+        throw new Error('Failed to delete backup');
+      }
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-backups'] });
@@ -238,8 +174,11 @@ export default function AdminBackup() {
 
   const restoreBackupMutation = useMutation({
     mutationFn: async (id: string) => {
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      return id;
+      const response = await apiRequest('POST', `/api/admin/backups/${id}/restore`);
+      if (!response.ok) {
+        throw new Error('Failed to restore backup');
+      }
+      return response.json();
     },
     onSuccess: () => {
       toast({

@@ -1,114 +1,117 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import AdminLayout from "@/components/admin/admin-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
-import { toast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Search, Users, BookOpen, Calendar, TrendingUp, Download, Eye, Mail, Phone } from "lucide-react";
+import { BookOpen, Users, TrendingUp, Eye, Download, Search, Edit, GraduationCap, CheckCircle2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface Enrollment {
   id: number;
   userId: number;
-  userName: string;
-  userEmail: string;
   courseId: number;
-  courseName: string;
-  instructorName: string;
   enrolledAt: string;
-  completedAt?: string;
   progress: number;
-  isActive: boolean;
-  grade?: string;
-  certificateIssued?: boolean;
+  completedAt?: string | null;
+  grade?: string | null;
+  certificateIssued: boolean;
+  user: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  course: {
+    id: number;
+    title: string;
+    price: number;
+    category: string;
+  };
 }
+
+interface User {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+}
+
+const enrollmentSchema = z.object({
+  progress: z.number().min(0).max(100),
+  grade: z.string().optional(),
+  certificateIssued: z.boolean(),
+});
+
+type EnrollmentFormData = z.infer<typeof enrollmentSchema>;
 
 export default function AdminEnrollments() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [courseFilter, setCourseFilter] = useState("all");
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedEnrollment, setSelectedEnrollment] = useState<Enrollment | null>(null);
-
+  const [editingEnrollment, setEditingEnrollment] = useState<Enrollment | null>(null);
+  const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: enrollments, isLoading } = useQuery({
-    queryKey: ['/api/admin/enrollments'],
+  const form = useForm<EnrollmentFormData>({
+    resolver: zodResolver(enrollmentSchema),
+    defaultValues: {
+      progress: 0,
+      grade: "",
+      certificateIssued: false,
+    },
+  });
+
+
+  const { data: enrollments, isLoading } = useQuery<Enrollment[]>({
+    queryKey: ['/api/enrollments/all'],
     queryFn: async () => {
-      // Mock data - in real app, this would fetch from API
-      const mockEnrollments: Enrollment[] = [
-        {
-          id: 1,
-          userId: 101,
-          userName: "John Smith",
-          userEmail: "john@example.com",
-          courseId: 1,
-          courseName: "Web Development Fundamentals",
-          instructorName: "Sarah Johnson",
-          enrolledAt: "2024-06-15",
-          progress: 75,
-          isActive: true,
-          grade: "A-",
-        },
-        {
-          id: 2,
-          userId: 102,
-          userName: "Emily Davis",
-          userEmail: "emily@example.com",
-          courseId: 2,
-          courseName: "React Advanced Concepts",
-          instructorName: "Michael Chen",
-          enrolledAt: "2024-06-20",
-          completedAt: "2024-07-05",
-          progress: 100,
-          isActive: false,
-          grade: "A+",
-          certificateIssued: true,
-        },
-        {
-          id: 3,
-          userId: 103,
-          userName: "Michael Johnson",
-          userEmail: "michael@example.com",
-          courseId: 3,
-          courseName: "Data Science Bootcamp",
-          instructorName: "Emily Davis",
-          enrolledAt: "2024-07-01",
-          progress: 45,
-          isActive: true,
-        },
-        {
-          id: 4,
-          userId: 104,
-          userName: "Sarah Wilson",
-          userEmail: "sarah@example.com",
-          courseId: 1,
-          courseName: "Web Development Fundamentals",
-          instructorName: "Sarah Johnson",
-          enrolledAt: "2024-07-03",
-          progress: 30,
-          isActive: true,
-        },
-        {
-          id: 5,
-          userId: 105,
-          userName: "David Brown",
-          userEmail: "david@example.com",
-          courseId: 4,
-          courseName: "Mobile App Development",
-          instructorName: "David Wilson",
-          enrolledAt: "2024-06-10",
-          progress: 0,
-          isActive: false,
-        },
-      ];
-      return mockEnrollments;
+      const response = await fetch('/api/enrollments/all', {
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Failed to fetch enrollments');
+      return response.json();
     },
   });
 
@@ -121,80 +124,112 @@ export default function AdminEnrollments() {
     },
   });
 
-  const updateProgressMutation = useMutation({
-    mutationFn: async ({ id, progress }: { id: number; progress: number }) => {
-      // In real app, this would call the API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return { id, progress };
+  const { data: instructors } = useQuery<User[]>({
+    queryKey: ['/api/users'],
+    queryFn: async () => {
+      const response = await fetch('/api/users', {
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Failed to fetch users');
+      const users = await response.json();
+      return users.filter((u: User) => u.role === 'instructor');
+    },
+  });
+
+  const updateEnrollmentMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: EnrollmentFormData }) => {
+      const response = await fetch(`/api/enrollments/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Failed to update enrollment');
+      return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/enrollments'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/enrollments/all'] });
+      setIsEditModalOpen(false);
+      setEditingEnrollment(null);
+      form.reset();
       toast({
         title: "Success",
-        description: "Progress updated successfully",
+        description: "Enrollment updated successfully",
       });
     },
     onError: () => {
       toast({
         title: "Error",
-        description: "Failed to update progress",
+        description: "Failed to update enrollment",
         variant: "destructive",
       });
     },
   });
 
-  const issueCertificateMutation = useMutation({
-    mutationFn: async (id: number) => {
-      // In real app, this would call the API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return { id };
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/enrollments'] });
-      toast({
-        title: "Success",
-        description: "Certificate issued successfully",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to issue certificate",
-        variant: "destructive",
-      });
-    },
-  });
+  const handleEdit = (enrollment: Enrollment) => {
+    setEditingEnrollment(enrollment);
+    form.reset({
+      progress: enrollment.progress,
+      grade: enrollment.grade || "",
+      certificateIssued: enrollment.certificateIssued,
+    });
+    setIsEditModalOpen(true);
+  };
 
-  const filteredEnrollments = enrollments?.filter((enrollment: Enrollment) => {
-    const matchesSearch = enrollment.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         enrollment.userEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         enrollment.courseName.toLowerCase().includes(searchTerm.toLowerCase());
+  const onSubmit = (data: EnrollmentFormData) => {
+    if (!editingEnrollment) return;
+    updateEnrollmentMutation.mutate({
+      id: editingEnrollment.id,
+      data,
+    });
+  };
+
+  const filteredEnrollments = useMemo(() => {
+    if (!enrollments) return [];
+    return enrollments.filter((enrollment: Enrollment) => {
+      const fullName = `${enrollment.user.firstName} ${enrollment.user.lastName}`;
+      const matchesSearch = fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           enrollment.user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           enrollment.course.title.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesStatus = statusFilter === "all" || 
+                           (statusFilter === "active" && !enrollment.completedAt && enrollment.progress < 100) ||
+                           (statusFilter === "completed" && enrollment.completedAt) ||
+                           (statusFilter === "inactive" && !enrollment.completedAt && enrollment.progress === 0);
+      
+      const matchesCourse = courseFilter === "all" || enrollment.courseId.toString() === courseFilter;
+      
+      return matchesSearch && matchesStatus && matchesCourse;
+    });
+  }, [enrollments, searchTerm, statusFilter, courseFilter]);
+
+  const stats = useMemo(() => {
+    if (!enrollments) return { total: 0, active: 0, completed: 0, completionRate: 0 };
     
-    const matchesStatus = statusFilter === "all" || 
-                         (statusFilter === "active" && enrollment.isActive) ||
-                         (statusFilter === "completed" && enrollment.completedAt) ||
-                         (statusFilter === "inactive" && !enrollment.isActive && !enrollment.completedAt);
-    
-    const matchesCourse = courseFilter === "all" || enrollment.courseId.toString() === courseFilter;
-    
-    return matchesSearch && matchesStatus && matchesCourse;
-  });
+    const total = enrollments.length;
+    const active = enrollments.filter(e => !e.completedAt && e.progress > 0).length;
+    const completed = enrollments.filter(e => e.completedAt).length;
+    const completionRate = total > 0 ? (completed / total) * 100 : 0;
+
+    return { total, active, completed, completionRate };
+  }, [enrollments]);
+
+  const getInstructorName = (courseId: number) => {
+    const course = courses?.find((c: any) => c.id === courseId);
+    if (!course?.instructorId) return "Not Assigned";
+    const instructor = instructors?.find(i => i.id === course.instructorId);
+    if (!instructor) return "Not Assigned";
+    return `${instructor.firstName} ${instructor.lastName}`;
+  };
 
   const getStatusBadge = (enrollment: Enrollment) => {
     if (enrollment.completedAt) {
-      return <Badge variant="default">Completed</Badge>;
+      return <Badge className="bg-green-500 hover:bg-green-600">Completed</Badge>;
     }
-    if (enrollment.isActive) {
-      return <Badge variant="outline">Active</Badge>;
+    if (enrollment.progress > 0) {
+      return <Badge className="bg-[#33A9D9] hover:bg-[#2A7CCD]">Active</Badge>;
     }
     return <Badge variant="secondary">Inactive</Badge>;
-  };
-
-  const getProgressColor = (progress: number) => {
-    if (progress >= 80) return "bg-green-500";
-    if (progress >= 60) return "bg-blue-500";
-    if (progress >= 40) return "bg-yellow-500";
-    return "bg-red-500";
   };
 
   const handleViewDetails = (enrollment: Enrollment) => {
@@ -202,26 +237,19 @@ export default function AdminEnrollments() {
     setIsDetailModalOpen(true);
   };
 
-  const handleIssueCertificate = (id: number) => {
-    if (window.confirm("Are you sure you want to issue a certificate for this student?")) {
-      issueCertificateMutation.mutate(id);
-    }
-  };
-
   const exportData = () => {
-    // In real app, this would generate and download CSV/Excel
     const csv = [
       ["Student Name", "Email", "Course", "Instructor", "Enrolled Date", "Progress", "Status", "Grade"],
-      ...filteredEnrollments?.map((enrollment: Enrollment) => [
-        enrollment.userName,
-        enrollment.userEmail,
-        enrollment.courseName,
-        enrollment.instructorName,
-        enrollment.enrolledAt,
+      ...filteredEnrollments.map((enrollment: Enrollment) => [
+        `${enrollment.user.firstName} ${enrollment.user.lastName}`,
+        enrollment.user.email,
+        enrollment.course.title,
+        getInstructorName(enrollment.courseId),
+        new Date(enrollment.enrolledAt).toLocaleDateString(),
         `${enrollment.progress}%`,
-        enrollment.completedAt ? "Completed" : enrollment.isActive ? "Active" : "Inactive",
+        enrollment.completedAt ? "Completed" : enrollment.progress > 0 ? "Active" : "Inactive",
         enrollment.grade || "N/A"
-      ]) || []
+      ])
     ].map(row => row.join(",")).join("\n");
 
     const blob = new Blob([csv], { type: "text/csv" });
@@ -233,65 +261,78 @@ export default function AdminEnrollments() {
     window.URL.revokeObjectURL(url);
   };
 
-  // Calculate statistics
-  const stats = {
-    total: enrollments?.length || 0,
-    active: enrollments?.filter(e => e.isActive).length || 0,
-    completed: enrollments?.filter(e => e.completedAt).length || 0,
-    averageProgress: enrollments?.reduce((sum, e) => sum + e.progress, 0) / (enrollments?.length || 1) || 0,
-  };
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="relative w-32 h-32">
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-24 h-24 border-8 border-[#1C4E9C] border-t-transparent rounded-full animate-spin" style={{ animationDelay: '0ms' }}></div>
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-16 h-16 border-8 border-[#33A9D9] border-t-transparent rounded-full animate-spin" style={{ animationDelay: '75ms' }}></div>
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-8 h-8 border-4 border-[#2A7CCD] border-t-transparent rounded-full animate-spin" style={{ animationDelay: '150ms' }}></div>
+            </div>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
-    <AdminLayout title="Enrollments">
+    <AdminLayout>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold">Enrollments</h1>
-            <p className="text-gray-600 mt-1">Manage student enrollments and track progress</p>
+        {/* Hero Section */}
+        <div className="bg-gradient-to-r from-[#1C4E9C] to-[#2A7CCD] text-white rounded-lg p-8">
+          <div className="flex items-center gap-3 mb-2">
+            <GraduationCap className="h-8 w-8" />
+            <h1 className="text-3xl font-bold">Enrollment Management</h1>
           </div>
-          <Button onClick={exportData}>
-            <Download className="h-4 w-4 mr-2" />
-            Export Data
-          </Button>
+          <p className="text-blue-100">Track and manage student course enrollments</p>
         </div>
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card>
+          <Card className="border-l-4 border-l-[#1C4E9C]">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Enrollments</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <Users className="h-5 w-5 text-[#1C4E9C]" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.total}</div>
+              <div className="text-2xl font-bold text-[#1C4E9C]">{stats.total}</div>
+              <p className="text-xs text-muted-foreground mt-1">All course enrollments</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-l-4 border-l-[#33A9D9]">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Active Students</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <TrendingUp className="h-5 w-5 text-[#33A9D9]" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.active}</div>
+              <div className="text-2xl font-bold text-[#33A9D9]">{stats.active}</div>
+              <p className="text-xs text-muted-foreground mt-1">Currently learning</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-l-4 border-l-green-500">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Completed</CardTitle>
-              <BookOpen className="h-4 w-4 text-muted-foreground" />
+              <CheckCircle2 className="h-5 w-5 text-green-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.completed}</div>
+              <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
+              <p className="text-xs text-muted-foreground mt-1">Courses finished</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-l-4 border-l-[#FFD700]">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Avg Progress</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
+              <BookOpen className="h-5 w-5 text-[#FFD700]" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{Math.round(stats.averageProgress)}%</div>
+              <div className="text-2xl font-bold text-[#FFD700]">{stats.completionRate.toFixed(1)}%</div>
+              <p className="text-xs text-muted-foreground mt-1">Success metric</p>
             </CardContent>
           </Card>
         </div>
@@ -299,10 +340,10 @@ export default function AdminEnrollments() {
         {/* Filters */}
         <Card>
           <CardHeader>
-            <CardTitle>Filter Enrollments</CardTitle>
+            <CardTitle className="text-[#1C4E9C]">Filter Enrollments</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex space-x-4">
+            <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -315,7 +356,7 @@ export default function AdminEnrollments() {
                 </div>
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-40">
+                <SelectTrigger className="w-full md:w-40">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -326,7 +367,7 @@ export default function AdminEnrollments() {
                 </SelectContent>
               </Select>
               <Select value={courseFilter} onValueChange={setCourseFilter}>
-                <SelectTrigger className="w-48">
+                <SelectTrigger className="w-full md:w-48">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -338,6 +379,10 @@ export default function AdminEnrollments() {
                   ))}
                 </SelectContent>
               </Select>
+              <Button onClick={exportData} variant="outline">
+                <Download className="h-4 w-4 mr-2" />
+                Export
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -345,9 +390,9 @@ export default function AdminEnrollments() {
         {/* Enrollments Table */}
         <Card>
           <CardHeader>
-            <CardTitle>All Enrollments</CardTitle>
+            <CardTitle className="text-[#1C4E9C]">All Enrollments</CardTitle>
             <CardDescription>
-              {filteredEnrollments?.length || 0} enrollments found
+              {filteredEnrollments.length} enrollments found
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -365,34 +410,28 @@ export default function AdminEnrollments() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isLoading ? (
+                {filteredEnrollments.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center">
-                      Loading enrollments...
-                    </TableCell>
-                  </TableRow>
-                ) : filteredEnrollments?.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={8} className="text-center">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground">
                       No enrollments found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredEnrollments?.map((enrollment: Enrollment) => (
+                  filteredEnrollments.map((enrollment: Enrollment) => (
                     <TableRow key={enrollment.id}>
                       <TableCell>
                         <div>
-                          <div className="font-medium">{enrollment.userName}</div>
-                          <div className="text-sm text-gray-500">{enrollment.userEmail}</div>
+                          <div className="font-medium">{enrollment.user.firstName} {enrollment.user.lastName}</div>
+                          <div className="text-sm text-gray-500">{enrollment.user.email}</div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">
-                          <BookOpen className="h-4 w-4" />
-                          <span className="font-medium">{enrollment.courseName}</span>
+                          <BookOpen className="h-4 w-4 text-[#1C4E9C]" />
+                          <span className="font-medium">{enrollment.course.title}</span>
                         </div>
                       </TableCell>
-                      <TableCell>{enrollment.instructorName}</TableCell>
+                      <TableCell>{getInstructorName(enrollment.courseId)}</TableCell>
                       <TableCell>{new Date(enrollment.enrolledAt).toLocaleDateString()}</TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">
@@ -405,7 +444,7 @@ export default function AdminEnrollments() {
                       <TableCell>{getStatusBadge(enrollment)}</TableCell>
                       <TableCell>
                         {enrollment.grade ? (
-                          <Badge variant="outline">{enrollment.grade}</Badge>
+                          <Badge variant="outline" className="border-[#FFD700] text-[#FFD700]">{enrollment.grade}</Badge>
                         ) : (
                           <span className="text-gray-400">-</span>
                         )}
@@ -419,16 +458,13 @@ export default function AdminEnrollments() {
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          {enrollment.progress === 100 && !enrollment.certificateIssued && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleIssueCertificate(enrollment.id)}
-                              disabled={issueCertificateMutation.isPending}
-                            >
-                              Certificate
-                            </Button>
-                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(enrollment)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -439,11 +475,93 @@ export default function AdminEnrollments() {
           </CardContent>
         </Card>
 
+        {/* Edit Enrollment Modal */}
+        <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-[#1C4E9C]">Edit Enrollment</DialogTitle>
+              <DialogDescription>
+                Update enrollment progress and grade
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="progress"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Progress (%)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="grade"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Grade (Optional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., A, B+, 85%" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="certificateIssued"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center gap-2">
+                      <FormControl>
+                        <input
+                          type="checkbox"
+                          checked={field.value}
+                          onChange={field.onChange}
+                          className="h-4 w-4"
+                        />
+                      </FormControl>
+                      <FormLabel className="!mt-0">Certificate Issued</FormLabel>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsEditModalOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="bg-[#1C4E9C] hover:bg-[#2A7CCD]"
+                    disabled={updateEnrollmentMutation.isPending}
+                  >
+                    {updateEnrollmentMutation.isPending ? "Saving..." : "Save Changes"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+
         {/* Enrollment Details Modal */}
         <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Enrollment Details</DialogTitle>
+              <DialogTitle className="text-[#1C4E9C]">Enrollment Details</DialogTitle>
               <DialogDescription>
                 Detailed information about the student enrollment
               </DialogDescription>
@@ -453,61 +571,61 @@ export default function AdminEnrollments() {
                 {/* Student Info */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="font-semibold">Student Name</Label>
-                    <p>{selectedEnrollment.userName}</p>
+                    <Label className="font-semibold text-[#1C4E9C]">Student Name</Label>
+                    <p className="mt-1">{selectedEnrollment.user.firstName} {selectedEnrollment.user.lastName}</p>
                   </div>
                   <div>
-                    <Label className="font-semibold">Email</Label>
-                    <p>{selectedEnrollment.userEmail}</p>
+                    <Label className="font-semibold text-[#1C4E9C]">Email</Label>
+                    <p className="mt-1">{selectedEnrollment.user.email}</p>
                   </div>
                 </div>
 
                 {/* Course Info */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="font-semibold">Course</Label>
-                    <p>{selectedEnrollment.courseName}</p>
+                    <Label className="font-semibold text-[#1C4E9C]">Course</Label>
+                    <p className="mt-1">{selectedEnrollment.course.title}</p>
                   </div>
                   <div>
-                    <Label className="font-semibold">Instructor</Label>
-                    <p>{selectedEnrollment.instructorName}</p>
+                    <Label className="font-semibold text-[#1C4E9C]">Instructor</Label>
+                    <p className="mt-1">{getInstructorName(selectedEnrollment.courseId)}</p>
                   </div>
                 </div>
 
                 {/* Progress Info */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="font-semibold">Enrolled Date</Label>
-                    <p>{new Date(selectedEnrollment.enrolledAt).toLocaleDateString()}</p>
+                    <Label className="font-semibold text-[#1C4E9C]">Enrolled Date</Label>
+                    <p className="mt-1">{new Date(selectedEnrollment.enrolledAt).toLocaleDateString()}</p>
                   </div>
                   <div>
-                    <Label className="font-semibold">Completion Date</Label>
-                    <p>{selectedEnrollment.completedAt ? new Date(selectedEnrollment.completedAt).toLocaleDateString() : "Not completed"}</p>
+                    <Label className="font-semibold text-[#1C4E9C]">Completion Date</Label>
+                    <p className="mt-1">{selectedEnrollment.completedAt ? new Date(selectedEnrollment.completedAt).toLocaleDateString() : "Not completed"}</p>
                   </div>
                 </div>
 
                 <div>
-                  <Label className="font-semibold">Progress</Label>
+                  <Label className="font-semibold text-[#1C4E9C]">Progress</Label>
                   <div className="flex items-center space-x-4 mt-2">
                     <Progress value={selectedEnrollment.progress} className="flex-1" />
-                    <span className="font-medium">{selectedEnrollment.progress}%</span>
+                    <span className="font-medium text-[#1C4E9C]">{selectedEnrollment.progress}%</span>
                   </div>
                 </div>
 
                 {selectedEnrollment.grade && (
                   <div>
-                    <Label className="font-semibold">Grade</Label>
+                    <Label className="font-semibold text-[#1C4E9C]">Grade</Label>
                     <div className="mt-2">
-                      <Badge variant="outline" className="text-lg px-3 py-1">{selectedEnrollment.grade}</Badge>
+                      <Badge variant="outline" className="text-lg px-3 py-1 border-[#FFD700] text-[#FFD700]">{selectedEnrollment.grade}</Badge>
                     </div>
                   </div>
                 )}
 
                 {selectedEnrollment.certificateIssued && (
                   <div>
-                    <Label className="font-semibold">Certificate</Label>
+                    <Label className="font-semibold text-[#1C4E9C]">Certificate</Label>
                     <div className="mt-2">
-                      <Badge variant="default">Certificate Issued</Badge>
+                      <Badge className="bg-green-500 hover:bg-green-600">Certificate Issued</Badge>
                     </div>
                   </div>
                 )}
@@ -516,10 +634,6 @@ export default function AdminEnrollments() {
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsDetailModalOpen(false)}>
                 Close
-              </Button>
-              <Button>
-                <Mail className="h-4 w-4 mr-2" />
-                Contact Student
               </Button>
             </DialogFooter>
           </DialogContent>

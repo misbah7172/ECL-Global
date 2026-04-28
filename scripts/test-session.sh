@@ -7,7 +7,7 @@ echo "🧪 Testing Session Management..."
 
 # Test 1: Login with admin credentials
 echo "📧 Test 1: Login with admin credentials"
-echo "Email: admin@mentor.com"
+echo "Email: admin@ECL Global.com"
 echo "Password: admin123"
 echo "Expected: Successful login, token stored, user redirected to dashboard"
 echo ""

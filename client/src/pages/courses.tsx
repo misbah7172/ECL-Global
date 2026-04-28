@@ -1,19 +1,24 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
-import CourseCard from "@/components/course-card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Search, Filter, BookOpen, GraduationCap, TrendingUp, Award, ChevronRight, Star, Users } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  Clock, 
+  Users, 
+  Star,
+  Play,
+  GraduationCap,
+  Award,
+  CheckCircle2,
+  Video,
+  Trophy
+} from "lucide-react";
 
 // Color Scheme Constants
 const COLORS = {
@@ -22,22 +27,88 @@ const COLORS = {
   midBlue: '#2A7CCD',
   darkGrey: '#4F4F4F',
   offWhite: '#F8F8F8',
+  gold: '#FFD700',
+  red: '#EF4444',
 };
 
-export default function Courses() {
-  const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [difficultyFilter, setDifficultyFilter] = useState("all");
+// Horizontal Scroll Course Card Component
+function HorizontalCourseCard({ course }: { course: any }) {
+  return (
+    <Card className="flex-shrink-0 w-80 overflow-hidden hover:shadow-xl transition-all duration-300 bg-white">
+      <div className="relative">
+        <img 
+          src={course.imageUrl || "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=200&fit=crop"} 
+          alt={course.title} 
+          className="w-full h-44 object-cover"
+        />
+        {course.isFeatured && (
+          <Badge 
+            className="absolute top-3 left-3 text-white font-semibold"
+            style={{ backgroundColor: COLORS.red }}
+          >
+            BESTSELLER
+          </Badge>
+        )}
+      </div>
+      <CardContent className="p-5">
+        <div className="flex items-center justify-between mb-2">
+          <Badge 
+            variant="outline" 
+            className="text-xs"
+            style={{ borderColor: COLORS.skyBlue, color: COLORS.skyBlue }}
+          >
+            {course.category?.name || "General"}
+          </Badge>
+          <div className="flex items-center text-yellow-400">
+            <Star className="h-4 w-4 fill-current" />
+            <span className="text-sm ml-1 font-medium" style={{ color: COLORS.darkGrey }}>
+              {course.rating || "4.8"}
+            </span>
+          </div>
+        </div>
+        
+        <h3 className="text-lg font-bold mb-2 line-clamp-2" style={{ color: COLORS.deepBlue }}>
+          {course.title}
+        </h3>
+        
+        <div className="flex items-center text-sm mb-4" style={{ color: COLORS.darkGrey }}>
+          <Clock className="h-4 w-4 mr-1" />
+          <span>{course.duration || "8 weeks"}</span>
+          <span className="mx-2">•</span>
+          <Users className="h-4 w-4 mr-1" />
+          <span>{course.enrolledCount || 0}</span>
+        </div>
+        
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-2xl font-bold" style={{ color: COLORS.deepBlue }}>
+              ৳{Number(course.price).toFixed(0)}
+            </span>
+            {course.originalPrice && Number(course.originalPrice) > Number(course.price) && (
+              <span className="text-sm line-through ml-2" style={{ color: COLORS.darkGrey }}>
+                ৳{Number(course.originalPrice).toFixed(0)}
+              </span>
+            )}
+          </div>
+          <Button 
+            asChild
+            size="sm"
+            className="text-white font-semibold hover:opacity-90"
+            style={{ backgroundColor: COLORS.red }}
+          >
+            <Link href={`/courses/${course.id}`}>Enroll</Link>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
+export default function Courses() {
   const { data: courses, isLoading } = useQuery({
-    queryKey: ["/api/courses", { search, categoryId: categoryFilter }],
+    queryKey: ["/api/courses"],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (search) params.append("search", search);
-      if (categoryFilter && categoryFilter !== "all") params.append("categoryId", categoryFilter);
-      
-      const url = `/api/courses${params.toString() ? `?${params.toString()}` : ""}`;
-      const response = await fetch(url);
+      const response = await fetch("/api/courses");
       return response.json();
     },
   });
@@ -50,30 +121,50 @@ export default function Courses() {
     },
   });
 
+  // Group courses by category
+  const coursesByCategory = useMemo(() => {
+    if (!Array.isArray(courses) || !Array.isArray(categories)) return {};
+    
+    const grouped: Record<string, any[]> = {};
+    categories.forEach((cat: any) => {
+      grouped[cat.name] = courses.filter((course: any) => course.categoryId === cat.id);
+    });
+    return grouped;
+  }, [courses, categories]);
+
+  // Featured and live courses
+  const featuredCourses = useMemo(() => {
+    return Array.isArray(courses) ? courses.filter((c: any) => c.isFeatured).slice(0, 4) : [];
+  }, [courses]);
+
+  const liveCourses = useMemo(() => {
+    return Array.isArray(courses) ? courses.slice(0, 6) : [];
+  }, [courses]);
+
+  const bundleOffers = useMemo(() => {
+    return Array.isArray(courses) ? courses.filter((c: any) => c.originalPrice && Number(c.originalPrice) > Number(c.price)).slice(0, 3) : [];
+  }, [courses]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen" style={{ backgroundColor: COLORS.offWhite }}>
         <Header />
         <div className="container mx-auto px-4 py-16">
           <div className="flex flex-col items-center justify-center min-h-[400px]">
-            {/* Beautiful Pulsing Animation */}
             <div className="relative w-24 h-24 mb-8">
-              {/* Outer ring - pulsing */}
               <div 
                 className="absolute inset-0 rounded-full animate-ping opacity-75"
                 style={{ backgroundColor: COLORS.skyBlue }}
               />
-              {/* Middle ring */}
               <div 
                 className="absolute inset-2 rounded-full animate-pulse"
                 style={{ backgroundColor: COLORS.midBlue }}
               />
-              {/* Inner circle with icon */}
               <div 
                 className="absolute inset-4 rounded-full flex items-center justify-center"
                 style={{ backgroundColor: COLORS.deepBlue }}
               >
-                <BookOpen className="h-8 w-8 text-white animate-pulse" />
+                <GraduationCap className="h-8 w-8 text-white animate-pulse" />
               </div>
             </div>
             
@@ -90,328 +181,370 @@ export default function Courses() {
     );
   }
 
-  // Filter courses by difficulty
-  const filteredCourses = Array.isArray(courses) 
-    ? courses.filter((course: any) => 
-        difficultyFilter === "all" || course.difficulty === difficultyFilter
-      )
-    : [];
-
   return (
-    <div className="min-h-screen" style={{ backgroundColor: COLORS.offWhite }}>
+    <div className="min-h-screen bg-white">
       <Header />
-      
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#1C4E9C] via-[#2A7CCD] to-[#33A9D9]">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1920&h=600&fit=crop')] bg-cover bg-center opacity-10"></div>
-        
-        <div className="relative container mx-auto px-4 py-20">
-          <div className="max-w-4xl mx-auto text-center text-white">
-            <Badge 
-              className="mb-6 text-white border-white/30"
-              style={{ backgroundColor: `${COLORS.skyBlue}40` }}
-            >
-              <BookOpen className="h-4 w-4 mr-2" />
-              Comprehensive Learning Programs
-            </Badge>
-            
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
-              Explore Our Courses
-            </h1>
-            
-            <p className="text-xl text-blue-100 mb-12 max-w-2xl mx-auto">
-              Choose from expert-led courses designed to help you achieve your IELTS, TOEFL, SAT, and study abroad goals.
-            </p>
 
-            {/* Search Bar */}
-            <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-3xl mx-auto">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1 relative">
-                  <Search 
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5" 
-                    style={{ color: COLORS.skyBlue }} 
-                  />
-                  <Input
-                    placeholder="Search courses, skills, or topics..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="pl-12 h-12 border-2 focus:border-2"
-                    style={{ borderColor: COLORS.offWhite }}
-                    onFocus={(e) => e.currentTarget.style.borderColor = COLORS.skyBlue}
-                    onBlur={(e) => e.currentTarget.style.borderColor = COLORS.offWhite}
-                  />
-                </div>
-                <Button 
-                  className="h-12 px-8 text-white font-semibold shadow-lg"
-                  style={{ backgroundColor: COLORS.skyBlue }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = COLORS.midBlue}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = COLORS.skyBlue}
-                >
-                  <Search className="h-4 w-4 mr-2" />
-                  Search
-                </Button>
-              </div>
+      {/* Top Banner - Grammar & Writing Course */}
+      <section 
+        className="relative py-16 px-4"
+        style={{ 
+          background: `linear-gradient(135deg, ${COLORS.deepBlue} 0%, ${COLORS.midBlue} 100%)`
+        }}
+      >
+        <div className="container mx-auto">
+          <div className="grid md:grid-cols-2 gap-8 items-center">
+            <div className="text-white">
+              <Badge className="mb-4 bg-white/20 text-white border-0 px-4 py-1">
+                <Trophy className="h-3 w-3 mr-1" />
+                Top Online Grammar & Writing Course in Bangladesh
+              </Badge>
+              <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight">
+                Grammar & Writing<br />Course in Bangladesh
+              </h1>
+              <p className="text-blue-100 text-lg mb-6">
+                Master English grammar and writing skills with expert instructors and comprehensive curriculum
+              </p>
+              <Button 
+                size="lg"
+                className="text-white font-semibold hover:opacity-90"
+                style={{ backgroundColor: COLORS.red }}
+              >
+                Enroll Now
+              </Button>
             </div>
-          </div>
-        </div>
-
-        {/* Stats Bar */}
-        <div className="relative border-t border-white/20 bg-white/10 backdrop-blur-sm">
-          <div className="container mx-auto px-4 py-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center text-white">
-              <div>
-                <div className="text-3xl font-bold mb-1" style={{ color: COLORS.skyBlue }}>
-                  {filteredCourses.length}+
-                </div>
-                <div className="text-sm text-blue-100">Expert Courses</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold mb-1" style={{ color: COLORS.skyBlue }}>
-                  15K+
-                </div>
-                <div className="text-sm text-blue-100">Students Enrolled</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold mb-1" style={{ color: COLORS.skyBlue }}>
-                  4.8
-                </div>
-                <div className="text-sm text-blue-100">Average Rating</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold mb-1" style={{ color: COLORS.skyBlue }}>
-                  98%
-                </div>
-                <div className="text-sm text-blue-100">Success Rate</div>
-              </div>
+            <div className="relative hidden md:block">
+              <img 
+                src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&h=400&fit=crop"
+                alt="Online Learning"
+                className="rounded-lg shadow-2xl"
+              />
             </div>
           </div>
         </div>
       </section>
 
-      {/* Filters Section */}
-      <section className="py-8 bg-white border-b">
+      {/* Live Courses Section */}
+      <section className="py-12 bg-white">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Filter className="h-5 w-5" style={{ color: COLORS.deepBlue }} />
-              <span className="font-semibold" style={{ color: COLORS.deepBlue }}>
-                Filter by:
-              </span>
-            </div>
-            
-            <div className="flex flex-wrap gap-4 flex-1 justify-end">
-              {/* Category Filter */}
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger 
-                  className="w-full md:w-56 h-11 border-2"
-                  style={{ borderColor: COLORS.offWhite }}
-                >
-                  <SelectValue placeholder="All Categories" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {Array.isArray(categories) && categories.map((category: any) => (
-                    <SelectItem key={category.id} value={category.id.toString()}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Difficulty Filter */}
-              <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
-                <SelectTrigger 
-                  className="w-full md:w-56 h-11 border-2"
-                  style={{ borderColor: COLORS.offWhite }}
-                >
-                  <SelectValue placeholder="All Levels" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Levels</SelectItem>
-                  <SelectItem value="beginner">Beginner</SelectItem>
-                  <SelectItem value="intermediate">Intermediate</SelectItem>
-                  <SelectItem value="advanced">Advanced</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Clear Filters */}
-              {(categoryFilter !== "all" || difficultyFilter !== "all" || search) && (
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setSearch("");
-                    setCategoryFilter("all");
-                    setDifficultyFilter("all");
-                  }}
-                  className="h-11"
-                  style={{ borderColor: COLORS.deepBlue, color: COLORS.deepBlue }}
-                >
-                  Clear All
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {/* Active Filters Display */}
-          {(categoryFilter !== "all" || difficultyFilter !== "all" || search) && (
-            <div className="mt-4 flex items-center gap-2 flex-wrap">
-              <span className="text-sm" style={{ color: COLORS.darkGrey }}>Active filters:</span>
-              {search && (
-                <Badge 
-                  className="text-white"
-                  style={{ backgroundColor: COLORS.skyBlue }}
-                >
-                  Search: "{search}"
-                </Badge>
-              )}
-              {categoryFilter !== "all" && (
-                <Badge 
-                  className="text-white"
-                  style={{ backgroundColor: COLORS.skyBlue }}
-                >
-                  {categories?.find((c: any) => c.id.toString() === categoryFilter)?.name}
-                </Badge>
-              )}
-              {difficultyFilter !== "all" && (
-                <Badge 
-                  className="text-white"
-                  style={{ backgroundColor: COLORS.skyBlue }}
-                >
-                  {difficultyFilter.charAt(0).toUpperCase() + difficultyFilter.slice(1)}
-                </Badge>
-              )}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Courses Grid */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          {/* Results Count */}
-          <div className="mb-8 flex items-center justify-between">
+          <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 className="text-2xl font-bold" style={{ color: COLORS.deepBlue }}>
-                Available Courses
+              <h2 className="text-3xl font-bold mb-2" style={{ color: COLORS.deepBlue }}>
+                Live Courses
               </h2>
-              <p className="text-sm mt-1" style={{ color: COLORS.darkGrey }}>
-                {filteredCourses.length} course{filteredCourses.length !== 1 ? 's' : ''} found
+              <p style={{ color: COLORS.darkGrey }}>Join our interactive live sessions</p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                size="icon"
+                variant="outline"
+                className="rounded-full w-10 h-10"
+                style={{ borderColor: COLORS.skyBlue, color: COLORS.skyBlue }}
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+              <Button
+                size="icon"
+                variant="outline"
+                className="rounded-full w-10 h-10"
+                style={{ borderColor: COLORS.skyBlue, color: COLORS.skyBlue }}
+              >
+                <ChevronRight className="h-5 w-5" />
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory">
+            {liveCourses.map((course: any) => (
+              <HorizontalCourseCard key={course.id} course={course} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Unbeatable Bundle Offers */}
+      {bundleOffers.length > 0 && (
+        <section className="py-12" style={{ backgroundColor: COLORS.offWhite }}>
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-8">
+              <Badge 
+                className="mb-4 text-white font-semibold px-4 py-1"
+                style={{ backgroundColor: COLORS.red }}
+              >
+                <Trophy className="h-4 w-4 mr-2" />
+                LIMITED TIME OFFER
+              </Badge>
+              <h2 className="text-3xl font-bold mb-2" style={{ color: COLORS.deepBlue }}>
+                Unbeatable Bundle Offers
+              </h2>
+              <p style={{ color: COLORS.darkGrey }}>
+                ✨ Level your Skill Bundle from the following courses @₹2,799 ✨
               </p>
             </div>
 
-            {/* Popular Categories Quick Filter */}
-            <div className="hidden md:flex items-center gap-2">
-              <span className="text-sm" style={{ color: COLORS.darkGrey }}>Popular:</span>
-              {Array.isArray(categories) && categories.slice(0, 3).map((category: any) => (
-                <button
-                  key={category.id}
-                  onClick={() => setCategoryFilter(category.id.toString())}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    categoryFilter === category.id.toString()
-                      ? 'text-white shadow-md'
-                      : 'hover:shadow-sm'
-                  }`}
-                  style={{
-                    backgroundColor: categoryFilter === category.id.toString() 
-                      ? COLORS.skyBlue 
-                      : COLORS.offWhite,
-                    color: categoryFilter === category.id.toString() 
-                      ? 'white' 
-                      : COLORS.darkGrey
-                  }}
-                >
-                  {category.name}
-                </button>
+            <div className="flex items-center justify-center mb-6">
+              <Button 
+                size="sm" 
+                className="text-white font-semibold"
+                style={{ backgroundColor: COLORS.red }}
+              >
+                Explore all Bundles
+              </Button>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+              {bundleOffers.map((course: any) => (
+                <Card key={course.id} className="overflow-hidden hover:shadow-xl transition-all bg-white">
+                  <div className="relative">
+                    <img 
+                      src={course.imageUrl || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=250&fit=crop"}
+                      alt={course.title}
+                      className="w-full h-48 object-cover"
+                    />
+                    <Badge 
+                      className="absolute top-3 right-3 text-white font-bold px-3 py-1"
+                      style={{ backgroundColor: COLORS.red }}
+                    >
+                      SAVE {Math.round((1 - Number(course.price) / Number(course.originalPrice)) * 100)}%
+                    </Badge>
+                  </div>
+                  <CardContent className="p-6">
+                    <h3 className="text-xl font-bold mb-3 line-clamp-2" style={{ color: COLORS.deepBlue }}>
+                      {course.title}
+                    </h3>
+                    <ul className="space-y-2 mb-4">
+                      <li className="flex items-start text-sm" style={{ color: COLORS.darkGrey }}>
+                        <CheckCircle2 className="h-4 w-4 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                        Lifetime Access
+                      </li>
+                      <li className="flex items-start text-sm" style={{ color: COLORS.darkGrey }}>
+                        <CheckCircle2 className="h-4 w-4 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                        Expert Instruction
+                      </li>
+                      <li className="flex items-start text-sm" style={{ color: COLORS.darkGrey }}>
+                        <CheckCircle2 className="h-4 w-4 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                        Certificate of Completion
+                      </li>
+                    </ul>
+                    <div className="flex items-baseline gap-2 mb-4">
+                      <span className="text-3xl font-bold" style={{ color: COLORS.deepBlue }}>
+                        ৳{Number(course.price).toFixed(0)}
+                      </span>
+                      <span className="text-lg line-through" style={{ color: COLORS.darkGrey }}>
+                        ৳{Number(course.originalPrice).toFixed(0)}
+                      </span>
+                    </div>
+                    <Button 
+                      asChild
+                      className="w-full text-white font-semibold hover:opacity-90"
+                      style={{ backgroundColor: COLORS.red }}
+                    >
+                      <Link href={`/courses/${course.id}`}>Buy Now</Link>
+                    </Button>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           </div>
+        </section>
+      )}
 
-          {filteredCourses.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredCourses.map((course: any) => (
-                <CourseCard key={course.id} course={course} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-20">
-              <div className="max-w-md mx-auto bg-white rounded-2xl p-12 shadow-lg">
-                <div 
-                  className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
-                  style={{ backgroundColor: `${COLORS.skyBlue}20` }}
+      {/* Featured Courses */}
+      {featuredCourses.length > 0 && (
+        <section className="py-12 bg-black text-white">
+          <div className="container mx-auto px-4">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-3xl font-bold mb-2">Featured Courses</h2>
+                <p className="text-gray-400">Handpicked courses that deliver exceptional results</p>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="rounded-full border-white text-white hover:bg-white/10 w-10 h-10"
                 >
-                  <Search className="h-10 w-10" style={{ color: COLORS.skyBlue }} />
-                </div>
-                <h3 className="text-2xl font-bold mb-3" style={{ color: COLORS.deepBlue }}>
-                  No Courses Found
-                </h3>
-                <p className="mb-6" style={{ color: COLORS.darkGrey }}>
-                  We couldn't find any courses matching your criteria. Try adjusting your filters or search terms.
-                </p>
-                <Button 
-                  onClick={() => { 
-                    setSearch(""); 
-                    setCategoryFilter("all"); 
-                    setDifficultyFilter("all");
-                  }}
-                  className="text-white font-semibold"
-                  style={{ backgroundColor: COLORS.skyBlue }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = COLORS.midBlue}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = COLORS.skyBlue}
+                  <ChevronLeft className="h-5 w-5" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="rounded-full border-white text-white hover:bg-white/10 w-10 h-10"
                 >
-                  Clear All Filters
+                  <ChevronRight className="h-5 w-5" />
                 </Button>
               </div>
             </div>
-          )}
+
+            <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory">
+              {featuredCourses.map((course: any) => (
+                <Card key={course.id} className="flex-shrink-0 w-80 overflow-hidden bg-white snap-start">
+                  <div className="relative">
+                    <img 
+                      src={course.imageUrl || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=200&fit=crop"}
+                      alt={course.title}
+                      className="w-full h-44 object-cover"
+                    />
+                    <Badge 
+                      className="absolute top-3 left-3 text-white font-semibold"
+                      style={{ backgroundColor: COLORS.red }}
+                    >
+                      FEATURED
+                    </Badge>
+                  </div>
+                  <CardContent className="p-5">
+                    <div className="flex items-center justify-between mb-2">
+                      <Badge 
+                        variant="outline"
+                        className="text-xs"
+                        style={{ borderColor: COLORS.skyBlue, color: COLORS.skyBlue }}
+                      >
+                        {course.category?.name || "Featured"}
+                      </Badge>
+                      <div className="flex items-center text-yellow-400">
+                        <Star className="h-4 w-4 fill-current" />
+                        <span className="text-sm ml-1 font-medium" style={{ color: COLORS.darkGrey }}>
+                          {course.rating || "4.9"}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <h3 className="text-lg font-bold mb-2 line-clamp-2" style={{ color: COLORS.deepBlue }}>
+                      {course.title}
+                    </h3>
+                    
+                    <div className="flex items-center text-sm mb-4" style={{ color: COLORS.darkGrey }}>
+                      <Clock className="h-4 w-4 mr-1" />
+                      <span>{course.duration || "8 weeks"}</span>
+                      <span className="mx-2">•</span>
+                      <Users className="h-4 w-4 mr-1" />
+                      <span>{course.enrolledCount || 0}</span>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-2xl font-bold" style={{ color: COLORS.deepBlue }}>
+                          ৳{Number(course.price).toFixed(0)}
+                        </span>
+                      </div>
+                      <Button 
+                        asChild
+                        size="sm"
+                        className="text-white font-semibold hover:opacity-90"
+                        style={{ backgroundColor: COLORS.red }}
+                      >
+                        <Link href={`/courses/${course.id}`}>Enroll</Link>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Browse Other Courses by Category */}
+      <section className="py-12 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold mb-2" style={{ color: COLORS.deepBlue }}>
+              Browse Other Courses
+            </h2>
+            <Button 
+              size="sm" 
+              className="mt-2 text-white font-semibold"
+              style={{ backgroundColor: COLORS.red }}
+            >
+              Explore all Courses
+            </Button>
+          </div>
+
+          {Array.isArray(categories) && categories.slice(0, 3).map((category: any) => {
+            const categoryCourses = coursesByCategory[category.name] || [];
+            if (categoryCourses.length === 0) return null;
+
+            return (
+              <div key={category.id} className="mb-12">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-2xl font-bold" style={{ color: COLORS.deepBlue }}>
+                    {category.name}
+                  </h3>
+                  <div className="flex gap-2">
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      className="rounded-full w-10 h-10"
+                      style={{ borderColor: COLORS.skyBlue, color: COLORS.skyBlue }}
+                    >
+                      <ChevronLeft className="h-5 w-5" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      className="rounded-full w-10 h-10"
+                      style={{ borderColor: COLORS.skyBlue, color: COLORS.skyBlue }}
+                    >
+                      <ChevronRight className="h-5 w-5" />
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory">
+                  {categoryCourses.slice(0, 4).map((course: any) => (
+                    <HorizontalCourseCard key={course.id} course={course} />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </section>
 
-      {/* Why Choose Our Courses Section */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4 max-w-6xl">
+      {/* How to Start Section */}
+      <section className="py-16" style={{ backgroundColor: COLORS.offWhite }}>
+        <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4" style={{ color: COLORS.deepBlue }}>
-              Why Choose Our Courses?
+            <h2 className="text-3xl font-bold mb-2" style={{ color: COLORS.deepBlue }}>
+              How to start
             </h2>
-            <p className="text-lg" style={{ color: COLORS.darkGrey }}>
-              Get the competitive edge with our expert-led programs
-            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-5xl mx-auto">
             {[
               {
                 icon: GraduationCap,
-                title: "Expert Instructors",
-                description: "Learn from certified professionals with 10+ years of experience"
+                title: "Sign up",
+                description: "Create your account and set up your profile to get personalized course recommendations"
+              },
+              {
+                icon: Video,
+                title: "Select a course",
+                description: "Browse our extensive catalog and choose courses that match your learning goals"
+              },
+              {
+                icon: Play,
+                title: "Start learning",
+                description: "Access high-quality video lessons and interactive content at your own pace"
               },
               {
                 icon: Award,
-                title: "Proven Results",
-                description: "98% of our students achieve their target scores"
-              },
-              {
-                icon: TrendingUp,
-                title: "Personalized Learning",
-                description: "Customized study plans tailored to your goals and pace"
+                title: "Get certificate",
+                description: "Complete courses and earn certificates to showcase your new skills"
               }
-            ].map((feature, index) => (
-              <div 
-                key={index}
-                className="p-6 rounded-xl text-center hover:shadow-lg transition-shadow"
-                style={{ backgroundColor: COLORS.offWhite }}
-              >
+            ].map((step, index) => (
+              <div key={index} className="text-center">
                 <div 
-                  className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
-                  style={{ backgroundColor: `${COLORS.skyBlue}20` }}
+                  className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4 hover:scale-110 transition-transform cursor-pointer"
+                  style={{ backgroundColor: COLORS.red }}
                 >
-                  <feature.icon className="h-8 w-8" style={{ color: COLORS.skyBlue }} />
+                  <step.icon className="h-12 w-12 text-white" />
                 </div>
-                <h3 className="text-xl font-bold mb-2" style={{ color: COLORS.deepBlue }}>
-                  {feature.title}
+                <h3 className="text-lg font-bold mb-2" style={{ color: COLORS.deepBlue }}>
+                  {step.title}
                 </h3>
-                <p style={{ color: COLORS.darkGrey }}>
-                  {feature.description}
+                <p className="text-sm" style={{ color: COLORS.darkGrey }}>
+                  {step.description}
                 </p>
               </div>
             ))}
@@ -419,39 +552,17 @@ export default function Courses() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-16 bg-gradient-to-br from-[#1C4E9C] to-[#2A7CCD] text-white">
-        <div className="container mx-auto px-4 max-w-4xl text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Ready to Start Your Learning Journey?
-          </h2>
-          <p className="text-xl text-blue-100 mb-8">
-            Join 15,000+ students who achieved their dreams with our expert guidance
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              className="h-12 px-8 text-white font-semibold shadow-xl"
-              style={{ backgroundColor: COLORS.skyBlue }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = COLORS.midBlue}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = COLORS.skyBlue}
-            >
-              Book Free Consultation
-              <ChevronRight className="ml-2 h-4 w-4" />
-            </Button>
-            <Button 
-              variant="outline"
-              className="h-12 px-8 border-2 border-white text-white hover:bg-white font-semibold"
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'white';
-                e.currentTarget.style.color = COLORS.deepBlue;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = 'white';
-              }}
-            >
-              View Free Courses
-            </Button>
+      {/* Our Partners Section */}
+      <section className="py-12 bg-white border-t">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold" style={{ color: COLORS.deepBlue }}>
+              Our Partners
+            </h2>
+          </div>
+          <div className="flex items-center justify-center gap-12 flex-wrap opacity-60">
+            {/* Add partner logos here if available */}
+            <div className="text-gray-400 text-sm">Partner logos will appear here</div>
           </div>
         </div>
       </section>

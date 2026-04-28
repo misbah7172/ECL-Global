@@ -89,10 +89,10 @@ type SystemSettings = {
 
 const mockSettings: SystemSettings = {
   general: {
-    siteName: "Mentor Learning Platform",
+    siteName: "ECL Global Learning Platform",
     siteDescription: "Premium online learning platform for students and professionals",
-    adminEmail: "admin@mentor.com",
-    supportEmail: "support@mentor.com",
+    adminEmail: "admin@ECL Global.com",
+    supportEmail: "support@ECL Global.com",
     timezone: "UTC",
     language: "en",
     currency: "USD",
@@ -110,10 +110,10 @@ const mockSettings: SystemSettings = {
   email: {
     smtpHost: "smtp.gmail.com",
     smtpPort: 587,
-    smtpUser: "noreply@mentor.com",
+    smtpUser: "noreply@ECL Global.com",
     smtpPassword: "********",
-    fromEmail: "noreply@mentor.com",
-    fromName: "Mentor Platform",
+    fromEmail: "noreply@ECL Global.com",
+    fromName: "ECL Global Platform",
     useSSL: true,
     isEnabled: true
   },
@@ -154,7 +154,7 @@ const mockSettings: SystemSettings = {
   api: {
     rateLimit: 100,
     enableCors: true,
-    corsOrigins: "https://mentor.com",
+    corsOrigins: "https://ECL Global.com",
     apiKey: "api_key_...",
     webhookSecret: "webhook_secret_..."
   }

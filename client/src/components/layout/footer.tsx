@@ -56,7 +56,7 @@ export default function Footer() {
             <div className="space-y-3 text-gray-300">
               <p>House 45, Road 27, Block A, Dhanmondi, Dhaka 1209</p>
               <p>+880 1777-123456</p>
-              <p>info@mentors.com.bd</p>
+              <p>info@ECL Globals.com.bd</p>
               <p>Mon - Sat: 9:00 AM - 8:00 PM</p>
             </div>
           </div>

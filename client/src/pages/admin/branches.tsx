@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { Plus, Pencil, Trash2, Search, Filter, MapPin, Users, BookOpen, DollarSign, Phone, Mail, Building } from "lucide-react";
 
 interface Branch {
@@ -68,92 +69,17 @@ export default function AdminBranches() {
   const { data: branches, isLoading } = useQuery({
     queryKey: ['/api/admin/branches'],
     queryFn: async () => {
-      // Mock data - in real app, this would fetch from API
-      const mockData: Branch[] = [
-        {
-          id: 1,
-          name: "Downtown Campus",
-          code: "DTC",
-          description: "Main campus located in the heart of downtown",
-          address: "123 Main Street, Suite 100",
-          city: "New York",
-          state: "NY",
-          zipCode: "10001",
-          country: "USA",
-          phone: "+1 (555) 123-4567",
-          email: "downtown@mentor.edu",
-          managerName: "John Smith",
-          managerPhone: "+1 (555) 123-4568",
-          managerEmail: "john.smith@mentor.edu",
-          isActive: true,
-          establishedDate: "2020-01-15",
-          totalStudents: 450,
-          totalCourses: 25,
-          totalInstructors: 12,
-          monthlyRevenue: 125000,
-          createdAt: "2020-01-15T10:00:00Z",
-          updatedAt: "2024-01-15T14:30:00Z",
-        },
-        {
-          id: 2,
-          name: "Westside Branch",
-          code: "WSB",
-          description: "Modern facility on the west side of the city",
-          address: "456 Oak Avenue, Building B",
-          city: "New York",
-          state: "NY",
-          zipCode: "10025",
-          country: "USA",
-          phone: "+1 (555) 234-5678",
-          email: "westside@mentor.edu",
-          managerName: "Sarah Johnson",
-          managerPhone: "+1 (555) 234-5679",
-          managerEmail: "sarah.johnson@mentor.edu",
-          isActive: true,
-          establishedDate: "2021-03-20",
-          totalStudents: 320,
-          totalCourses: 18,
-          totalInstructors: 8,
-          monthlyRevenue: 85000,
-          createdAt: "2021-03-20T09:00:00Z",
-          updatedAt: "2024-01-20T16:45:00Z",
-        },
-        {
-          id: 3,
-          name: "Suburban Center",
-          code: "SUB",
-          description: "Quiet suburban location with ample parking",
-          address: "789 Elm Street, Floor 2",
-          city: "Brooklyn",
-          state: "NY",
-          zipCode: "11201",
-          country: "USA",
-          phone: "+1 (555) 345-6789",
-          email: "suburban@mentor.edu",
-          managerName: "Mike Chen",
-          managerPhone: "+1 (555) 345-6790",
-          managerEmail: "mike.chen@mentor.edu",
-          isActive: false,
-          establishedDate: "2019-06-10",
-          totalStudents: 180,
-          totalCourses: 12,
-          totalInstructors: 6,
-          monthlyRevenue: 45000,
-          createdAt: "2019-06-10T08:00:00Z",
-          updatedAt: "2024-01-10T12:30:00Z",
-        },
-      ];
-      return mockData;
+      const response = await apiRequest('GET', '/api/admin/branches');
+      if (!response.ok) {
+        throw new Error('Failed to load branches');
+      }
+      return response.json();
     },
   });
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const response = await fetch('/api/admin/branches', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+      const response = await apiRequest('POST', '/api/admin/branches', data);
       if (!response.ok) throw new Error('Failed to create branch');
       return response.json();
     },
@@ -170,11 +96,7 @@ export default function AdminBranches() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: typeof formData }) => {
-      const response = await fetch(`/api/admin/branches/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+      const response = await apiRequest('PUT', `/api/admin/branches/${id}`, data);
       if (!response.ok) throw new Error('Failed to update branch');
       return response.json();
     },
@@ -191,9 +113,7 @@ export default function AdminBranches() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await fetch(`/api/admin/branches/${id}`, {
-        method: 'DELETE',
-      });
+      const response = await apiRequest('DELETE', `/api/admin/branches/${id}`);
       if (!response.ok) throw new Error('Failed to delete branch');
       return response.json();
     },

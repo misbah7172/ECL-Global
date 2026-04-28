@@ -7,7 +7,7 @@ async function verifyAdmin() {
   try {
     // Find the admin user
     const admin = await prisma.user.findUnique({
-      where: { email: 'admin@mentor.com' },
+      where: { email: 'admin@ECL Global.com' },
       select: {
         id: true,
         email: true,
@@ -38,7 +38,7 @@ async function verifyAdmin() {
     // Test password verification
     const testPassword = 'admin123';
     const adminWithPassword = await prisma.user.findUnique({
-      where: { email: 'admin@mentor.com' },
+      where: { email: 'admin@ECL Global.com' },
       select: { password: true }
     });
 

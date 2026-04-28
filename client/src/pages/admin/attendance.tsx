@@ -1,408 +1,441 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import AdminLayout from "@/components/admin/admin-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { toast } from "@/hooks/use-toast";
-import { Plus, Search, Calendar as CalendarIcon, Clock, Users, BookOpen, Filter, Download, CheckCircle, XCircle, AlertCircle } from "lucide-react";
-import { format } from "date-fns";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Search, Users, BookOpen, TrendingUp, Download, Eye, ClipboardCheck, UserCheck } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
-interface AttendanceRecord {
+interface Enrollment {
   id: number;
-  scheduleId: number;
-  courseName: string;
-  instructorName: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-  totalStudents: number;
-  presentStudents: number;
-  absentStudents: number;
-  lateStudents: number;
-  attendanceRate: number;
-  isMarked: boolean;
+  userId: number;
+  courseId: number;
+  enrolledAt: string;
+  progress: number;
+  completedAt?: string | null;
+  isActive: boolean;
+  user: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  course: {
+    id: number;
+    title: string;
+    price: number;
+    category: string;
+    totalSessions: number;
+  };
 }
 
-interface StudentAttendance {
+interface Course {
   id: number;
-  studentId: number;
-  studentName: string;
-  studentEmail: string;
-  status: 'present' | 'absent' | 'late';
-  markedAt?: string;
+  title: string;
+  category: string;
+  totalSessions: number;
+}
+
+interface User {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
 }
 
 export default function AdminAttendance() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [dateFilter, setDateFilter] = useState<Date | undefined>(undefined);
   const [courseFilter, setCourseFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [isMarkAttendanceModalOpen, setIsMarkAttendanceModalOpen] = useState(false);
-  const [selectedSchedule, setSelectedSchedule] = useState<AttendanceRecord | null>(null);
-  const [studentAttendances, setStudentAttendances] = useState<StudentAttendance[]>([]);
-
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [courseEnrollments, setCourseEnrollments] = useState<Enrollment[]>([]);
+  const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: attendanceRecords, isLoading } = useQuery({
-    queryKey: ['/api/admin/attendance'],
+  const { data: enrollments, isLoading } = useQuery<Enrollment[]>({
+    queryKey: ['/api/enrollments/all'],
     queryFn: async () => {
-      // Mock data - in real app, this would fetch from API
-      const mockRecords: AttendanceRecord[] = [
-        {
-          id: 1,
-          scheduleId: 101,
-          courseName: "Web Development Fundamentals",
-          instructorName: "Sarah Johnson",
-          date: "2024-01-15",
-          startTime: "09:00",
-          endTime: "11:00",
-          totalStudents: 25,
-          presentStudents: 23,
-          absentStudents: 2,
-          lateStudents: 1,
-          attendanceRate: 92,
-          isMarked: true,
-        },
-        {
-          id: 2,
-          scheduleId: 102,
-          courseName: "Data Science Bootcamp",
-          instructorName: "Mike Chen",
-          date: "2024-01-15",
-          startTime: "14:00",
-          endTime: "16:00",
-          totalStudents: 20,
-          presentStudents: 18,
-          absentStudents: 2,
-          lateStudents: 0,
-          attendanceRate: 90,
-          isMarked: true,
-        },
-        {
-          id: 3,
-          scheduleId: 103,
-          courseName: "Mobile App Development",
-          instructorName: "Jennifer Davis",
-          date: "2024-01-16",
-          startTime: "10:00",
-          endTime: "12:00",
-          totalStudents: 18,
-          presentStudents: 0,
-          absentStudents: 0,
-          lateStudents: 0,
-          attendanceRate: 0,
-          isMarked: false,
-        },
-      ];
-      return mockRecords;
-    },
-  });
-
-  const { data: courses } = useQuery({
-    queryKey: ['/api/courses'],
-    queryFn: async () => {
-      return [
-        { id: 1, name: "Web Development Fundamentals" },
-        { id: 2, name: "Data Science Bootcamp" },
-        { id: 3, name: "Mobile App Development" },
-      ];
-    },
-  });
-
-  const markAttendanceMutation = useMutation({
-    mutationFn: async ({ scheduleId, attendances }: { scheduleId: number; attendances: StudentAttendance[] }) => {
-      const response = await fetch(`/api/admin/attendance/${scheduleId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ attendances }),
+      const response = await fetch('/api/enrollments/all', {
+        credentials: 'include',
       });
-      if (!response.ok) throw new Error('Failed to mark attendance');
+      if (!response.ok) throw new Error('Failed to fetch enrollments');
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/attendance'] });
-      toast({ title: "Success", description: "Attendance marked successfully" });
-      setIsMarkAttendanceModalOpen(false);
-    },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to mark attendance", variant: "destructive" });
+  });
+
+  const { data: courses } = useQuery<Course[]>({
+    queryKey: ['/api/courses'],
+    queryFn: async () => {
+      const response = await fetch('/api/courses');
+      if (!response.ok) throw new Error('Failed to fetch courses');
+      return response.json();
     },
   });
 
-  const filteredRecords = attendanceRecords?.filter(record => {
-    const matchesSearch = record.courseName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         record.instructorName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesDate = !dateFilter || record.date === format(dateFilter, 'yyyy-MM-dd');
-    const matchesCourse = courseFilter === "all" || record.courseName === courseFilter;
-    const matchesStatus = statusFilter === "all" || 
-                         (statusFilter === "marked" && record.isMarked) ||
-                         (statusFilter === "pending" && !record.isMarked);
+  const { data: students } = useQuery<User[]>({
+    queryKey: ['/api/users'],
+    queryFn: async () => {
+      const response = await fetch('/api/users', {
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Failed to fetch users');
+      const users = await response.json();
+      return users.filter((u: User) => u.role === 'student');
+    },
+  });
+
+  // Group enrollments by course
+  const courseAttendanceData = useMemo(() => {
+    if (!enrollments || !courses) return [];
     
-    return matchesSearch && matchesDate && matchesCourse && matchesStatus;
-  });
+    return courses.map(course => {
+      const courseEnrollments = enrollments.filter(e => e.courseId === course.id);
+      const totalStudents = courseEnrollments.length;
+      const activeStudents = courseEnrollments.filter(e => e.isActive).length;
+      const completedStudents = courseEnrollments.filter(e => e.completedAt).length;
+      const averageProgress = totalStudents > 0 
+        ? courseEnrollments.reduce((sum, e) => sum + e.progress, 0) / totalStudents 
+        : 0;
+      const attendanceRate = totalStudents > 0 ? (activeStudents / totalStudents) * 100 : 0;
 
-  const handleMarkAttendance = (schedule: AttendanceRecord) => {
-    setSelectedSchedule(schedule);
-    // Mock student data for the selected schedule
-    const mockStudents: StudentAttendance[] = [
-      { id: 1, studentId: 101, studentName: "Alice Johnson", studentEmail: "alice@example.com", status: 'present' },
-      { id: 2, studentId: 102, studentName: "Bob Smith", studentEmail: "bob@example.com", status: 'present' },
-      { id: 3, studentId: 103, studentName: "Charlie Brown", studentEmail: "charlie@example.com", status: 'absent' },
-    ];
-    setStudentAttendances(mockStudents);
-    setIsMarkAttendanceModalOpen(true);
-  };
-
-  const handleAttendanceStatusChange = (studentId: number, status: 'present' | 'absent' | 'late') => {
-    setStudentAttendances(prev => 
-      prev.map(student => 
-        student.studentId === studentId ? { ...student, status } : student
-      )
-    );
-  };
-
-  const handleSaveAttendance = () => {
-    if (!selectedSchedule) return;
-    markAttendanceMutation.mutate({
-      scheduleId: selectedSchedule.scheduleId,
-      attendances: studentAttendances,
+      return {
+        course,
+        totalStudents,
+        activeStudents,
+        completedStudents,
+        averageProgress: Math.round(averageProgress),
+        attendanceRate: Math.round(attendanceRate),
+        enrollments: courseEnrollments,
+      };
     });
+  }, [enrollments, courses]);
+
+  const filteredData = useMemo(() => {
+    if (!courseAttendanceData) return [];
+    return courseAttendanceData.filter(data => {
+      const matchesSearch = data.course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           data.course.category.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesCourse = courseFilter === "all" || data.course.id.toString() === courseFilter;
+      
+      const matchesStatus = statusFilter === "all" || 
+                           (statusFilter === "active" && data.activeStudents > 0) ||
+                           (statusFilter === "completed" && data.completedStudents > 0) ||
+                           (statusFilter === "inactive" && data.activeStudents === 0);
+      
+      return matchesSearch && matchesCourse && matchesStatus;
+    });
+  }, [courseAttendanceData, searchTerm, courseFilter, statusFilter]);
+
+  const stats = useMemo(() => {
+    if (!enrollments) return { 
+      totalEnrollments: 0, 
+      activeStudents: 0, 
+      averageAttendance: 0,
+      totalCourses: 0 
+    };
+    
+    const totalEnrollments = enrollments.length;
+    const activeStudents = enrollments.filter(e => e.isActive).length;
+    const averageAttendance = totalEnrollments > 0 
+      ? (activeStudents / totalEnrollments) * 100 
+      : 0;
+    const totalCourses = new Set(enrollments.map(e => e.courseId)).size;
+
+    return { 
+      totalEnrollments, 
+      activeStudents, 
+      averageAttendance: Math.round(averageAttendance),
+      totalCourses 
+    };
+  }, [enrollments]);
+
+  const handleViewDetails = (course: Course) => {
+    setSelectedCourse(course);
+    const courseEnrolls = enrollments?.filter(e => e.courseId === course.id) || [];
+    setCourseEnrollments(courseEnrolls);
+    setIsDetailModalOpen(true);
   };
 
-  const exportAttendance = () => {
-    // Mock export functionality
-    const csvContent = "data:text/csv;charset=utf-8," + 
-      "Course,Instructor,Date,Time,Total Students,Present,Absent,Late,Attendance Rate\n" +
-      filteredRecords?.map(record => 
-        `${record.courseName},${record.instructorName},${record.date},${record.startTime}-${record.endTime},${record.totalStudents},${record.presentStudents},${record.absentStudents},${record.lateStudents},${record.attendanceRate}%`
-      ).join("\n");
-    
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "attendance_report.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const exportData = () => {
+    const csv = [
+      ["Course", "Category", "Total Students", "Active Students", "Completed Students", "Average Progress", "Attendance Rate"],
+      ...filteredData.map(data => [
+        data.course.title,
+        data.course.category,
+        data.totalStudents.toString(),
+        data.activeStudents.toString(),
+        data.completedStudents.toString(),
+        `${data.averageProgress}%`,
+        `${data.attendanceRate}%`
+      ])
+    ].map(row => row.join(",")).join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "attendance_report.csv";
+    a.click();
+    window.URL.revokeObjectURL(url);
   };
+
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="relative w-32 h-32">
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-24 h-24 border-8 border-[#1C4E9C] border-t-transparent rounded-full animate-spin" style={{ animationDelay: '0ms' }}></div>
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-16 h-16 border-8 border-[#33A9D9] border-t-transparent rounded-full animate-spin" style={{ animationDelay: '75ms' }}></div>
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-8 h-8 border-4 border-[#2A7CCD] border-t-transparent rounded-full animate-spin" style={{ animationDelay: '150ms' }}></div>
+            </div>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
-    <AdminLayout title="Attendance Management">
+    <AdminLayout>
       <div className="space-y-6">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
+        {/* Hero Section */}
+        <div className="bg-gradient-to-r from-[#1C4E9C] to-[#2A7CCD] text-white rounded-lg p-8">
+          <div className="flex items-center gap-3 mb-2">
+            <ClipboardCheck className="h-8 w-8" />
+            <h1 className="text-3xl font-bold">Attendance & Engagement Tracking</h1>
+          </div>
+          <p className="text-blue-100">Monitor student participation and course engagement</p>
+        </div>
+
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Card className="border-l-4 border-l-[#1C4E9C]">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Today's Classes</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Total Enrollments</CardTitle>
+              <Users className="h-5 w-5 text-[#1C4E9C]" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">8</div>
-              <p className="text-xs text-muted-foreground">
-                3 completed, 5 pending
-              </p>
+              <div className="text-2xl font-bold text-[#1C4E9C]">{stats.totalEnrollments}</div>
+              <p className="text-xs text-muted-foreground mt-1">Across all courses</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-l-4 border-l-[#33A9D9]">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Average Attendance</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Active Students</CardTitle>
+              <UserCheck className="h-5 w-5 text-[#33A9D9]" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">87%</div>
-              <p className="text-xs text-muted-foreground">
-                +2% from last week
-              </p>
+              <div className="text-2xl font-bold text-[#33A9D9]">{stats.activeStudents}</div>
+              <p className="text-xs text-muted-foreground mt-1">Currently enrolled</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-l-4 border-l-green-500">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Students</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Attendance Rate</CardTitle>
+              <TrendingUp className="h-5 w-5 text-green-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">245</div>
-              <p className="text-xs text-muted-foreground">
-                Across all courses
-              </p>
+              <div className="text-2xl font-bold text-green-600">{stats.averageAttendance}%</div>
+              <p className="text-xs text-muted-foreground mt-1">Overall engagement</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-l-4 border-l-[#FFD700]">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pending Attendance</CardTitle>
-              <AlertCircle className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Active Courses</CardTitle>
+              <BookOpen className="h-5 w-5 text-[#FFD700]" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">5</div>
-              <p className="text-xs text-muted-foreground">
-                Classes need attendance
-              </p>
+              <div className="text-2xl font-bold text-[#FFD700]">{stats.totalCourses}</div>
+              <p className="text-xs text-muted-foreground mt-1">Running courses</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Filters and Search */}
+        {/* Filters */}
         <Card>
           <CardHeader>
-            <CardTitle>Attendance Records</CardTitle>
-            <CardDescription>
-              Track and manage student attendance across all courses
-            </CardDescription>
+            <CardTitle className="text-[#1C4E9C]">Course Attendance Overview</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1">
                 <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
-                    placeholder="Search courses or instructors..."
+                    placeholder="Search courses or categories..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
                   />
                 </div>
               </div>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="justify-start text-left font-normal">
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dateFilter ? format(dateFilter, 'PPP') : 'Select date'}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={dateFilter}
-                    onSelect={setDateFilter}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
               <Select value={courseFilter} onValueChange={setCourseFilter}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Filter by course" />
+                <SelectTrigger className="w-full md:w-48">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Courses</SelectItem>
-                  {courses?.map(course => (
-                    <SelectItem key={course.id} value={course.name}>
-                      {course.name}
+                  {courses?.map((course) => (
+                    <SelectItem key={course.id} value={course.id.toString()}>
+                      {course.title}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Filter by status" />
+                <SelectTrigger className="w-full md:w-40">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="marked">Marked</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
                 </SelectContent>
               </Select>
-              <Button onClick={exportAttendance} variant="outline">
-                <Download className="mr-2 h-4 w-4" />
+              <Button onClick={exportData} variant="outline">
+                <Download className="h-4 w-4 mr-2" />
                 Export
               </Button>
-            </div>
-
-            {/* Attendance Table */}
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Course</TableHead>
-                    <TableHead>Instructor</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Time</TableHead>
-                    <TableHead>Students</TableHead>
-                    <TableHead>Attendance Rate</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={8} className="text-center">
-                        Loading...
-                      </TableCell>
-                    </TableRow>
-                  ) : filteredRecords?.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={8} className="text-center">
-                        No attendance records found
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredRecords?.map((record) => (
-                      <TableRow key={record.id}>
-                        <TableCell className="font-medium">{record.courseName}</TableCell>
-                        <TableCell>{record.instructorName}</TableCell>
-                        <TableCell>{format(new Date(record.date), 'MMM dd, yyyy')}</TableCell>
-                        <TableCell>{record.startTime} - {record.endTime}</TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            <div>Present: {record.presentStudents}</div>
-                            <div>Absent: {record.absentStudents}</div>
-                            {record.lateStudents > 0 && <div>Late: {record.lateStudents}</div>}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center">
-                            <span className={`font-medium ${record.attendanceRate >= 90 ? 'text-green-600' : 
-                                                           record.attendanceRate >= 80 ? 'text-yellow-600' : 
-                                                           'text-red-600'}`}>
-                              {record.attendanceRate}%
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={record.isMarked ? "default" : "secondary"}>
-                            {record.isMarked ? "Marked" : "Pending"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleMarkAttendance(record)}
-                            disabled={record.isMarked}
-                          >
-                            {record.isMarked ? "View" : "Mark"}
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
             </div>
           </CardContent>
         </Card>
 
-        {/* Mark Attendance Modal */}
-        <Dialog open={isMarkAttendanceModalOpen} onOpenChange={setIsMarkAttendanceModalOpen}>
+        {/* Attendance Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-[#1C4E9C]">Course Engagement Details</CardTitle>
+            <CardDescription>
+              {filteredData.length} courses found
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Course</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Total Students</TableHead>
+                  <TableHead>Active</TableHead>
+                  <TableHead>Completed</TableHead>
+                  <TableHead>Avg Progress</TableHead>
+                  <TableHead>Engagement</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredData.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center text-muted-foreground">
+                      No attendance data found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredData.map((data) => (
+                    <TableRow key={data.course.id}>
+                      <TableCell className="font-medium">{data.course.title}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{data.course.category}</Badge>
+                      </TableCell>
+                      <TableCell>{data.totalStudents}</TableCell>
+                      <TableCell>
+                        <span className="text-[#33A9D9] font-medium">{data.activeStudents}</span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-green-600 font-medium">{data.completedStudents}</span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-[#1C4E9C] transition-all"
+                              style={{ width: `${data.averageProgress}%` }}
+                            />
+                          </div>
+                          <span className="text-sm font-medium">{data.averageProgress}%</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge 
+                          className={
+                            data.attendanceRate >= 80 
+                              ? "bg-green-500 hover:bg-green-600" 
+                              : data.attendanceRate >= 60 
+                              ? "bg-[#FFD700] hover:bg-[#FFD700]/90 text-black" 
+                              : "bg-red-500 hover:bg-red-600"
+                          }
+                        >
+                          {data.attendanceRate}%
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleViewDetails(data.course)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        {/* Detail Modal */}
+        <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
           <DialogContent className="max-w-4xl">
             <DialogHeader>
-              <DialogTitle>Mark Attendance</DialogTitle>
+              <DialogTitle className="text-[#1C4E9C]">Course Enrollment Details</DialogTitle>
               <DialogDescription>
-                {selectedSchedule && (
-                  <>
-                    {selectedSchedule.courseName} - {selectedSchedule.instructorName}
-                    <br />
-                    {format(new Date(selectedSchedule.date), 'PPP')} | {selectedSchedule.startTime} - {selectedSchedule.endTime}
-                  </>
-                )}
+                {selectedCourse && `${selectedCourse.title} - Student Enrollment List`}
               </DialogDescription>
             </DialogHeader>
             <div className="max-h-96 overflow-y-auto">
@@ -411,57 +444,55 @@ export default function AdminAttendance() {
                   <TableRow>
                     <TableHead>Student</TableHead>
                     <TableHead>Email</TableHead>
+                    <TableHead>Enrolled Date</TableHead>
+                    <TableHead>Progress</TableHead>
                     <TableHead>Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {studentAttendances.map((student) => (
-                    <TableRow key={student.id}>
-                      <TableCell className="font-medium">{student.studentName}</TableCell>
-                      <TableCell>{student.studentEmail}</TableCell>
-                      <TableCell>
-                        <Select
-                          value={student.status}
-                          onValueChange={(value: 'present' | 'absent' | 'late') => 
-                            handleAttendanceStatusChange(student.studentId, value)
-                          }
-                        >
-                          <SelectTrigger className="w-32">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="present">
-                              <div className="flex items-center">
-                                <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
-                                Present
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="absent">
-                              <div className="flex items-center">
-                                <XCircle className="mr-2 h-4 w-4 text-red-500" />
-                                Absent
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="late">
-                              <div className="flex items-center">
-                                <Clock className="mr-2 h-4 w-4 text-yellow-500" />
-                                Late
-                              </div>
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
+                  {courseEnrollments.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center text-muted-foreground">
+                        No students enrolled
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    courseEnrollments.map((enrollment) => (
+                      <TableRow key={enrollment.id}>
+                        <TableCell className="font-medium">
+                          {enrollment.user.firstName} {enrollment.user.lastName}
+                        </TableCell>
+                        <TableCell>{enrollment.user.email}</TableCell>
+                        <TableCell>{new Date(enrollment.enrolledAt).toLocaleDateString()}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+                              <div 
+                                className="h-full bg-[#1C4E9C] transition-all"
+                                style={{ width: `${enrollment.progress}%` }}
+                              />
+                            </div>
+                            <span className="text-sm">{enrollment.progress}%</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {enrollment.completedAt ? (
+                            <Badge className="bg-green-500 hover:bg-green-600">Completed</Badge>
+                          ) : enrollment.isActive ? (
+                            <Badge className="bg-[#33A9D9] hover:bg-[#2A7CCD]">Active</Badge>
+                          ) : (
+                            <Badge variant="secondary">Inactive</Badge>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsMarkAttendanceModalOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleSaveAttendance} disabled={markAttendanceMutation.isPending}>
-                {markAttendanceMutation.isPending ? "Saving..." : "Save Attendance"}
+              <Button variant="outline" onClick={() => setIsDetailModalOpen(false)}>
+                Close
               </Button>
             </DialogFooter>
           </DialogContent>

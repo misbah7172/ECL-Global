@@ -52,7 +52,7 @@ type SMSTemplate = {
 const mockSMSMessages: SMSMessage[] = [
   {
     id: "1",
-    message: "Welcome to Mentor! Your enrollment in Advanced JavaScript has been confirmed. Classes start Monday at 9 AM. Good luck!",
+    message: "Welcome to ECL Global! Your enrollment in Advanced JavaScript has been confirmed. Classes start Monday at 9 AM. Good luck!",
     recipients: ["+1234567890", "+1234567891", "+1234567892"],
     recipientCount: 3,
     type: "transactional",
@@ -104,7 +104,7 @@ const mockSMSTemplates: SMSTemplate[] = [
   {
     id: "1",
     name: "Course Enrollment",
-    content: "Welcome to Mentor! Your enrollment in {course_name} has been confirmed. Classes start {start_date}. Good luck!",
+    content: "Welcome to ECL Global! Your enrollment in {course_name} has been confirmed. Classes start {start_date}. Good luck!",
     type: "transactional",
     variables: ["course_name", "start_date"],
     isActive: true,
