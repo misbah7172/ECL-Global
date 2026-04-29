@@ -132,42 +132,6 @@ export default function HomeRedesigned() {
     }
   ];
 
-  // Trust indicators
-  const trustBadges = [
-    { name: "British Council Partner", logo: "🇬🇧" },
-    { name: "Cambridge Certified", logo: "📜" },
-    { name: "IDP Education Partner", logo: "🎓" },
-    { name: "15+ Years Excellence", logo: "🏆" }
-  ];
-
-  // FAQs
-  const faqs = [
-    {
-      question: "What makes ECL Global different from other consultancies?",
-      answer: "We offer personalized attention with a proven track record of 15,000+ successful placements, 98% visa approval rate, and partnerships with 50+ top universities worldwide. Our team consists of certified experts with decades of combined experience."
-    },
-    {
-      question: "What is your visa success rate?",
-      answer: "We maintain a 98% visa approval rate across all countries including USA, UK, Canada, Australia, and Europe. Our expert counselors ensure all documentation is perfect and provide comprehensive interview preparation."
-    },
-    {
-      question: "Do you offer a score improvement guarantee?",
-      answer: "Yes! We guarantee score improvement for all our test preparation programs. If you don't achieve the promised improvement, we offer additional coaching sessions at no extra cost."
-    },
-    {
-      question: "Can I get a scholarship to study abroad?",
-      answer: "Absolutely! We have dedicated scholarship counselors who help identify and apply for various scholarships, grants, and financial aid options. Many of our students receive partial to full scholarships."
-    },
-    {
-      question: "What countries do you provide services for?",
-      answer: "We provide comprehensive study abroad services for USA, UK, Canada, Australia, Germany, Netherlands, Sweden, Ireland, New Zealand, and 15+ other countries."
-    },
-    {
-      question: "Do you offer online classes?",
-      answer: "Yes, we offer both online and offline classes with live interactive sessions, recorded lectures, and 24/7 learning platform access for maximum flexibility."
-    }
-  ];
-
   return (
     <div className="min-h-screen" style={{ backgroundColor: COLORS.offWhite }}>
       {/* Sticky Header */}
@@ -182,15 +146,7 @@ export default function HomeRedesigned() {
         <div className="relative container mx-auto px-4 py-20 lg:py-32">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center max-w-7xl mx-auto">
             <div className="text-white space-y-8">
-              {/* Trust Badge */}
-              <div className="flex flex-wrap gap-3">
-                {trustBadges.map((badge, index) => (
-                  <Badge key={index} className="bg-white/10 text-white border-white/20 hover:bg-white/20 backdrop-blur-sm">
-                    <span className="mr-2">{badge.logo}</span>
-                    {badge.name}
-                  </Badge>
-                ))}
-              </div>
+
 
               <h1 className="text-4xl lg:text-6xl font-bold leading-tight">
                 Your Passport to
@@ -655,25 +611,11 @@ export default function HomeRedesigned() {
             </p>
           </div>
 
-          <Accordion type="single" collapsible className="space-y-4">
-            {faqs.map((faq, index) => (
-              <AccordionItem 
-                key={index} 
-                value={`item-${index}`}
-                className="bg-white rounded-lg px-6 border-0 shadow-sm hover:shadow-md transition-shadow"
-              >
-                <AccordionTrigger 
-                  className="text-left font-semibold hover:no-underline"
-                  style={{ color: COLORS.deepBlue }}
-                >
-                  {faq.question}
-                </AccordionTrigger>
-                <AccordionContent style={{ color: COLORS.darkGrey }}>
-                  {faq.answer}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
+          <div className="text-center py-12 bg-white rounded-2xl shadow-lg">
+            <p style={{ color: COLORS.darkGrey }} className="mb-4">
+              FAQs will be added and managed by admin. Check back soon for frequently asked questions and answers!
+            </p>
+          </div>
 
           <div className="mt-12 text-center">
             <p className="mb-4" style={{ color: COLORS.darkGrey }}>
