@@ -1,8 +1,10 @@
 import { useParams } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { trackViewContent } from "@/lib/facebook-pixel";
 import { useState } from "react";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
@@ -34,6 +36,19 @@ export default function CourseDetail() {
       return response.json();
     },
   });
+
+  // Track course view in Facebook Pixel
+  useEffect(() => {
+    if (course && course.id) {
+      trackViewContent({
+        contentName: course.title,
+        contentType: "course",
+        contentId: course.id,
+        value: course.price || 0,
+        currency: "USD",
+      });
+    }
+  }, [course?.id]);
 
   const enrollMutation = useMutation({
     mutationFn: () => apiRequest("POST", "/api/enrollments", { courseId: parseInt(id!) }),

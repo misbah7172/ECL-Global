@@ -1423,6 +1423,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Homepage Settings routes
+  app.get("/api/settings/homepage", async (req, res) => {
+    try {
+      const settings = await storage.getHomepageSettings();
+      res.json(settings);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.put("/api/admin/settings/homepage", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const settings = await storage.updateHomepageSettings(req.body);
+      res.json(settings);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
   // Payment routes (if Stripe is configured)
   if (stripe) {
     app.post("/api/create-payment-intent", async (req, res) => {

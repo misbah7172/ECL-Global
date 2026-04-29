@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { trackCompleteRegistration } from "@/lib/facebook-pixel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -70,6 +71,15 @@ export default function Register() {
     try {
       const { confirmPassword, ...registerData } = data;
       await register(registerData);
+      
+      // Track registration in Facebook Pixel
+      trackCompleteRegistration({
+        email: data.email,
+        phone: data.phone,
+        firstName: data.firstName,
+        lastName: data.lastName,
+      });
+      
       toast({
         title: "Account created successfully!",
         description: "Welcome to ECL Global Learning Platform.",

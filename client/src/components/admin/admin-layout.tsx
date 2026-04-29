@@ -114,6 +114,7 @@ const adminNavItems = [
     category: "System",
     items: [
       { href: "/admin/users", icon: Shield, label: "User Management" },
+      { href: "/admin/homepage-settings", icon: Settings, label: "Homepage Settings" },
       { href: "/admin/settings", icon: Settings, label: "Settings" },
       { href: "/admin/backup", icon: Database, label: "Backup" },
     ]

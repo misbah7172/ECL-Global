@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { trackPurchase } from "@/lib/facebook-pixel";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,6 +51,15 @@ const CheckoutForm = ({ course }: { course: any }) => {
         variant: "destructive",
       });
     } else {
+      // Track purchase in Facebook Pixel
+      trackPurchase({
+        value: course.price || 0,
+        currency: "USD",
+        contentName: course.title,
+        contentType: "course",
+        contentId: course.id,
+      });
+      
       toast({
         title: "Payment Successful",
         description: "Thank you for your purchase! You have been enrolled in the course.",

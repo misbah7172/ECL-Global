@@ -102,6 +102,8 @@ export interface IStorage {
   createTeamMember(memberData: any): Promise<any>;
   updateTeamMember(id: number, updates: any): Promise<any>;
   deleteTeamMember(id: number): Promise<any>;
+  getHomepageSettings(): Promise<any>;
+  updateHomepageSettings(updates: any): Promise<any>;
 }
 
 export class Storage implements IStorage {
@@ -1041,6 +1043,29 @@ export class Storage implements IStorage {
   async deleteTeamMember(id: number) {
     return await this.db.teamMember.delete({
       where: { id },
+    });
+  }
+
+  async getHomepageSettings() {
+    let settings = await this.db.homepageSettings.findFirst();
+    if (!settings) {
+      settings = await this.db.homepageSettings.create({
+        data: {},
+      });
+    }
+    return settings;
+  }
+
+  async updateHomepageSettings(updates: any) {
+    const settings = await this.db.homepageSettings.findFirst();
+    if (!settings) {
+      return await this.db.homepageSettings.create({
+        data: updates,
+      });
+    }
+    return await this.db.homepageSettings.update({
+      where: { id: settings.id },
+      data: updates,
     });
   }
 }

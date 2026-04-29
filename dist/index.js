@@ -863,6 +863,27 @@ var Storage = class {
       where: { id }
     });
   }
+  async getHomepageSettings() {
+    let settings = await this.db.homepageSettings.findFirst();
+    if (!settings) {
+      settings = await this.db.homepageSettings.create({
+        data: {}
+      });
+    }
+    return settings;
+  }
+  async updateHomepageSettings(updates) {
+    const settings = await this.db.homepageSettings.findFirst();
+    if (!settings) {
+      return await this.db.homepageSettings.create({
+        data: updates
+      });
+    }
+    return await this.db.homepageSettings.update({
+      where: { id: settings.id },
+      data: updates
+    });
+  }
 };
 var storage = new Storage(prisma);
 
@@ -2089,6 +2110,22 @@ async function registerRoutes(app2) {
       const id = parseInt(req.params.id);
       await storage.deleteTeamMember(id);
       res.json({ success: true });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+  app2.get("/api/settings/homepage", async (req, res) => {
+    try {
+      const settings = await storage.getHomepageSettings();
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  app2.put("/api/admin/settings/homepage", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const settings = await storage.updateHomepageSettings(req.body);
+      res.json(settings);
     } catch (error) {
       res.status(400).json({ error: error.message });
     }

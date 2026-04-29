@@ -118,19 +118,14 @@ export default function HomeRedesigned() {
     },
   });
 
-  // Team Members (fallback - will be replaced by API data)
-  const teamStatic = [
-    {
-      id: 1,
-      name: "Dr. Ahmed Rahman",
-      role: "Chief Education Consultant",
-      specialization: "Study Abroad Expert - USA & Canada",
-      experience: "15+ Years Experience",
-      credentials: "PhD in Education, Cambridge Certified",
-      imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face",
-      bio: "Helped 3,000+ students secure admissions to top universities including Harvard, MIT, and Stanford."
-    }
-  ];
+  const { data: settings = {} } = useQuery({
+    queryKey: ["/api/settings/homepage"],
+    queryFn: async () => {
+      const response = await fetch("/api/settings/homepage");
+      const data = await response.json();
+      return data || {};
+    },
+  });
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: COLORS.offWhite }}>
@@ -162,15 +157,15 @@ export default function HomeRedesigned() {
               {/* Quick Stats */}
               <div className="grid grid-cols-3 gap-6 py-6 bg-white/10 backdrop-blur-sm rounded-2xl p-6">
                 <div className="text-center">
-                  <div className="text-3xl font-bold" style={{ color: COLORS.skyBlue }}>15K+</div>
+                  <div className="text-3xl font-bold" style={{ color: COLORS.skyBlue }}>{settings?.studentsPlaced || "15K+"}</div>
                   <div className="text-sm text-blue-200">Students Placed</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-green-400">98%</div>
+                  <div className="text-3xl font-bold text-green-400">{settings?.visaSuccessRate || "98%"}</div>
                   <div className="text-sm text-blue-200">Visa Success</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-yellow-400">50+</div>
+                  <div className="text-3xl font-bold text-yellow-400">{settings?.universityPartners || "50+"}</div>
                   <div className="text-sm text-blue-200">Universities</div>
                 </div>
               </div>
@@ -203,14 +198,18 @@ export default function HomeRedesigned() {
 
               {/* Contact Options */}
               <div className="flex gap-4 pt-4">
-                <div className="flex items-center gap-2 text-sm text-blue-100">
-                  <Phone className="h-4 w-4" />
-                  <span>+880 1777-123456</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-blue-100">
-                  <MessageSquare className="h-4 w-4" />
-                  <span>WhatsApp Chat</span>
-                </div>
+                {settings?.phoneNumber && (
+                  <div className="flex items-center gap-2 text-sm text-blue-100">
+                    <Phone className="h-4 w-4" />
+                    <span>{settings.phoneNumber}</span>
+                  </div>
+                )}
+                {settings?.whatsappNumber && (
+                  <div className="flex items-center gap-2 text-sm text-blue-100">
+                    <MessageSquare className="h-4 w-4" />
+                    <span>WhatsApp: {settings.whatsappNumber}</span>
+                  </div>
+                )}
               </div>
             </div>
             
@@ -245,10 +244,11 @@ export default function HomeRedesigned() {
                     />
                     <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#33A9D9] focus:border-transparent">
                       <option>Select Service</option>
-                      <option>IELTS Preparation</option>
-                      <option>SAT Preparation</option>
-                      <option>Study Abroad Consulting</option>
-                      <option>Career Counseling</option>
+                      {services.map((service: any) => (
+                        <option key={service.id} value={service.serviceType}>
+                          {service.title}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <Button 

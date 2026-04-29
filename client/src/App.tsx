@@ -5,6 +5,8 @@ import { AuthProvider, useAuth } from "@/lib/auth";
 import { queryClient } from "@/lib/queryClient";
 import { LoadingScreen } from "@/components/loading-screen";
 import ScrollToTop from "@/components/scroll-to-top";
+import { useEffect } from "react";
+import { initializeFacebookPixel, trackPageView } from "@/lib/facebook-pixel";
 
 // Pages
 import Home from "@/pages/home-redesigned";
@@ -35,6 +37,7 @@ import AdminBranches from "@/pages/admin/branches";
 import AdminPayments from "@/pages/admin/payments";
 import AdminReviews from "@/pages/admin/reviews";
 import AdminTeam from "@/pages/admin/team";
+import AdminHomepageSettings from "@/pages/admin/homepage-settings";
 import AdminNotifications from "@/pages/admin/notifications";
 import AdminMessages from "@/pages/admin/messages";
 import AdminSMS from "@/pages/admin/sms";
@@ -52,6 +55,19 @@ import AdminStudyAbroadInquiries from "@/pages/admin/study-abroad-inquiries";
 
 function AppContent() {
   const { isLoading } = useAuth();
+
+  // Initialize Facebook Pixel
+  useEffect(() => {
+    const pixelId = import.meta.env.VITE_FACEBOOK_PIXEL_ID || "YOUR_PIXEL_ID";
+    if (pixelId && pixelId !== "YOUR_PIXEL_ID") {
+      initializeFacebookPixel(pixelId);
+    }
+  }, []);
+
+  // Track page views
+  useEffect(() => {
+    trackPageView();
+  }, []);
 
   if (isLoading) {
     return <LoadingScreen />;
@@ -94,6 +110,7 @@ function AppContent() {
         <Route path="/admin/payments" component={AdminPayments} />
         <Route path="/admin/reviews" component={AdminReviews} />
         <Route path="/admin/team" component={AdminTeam} />
+        <Route path="/admin/homepage-settings" component={AdminHomepageSettings} />
         <Route path="/admin/notifications" component={AdminNotifications} />
         <Route path="/admin/messages" component={AdminMessages} />
         <Route path="/admin/sms" component={AdminSMS} />

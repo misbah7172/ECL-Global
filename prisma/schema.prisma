@@ -429,3 +429,30 @@ model TeamMember {
 
   @@map("team_members")
 }
+
+model HomepageSettings {
+  id                Int     @id @default(autoincrement())
+  
+  // Hero stats
+  studentsPlaced    String  @default("15,000+")
+  visaSuccessRate   String  @default("98%")
+  universityPartners String @default("50+")
+  
+  // Contact info
+  phoneNumber       String  @default("+880 1777-123456")
+  whatsappNumber    String  @default("+880 1777-123456")
+  email             String  @default("info@eclglobal.com")
+  
+  // Hero text
+  heroTitle         String  @default("Your Passport to Academic Adventure")
+  heroSubtitle      String  @default("Bangladesh's #1 Study Abroad Consultant. Transform your global education dreams into reality with expert guidance, proven results, and personalized support.")
+  
+  // Lead form
+  leadFormTitle     String  @default("Start Your Journey Today")
+  leadFormSubtitle  String  @default("Get personalized guidance from our experts")
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("homepage_settings")
+}

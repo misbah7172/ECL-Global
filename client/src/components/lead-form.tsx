@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { trackLead } from "@/lib/facebook-pixel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -49,7 +50,15 @@ export default function LeadForm() {
 
   const createLeadMutation = useMutation({
     mutationFn: (data: LeadFormData) => apiRequest("POST", "/api/leads", data),
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
+      // Track lead in Facebook Pixel
+      trackLead({
+        email: variables.email,
+        phone: variables.phone,
+        firstName: variables.fullName.split(" ")[0],
+        lastName: variables.fullName.split(" ").slice(1).join(" ") || "",
+      });
+      
       toast({
         title: "Success!",
         description: "We'll contact you soon for your free consultation.",
