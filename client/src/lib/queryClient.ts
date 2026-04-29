@@ -4,6 +4,16 @@ import { SESSION_KEYS, clearSession } from "@/lib/session";
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
+    let message = text;
+
+    try {
+      const parsed = JSON.parse(text);
+      if (parsed?.error && typeof parsed.error === "string") {
+        message = parsed.error;
+      }
+    } catch {
+      // Keep raw text when the response is not JSON.
+    }
     
     // Handle 401 errors globally
     if (res.status === 401) {
@@ -13,7 +23,7 @@ async function throwIfResNotOk(res: Response) {
       return;
     }
     
-    throw new Error(`${res.status}: ${text}`);
+    throw new Error(message || `${res.status}: ${res.statusText}`);
   }
 }
 

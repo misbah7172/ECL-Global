@@ -286,11 +286,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/register", async (req, res) => {
     try {
       const userData = insertUserSchema.parse(req.body);
+      const normalizedUsername = userData.username.trim().toLowerCase();
+      const normalizedEmail = userData.email.trim().toLowerCase();
       
-      // Check if user already exists
-      const existingUser = await storage.getUserByEmail(userData.email);
+      // Check if email already exists
+      const existingUser = await storage.getUserByEmail(normalizedEmail);
       if (existingUser) {
-        return res.status(400).json({ error: "User already exists" });
+        return res.status(400).json({ error: "Email is already registered" });
+      }
+
+      // Check if username already exists
+      const existingUsername = await storage.getUserByUsername(normalizedUsername);
+      if (existingUsername) {
+        return res.status(400).json({ error: "Username is already taken" });
       }
 
       // Hash password
@@ -299,6 +307,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create user
       const user = await storage.createUser({
         ...userData,
+        username: normalizedUsername,
+        email: normalizedEmail,
         password: hashedPassword,
       });
 
@@ -321,7 +331,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
       });
     } catch (error: any) {
-      res.status(400).json({ error: error.message });
+      const message = String(error?.message || "Registration failed");
+
+      // Guard against race conditions where duplicate is inserted between checks.
+      if (message.includes("Unique constraint failed") && message.includes("username")) {
+        return res.status(400).json({ error: "Username is already taken" });
+      }
+      if (message.includes("Unique constraint failed") && message.includes("email")) {
+        return res.status(400).json({ error: "Email is already registered" });
+      }
+
+      res.status(400).json({ error: message });
     }
   });
 
