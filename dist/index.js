@@ -425,6 +425,57 @@ var Storage = class {
       orderBy: { createdAt: "desc" }
     });
   }
+  // Review methods
+  async getReviews(filters) {
+    const where = {};
+    if (filters?.status) {
+      where.status = filters.status;
+    }
+    if (filters?.featured !== void 0) {
+      where.isFeatured = filters.featured;
+    }
+    return await this.db.review.findMany({
+      where,
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true
+          }
+        },
+        course: {
+          select: {
+            id: true,
+            title: true,
+            imageUrl: true
+          }
+        }
+      },
+      orderBy: [
+        { isFeatured: "desc" },
+        { createdAt: "desc" }
+      ],
+      take: filters?.limit
+    });
+  }
+  async createReview(reviewData) {
+    return await this.db.review.create({
+      data: reviewData
+    });
+  }
+  async updateReview(id, updates) {
+    return await this.db.review.update({
+      where: { id },
+      data: updates
+    });
+  }
+  async deleteReview(id) {
+    return await this.db.review.delete({
+      where: { id }
+    });
+  }
   // Free Course methods
   async getFreeCourses(filters) {
     const where = { isActive: true, isFree: true };
@@ -2281,7 +2332,6 @@ app.use((req, res, next) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
     res.status(status).json({ message });
-    throw err;
   });
   if (app.get("env") === "development") {
     await setupVite(app, server);

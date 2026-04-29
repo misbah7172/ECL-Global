@@ -95,7 +95,8 @@ export default function HomeRedesigned() {
     queryKey: ["/api/study-abroad-services"],
     queryFn: async () => {
       const response = await fetch("/api/study-abroad-services");
-      return response.json();
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
     },
   });
 
@@ -103,7 +104,8 @@ export default function HomeRedesigned() {
     queryKey: ["/api/reviews", { featured: true }],
     queryFn: async () => {
       const response = await fetch("/api/reviews?featured=true&limit=6");
-      return response.json();
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
     },
   });
 

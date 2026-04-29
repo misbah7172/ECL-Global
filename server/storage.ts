@@ -58,6 +58,12 @@ export interface IStorage {
   createLead(leadData: any): Promise<any>;
   getLeads(): Promise<any[]>;
 
+  // Review methods
+  getReviews(filters?: { status?: string; featured?: boolean; limit?: number }): Promise<any[]>;
+  createReview(reviewData: any): Promise<any>;
+  updateReview(id: number, updates: any): Promise<any>;
+  deleteReview(id: number): Promise<any>;
+
   // Free Course methods
   getFreeCourses(filters?: { categoryId?: number; featured?: boolean; search?: string }): Promise<any[]>;
   getFreeCourse(id: number): Promise<any>;
@@ -537,6 +543,64 @@ export class Storage implements IStorage {
   async getLeads() {
     return await this.db.lead.findMany({
       orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  // Review methods
+  async getReviews(filters?: { status?: string; featured?: boolean; limit?: number }) {
+    const where: any = {};
+
+    if (filters?.status) {
+      where.status = filters.status;
+    }
+
+    if (filters?.featured !== undefined) {
+      where.isFeatured = filters.featured;
+    }
+
+    return await this.db.review.findMany({
+      where,
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+        course: {
+          select: {
+            id: true,
+            title: true,
+            imageUrl: true,
+          },
+        },
+      },
+      orderBy: [
+        { isFeatured: 'desc' },
+        { createdAt: 'desc' },
+      ],
+      take: filters?.limit,
+    });
+  }
+
+  async createReview(reviewData: any) {
+    return await this.db.review.create({
+      data: reviewData,
+    });
+  }
+
+  async updateReview(id: number, updates: any) {
+    return await this.db.review.update({
+      where: { id },
+      data: updates,
+    });
+  }
+
+  async deleteReview(id: number) {
+    return await this.db.review.delete({
+      where: { id },
     });
   }
 
