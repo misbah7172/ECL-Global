@@ -34,6 +34,7 @@ import AdminContent from "@/pages/admin/content";
 import AdminBranches from "@/pages/admin/branches";
 import AdminPayments from "@/pages/admin/payments";
 import AdminReviews from "@/pages/admin/reviews";
+import AdminTeam from "@/pages/admin/team";
 import AdminNotifications from "@/pages/admin/notifications";
 import AdminMessages from "@/pages/admin/messages";
 import AdminSMS from "@/pages/admin/sms";
@@ -92,6 +93,7 @@ function AppContent() {
         <Route path="/admin/leads" component={AdminLeads} />
         <Route path="/admin/payments" component={AdminPayments} />
         <Route path="/admin/reviews" component={AdminReviews} />
+        <Route path="/admin/team" component={AdminTeam} />
         <Route path="/admin/notifications" component={AdminNotifications} />
         <Route path="/admin/messages" component={AdminMessages} />
         <Route path="/admin/sms" component={AdminSMS} />

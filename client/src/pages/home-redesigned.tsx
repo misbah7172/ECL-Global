@@ -109,8 +109,17 @@ export default function HomeRedesigned() {
     },
   });
 
-  // Team Members
-  const team = [
+  const { data: team = [] } = useQuery({
+    queryKey: ["/api/team"],
+    queryFn: async () => {
+      const response = await fetch("/api/team");
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
+    },
+  });
+
+  // Team Members (fallback - will be replaced by API data)
+  const teamStatic = [
     {
       id: 1,
       name: "Dr. Ahmed Rahman",
@@ -120,36 +129,6 @@ export default function HomeRedesigned() {
       credentials: "PhD in Education, Cambridge Certified",
       imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face",
       bio: "Helped 3,000+ students secure admissions to top universities including Harvard, MIT, and Stanford."
-    },
-    {
-      id: 2,
-      name: "Sarah Johnson",
-      role: "Senior Test Prep Specialist",
-      specialization: "IELTS & TOEFL Expert",
-      experience: "12+ Years Experience",
-      credentials: "CELTA & DELTA Certified",
-      imageUrl: "https://images.unsplash.com/photo-1494790108755-2616b612b193?w=400&h=400&fit=crop&crop=face",
-      bio: "Average student score improvement: IELTS Band 7.5+. Trained over 5,000 students with 98% success rate."
-    },
-    {
-      id: 3,
-      name: "Michael Chen",
-      role: "Visa & Immigration Consultant",
-      specialization: "Student Visa Expert",
-      experience: "10+ Years Experience",
-      credentials: "Licensed Immigration Consultant",
-      imageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face",
-      bio: "98% visa approval rate across USA, UK, Canada, and Australia. Successfully handled 4,500+ visa applications."
-    },
-    {
-      id: 4,
-      name: "Dr. Priya Sharma",
-      role: "Career Counseling Director",
-      specialization: "Academic & Career Pathways",
-      experience: "14+ Years Experience",
-      credentials: "PhD in Career Psychology",
-      imageUrl: "https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=400&h=400&fit=crop&crop=face",
-      bio: "Specialized in matching students with perfect career paths. Over 2,000 successful career transitions."
     }
   ];
 
@@ -505,7 +484,7 @@ export default function HomeRedesigned() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {team.map((member) => (
+            {team.length > 0 ? team.map((member: any) => (
               <Card key={member.id} className="group hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-0">
                 <div className="relative overflow-hidden">
                   <img 
@@ -537,7 +516,11 @@ export default function HomeRedesigned() {
                   </Badge>
                 </CardContent>
               </Card>
-            ))}
+            )) : (
+              <div className="col-span-full text-center py-12">
+                <p style={{ color: COLORS.darkGrey }}>Team members will be added by admin. Check back soon!</p>
+              </div>
+            )}
           </div>
         </div>
       </section>

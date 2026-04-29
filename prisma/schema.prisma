@@ -408,3 +408,24 @@ model StudyAbroadInquiry {
 
   @@map("study_abroad_inquiries")
 }
+
+model TeamMember {
+  id              Int      @id @default(autoincrement())
+  name            String   @db.VarChar(200)
+  role            String   @db.VarChar(150)
+  specialization  String?  @map("specialization") @db.VarChar(200)
+  experience      String?  @db.VarChar(100)
+  credentials     String?  @db.VarChar(200)
+  bio             String   @db.Text
+  imageUrl        String   @map("image_url") @db.Text
+  email           String?  @db.VarChar(255)
+  phone           String?  @db.VarChar(20)
+  linkedinUrl     String?  @map("linkedin_url") @db.Text
+  order           Int      @default(0)
+  isFeatured      Boolean  @default(false) @map("is_featured")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("team_members")
+}

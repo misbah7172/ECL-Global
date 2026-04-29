@@ -95,6 +95,13 @@ export interface IStorage {
   createStudyAbroadInquiry(inquiryData: any): Promise<any>;
   updateStudyAbroadInquiry(id: number, updates: any): Promise<any>;
   deleteStudyAbroadInquiry(id: number): Promise<any>;
+
+  // Team Member methods
+  getTeamMembers(filters?: { featured?: boolean; active?: boolean; limit?: number }): Promise<any[]>;
+  getTeamMember(id: number): Promise<any>;
+  createTeamMember(memberData: any): Promise<any>;
+  updateTeamMember(id: number, updates: any): Promise<any>;
+  deleteTeamMember(id: number): Promise<any>;
 }
 
 export class Storage implements IStorage {
@@ -985,6 +992,54 @@ export class Storage implements IStorage {
 
   async deleteStudyAbroadInquiry(id: number) {
     return await this.db.studyAbroadInquiry.delete({
+      where: { id },
+    });
+  }
+
+  // Team Member methods
+  async getTeamMembers(filters?: { featured?: boolean; active?: boolean; limit?: number }) {
+    const where: any = {};
+
+    if (filters?.active !== undefined) {
+      where.isActive = filters.active;
+    }
+
+    if (filters?.featured !== undefined) {
+      where.isFeatured = filters.featured;
+    }
+
+    return await this.db.teamMember.findMany({
+      where,
+      orderBy: [
+        { isFeatured: 'desc' },
+        { order: 'asc' },
+        { createdAt: 'desc' },
+      ],
+      take: filters?.limit,
+    });
+  }
+
+  async getTeamMember(id: number) {
+    return await this.db.teamMember.findUnique({
+      where: { id },
+    });
+  }
+
+  async createTeamMember(memberData: any) {
+    return await this.db.teamMember.create({
+      data: memberData,
+    });
+  }
+
+  async updateTeamMember(id: number, updates: any) {
+    return await this.db.teamMember.update({
+      where: { id },
+      data: updates,
+    });
+  }
+
+  async deleteTeamMember(id: number) {
+    return await this.db.teamMember.delete({
       where: { id },
     });
   }

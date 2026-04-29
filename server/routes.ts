@@ -102,6 +102,38 @@ const updateReviewSchema = z.object({
   helpful: z.coerce.number().optional(),
 });
 
+const insertTeamMemberSchema = z.object({
+  name: z.string().min(1),
+  role: z.string().min(1),
+  specialization: z.string().optional(),
+  experience: z.string().optional(),
+  credentials: z.string().optional(),
+  bio: z.string().min(1),
+  imageUrl: z.string().min(1),
+  email: z.string().email().optional(),
+  phone: z.string().optional(),
+  linkedinUrl: z.string().optional(),
+  order: z.coerce.number().default(0),
+  isFeatured: z.coerce.boolean().default(false),
+  isActive: z.coerce.boolean().default(true),
+});
+
+const updateTeamMemberSchema = z.object({
+  name: z.string().optional(),
+  role: z.string().optional(),
+  specialization: z.string().optional(),
+  experience: z.string().optional(),
+  credentials: z.string().optional(),
+  bio: z.string().optional(),
+  imageUrl: z.string().optional(),
+  email: z.string().email().optional(),
+  phone: z.string().optional(),
+  linkedinUrl: z.string().optional(),
+  order: z.coerce.number().optional(),
+  isFeatured: z.coerce.boolean().optional(),
+  isActive: z.coerce.boolean().optional(),
+});
+
 const insertMockTestSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
@@ -1326,6 +1358,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       await storage.deleteReview(id);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  // Team Member routes
+  app.get("/api/team", async (req, res) => {
+    try {
+      const { featured, limit } = req.query;
+      const members = await storage.getTeamMembers({
+        active: true,
+        featured: featured === "true" ? true : undefined,
+        limit: limit ? parseInt(limit as string, 10) : undefined,
+      });
+      res.json(members);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/admin/team", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const memberData = insertTeamMemberSchema.parse(req.body);
+      const member = await storage.createTeamMember(memberData);
+      res.json(member);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/admin/team", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const { featured, limit } = req.query;
+      const members = await storage.getTeamMembers({
+        featured: featured === "true" ? true : featured === "false" ? false : undefined,
+        limit: limit ? parseInt(limit as string, 10) : undefined,
+      });
+      res.json(members);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.put("/api/admin/team/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updateData = updateTeamMemberSchema.parse(req.body);
+      const member = await storage.updateTeamMember(id, updateData);
+      res.json(member);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.delete("/api/admin/team/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteTeamMember(id);
       res.json({ success: true });
     } catch (error: any) {
       res.status(400).json({ error: error.message });
