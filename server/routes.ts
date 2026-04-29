@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import Stripe from "stripe";
 import { storage } from "./storage";
+import { prisma } from "./prisma";
 import { z } from "zod";
 import "./types"; // Import the types extension
 
@@ -477,7 +478,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const courseId = parseInt(req.params.id);
       
       // Check if course exists
-      const existingCourse = await db.course.findUnique({
+      const existingCourse = await prisma.course.findUnique({
         where: { id: courseId }
       });
 
@@ -516,7 +517,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Handle lectures separately if provided
       if (lectures && Array.isArray(lectures)) {
         // Delete existing lectures
-        await db.lecture.deleteMany({
+        await prisma.lecture.deleteMany({
           where: { courseId: courseId }
         });
 
@@ -537,7 +538,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Updating course', courseId, 'with data:', courseData);
 
-      const updatedCourse = await db.course.update({
+      const updatedCourse = await prisma.course.update({
         where: { id: courseId },
         data: courseData,
         include: {
@@ -566,7 +567,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const courseId = parseInt(req.params.id);
       
       // Check if course exists
-      const course = await db.course.findUnique({
+      const course = await prisma.course.findUnique({
         where: { id: courseId }
       });
 
@@ -575,7 +576,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Delete the course
-      await db.course.delete({
+      await prisma.course.delete({
         where: { id: courseId }
       });
       
@@ -699,7 +700,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all enrollments (admin only)
   app.get("/api/enrollments/all", authenticateToken, requireAdmin, async (req, res) => {
     try {
-      const enrollments = await db.enrollment.findMany({
+      const enrollments = await prisma.enrollment.findMany({
         include: {
           user: {
             select: {
@@ -735,7 +736,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { progress, grade, certificateIssued } = req.body;
 
       // Validate enrollment exists
-      const existingEnrollment = await db.enrollment.findUnique({
+      const existingEnrollment = await prisma.enrollment.findUnique({
         where: { id: enrollmentId }
       });
 
@@ -744,7 +745,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Update the enrollment
-      const updatedEnrollment = await db.enrollment.update({
+      const updatedEnrollment = await prisma.enrollment.update({
         where: { id: enrollmentId },
         data: {
           progress: progress !== undefined ? progress : existingEnrollment.progress,
@@ -1511,6 +1512,120 @@ export async function registerRoutes(app: Express): Promise<Server> {
       })));
     } catch (error: any) {
       res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Create new instructor
+  app.post("/api/admin/instructors", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const { firstName, lastName, email, username, password, phone, bio, specialization } = req.body;
+      
+      if (!firstName || !lastName || !email || !username || !password) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ error: "Email already in use" });
+      }
+
+      // Check if username is taken
+      const existingUsername = await storage.getUserByUsername(username);
+      if (existingUsername) {
+        return res.status(400).json({ error: "Username already taken" });
+      }
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Create instructor user
+      const instructor = await storage.createUser({
+        firstName,
+        lastName,
+        email,
+        username,
+        password: hashedPassword,
+        phone: phone || null,
+        role: 'instructor',
+        isActive: true,
+      });
+
+      res.json({
+        id: instructor.id,
+        firstName: instructor.firstName,
+        lastName: instructor.lastName,
+        email: instructor.email,
+        username: instructor.username,
+        role: instructor.role,
+        message: "Instructor created successfully. They can now login with their username and password."
+      });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  // Update instructor
+  app.put("/api/admin/instructors/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const instructorId = parseInt(req.params.id);
+      const { firstName, lastName, email, phone, isActive } = req.body;
+
+      // Check if instructor exists
+      const instructor = await storage.getUser(instructorId);
+      if (!instructor) {
+        return res.status(404).json({ error: "Instructor not found" });
+      }
+
+      // If email is being changed, check it's not taken
+      if (email && email !== instructor.email) {
+        const existingEmail = await storage.getUserByEmail(email);
+        if (existingEmail) {
+          return res.status(400).json({ error: "Email already in use" });
+        }
+      }
+
+      // Update instructor
+      const updates: any = {};
+      if (firstName !== undefined) updates.firstName = firstName;
+      if (lastName !== undefined) updates.lastName = lastName;
+      if (email !== undefined) updates.email = email;
+      if (phone !== undefined) updates.phone = phone;
+      if (isActive !== undefined) updates.isActive = isActive;
+
+      const updatedInstructor = await storage.updateUser(instructorId, updates);
+      res.json(updatedInstructor);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  // Delete instructor
+  app.delete("/api/admin/instructors/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const instructorId = parseInt(req.params.id);
+
+      // Check if instructor exists
+      const instructor = await storage.getUser(instructorId);
+      if (!instructor) {
+        return res.status(404).json({ error: "Instructor not found" });
+      }
+
+      // Check if instructor has courses
+      const courses = await storage.getCourses();
+      const instructorHasCourses = courses.some((course: any) => course.instructorId === instructorId);
+      
+      if (instructorHasCourses) {
+        return res.status(400).json({ 
+          error: "Cannot delete instructor with existing courses. Please reassign or delete the courses first." 
+        });
+      }
+
+      // Soft delete by marking as inactive
+      await storage.updateUser(instructorId, { isActive: false });
+      res.json({ success: true, message: "Instructor deleted successfully" });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
     }
   });
 

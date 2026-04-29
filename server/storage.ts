@@ -16,6 +16,7 @@ export interface IStorage {
   getCategory(id: number): Promise<any>;
   createCategory(categoryData: any): Promise<any>;
   updateCategory(id: number, updates: any): Promise<any>;
+  deleteCategory(id: number): Promise<any>;
 
   // Course methods
   getCourses(filters?: { categoryId?: number; featured?: boolean; search?: string }): Promise<any[]>;
@@ -186,6 +187,12 @@ export class Storage implements IStorage {
     return await this.db.category.update({
       where: { id },
       data: updates,
+    });
+  }
+
+  async deleteCategory(id: number) {
+    return await this.db.category.delete({
+      where: { id },
     });
   }
 

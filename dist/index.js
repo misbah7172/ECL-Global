@@ -27,8 +27,8 @@ process.on("beforeExit", async () => {
 
 // server/storage.ts
 var Storage = class {
-  constructor(db2) {
-    this.db = db2;
+  constructor(db) {
+    this.db = db;
   }
   // User methods
   async getUser(id) {
@@ -97,6 +97,11 @@ var Storage = class {
     return await this.db.category.update({
       where: { id },
       data: updates
+    });
+  }
+  async deleteCategory(id) {
+    return await this.db.category.delete({
+      where: { id }
     });
   }
   // Course methods
@@ -1294,7 +1299,7 @@ async function registerRoutes(app2) {
   app2.put("/api/courses/:id", authenticateToken, requireAdmin, async (req, res) => {
     try {
       const courseId = parseInt(req.params.id);
-      const existingCourse = await db.course.findUnique({
+      const existingCourse = await prisma.course.findUnique({
         where: { id: courseId }
       });
       if (!existingCourse) {
@@ -1323,7 +1328,7 @@ async function registerRoutes(app2) {
       if (courseFields.whatYouWillLearn !== void 0) courseData.whatYouWillLearn = courseFields.whatYouWillLearn;
       if (courseFields.requirements !== void 0) courseData.requirements = courseFields.requirements;
       if (lectures && Array.isArray(lectures)) {
-        await db.lecture.deleteMany({
+        await prisma.lecture.deleteMany({
           where: { courseId }
         });
         courseData.lectures = {
@@ -1340,7 +1345,7 @@ async function registerRoutes(app2) {
         };
       }
       console.log("Updating course", courseId, "with data:", courseData);
-      const updatedCourse = await db.course.update({
+      const updatedCourse = await prisma.course.update({
         where: { id: courseId },
         data: courseData,
         include: {
@@ -1365,13 +1370,13 @@ async function registerRoutes(app2) {
   app2.delete("/api/courses/:id", authenticateToken, requireAdmin, async (req, res) => {
     try {
       const courseId = parseInt(req.params.id);
-      const course = await db.course.findUnique({
+      const course = await prisma.course.findUnique({
         where: { id: courseId }
       });
       if (!course) {
         return res.status(404).json({ error: "Course not found" });
       }
-      await db.course.delete({
+      await prisma.course.delete({
         where: { id: courseId }
       });
       res.json({ message: "Course deleted successfully" });
@@ -1469,7 +1474,7 @@ async function registerRoutes(app2) {
   });
   app2.get("/api/enrollments/all", authenticateToken, requireAdmin, async (req, res) => {
     try {
-      const enrollments = await db.enrollment.findMany({
+      const enrollments = await prisma.enrollment.findMany({
         include: {
           user: {
             select: {
@@ -1501,13 +1506,13 @@ async function registerRoutes(app2) {
     try {
       const enrollmentId = parseInt(req.params.id);
       const { progress, grade, certificateIssued } = req.body;
-      const existingEnrollment = await db.enrollment.findUnique({
+      const existingEnrollment = await prisma.enrollment.findUnique({
         where: { id: enrollmentId }
       });
       if (!existingEnrollment) {
         return res.status(404).json({ error: "Enrollment not found" });
       }
-      const updatedEnrollment = await db.enrollment.update({
+      const updatedEnrollment = await prisma.enrollment.update({
         where: { id: enrollmentId },
         data: {
           progress: progress !== void 0 ? progress : existingEnrollment.progress,
@@ -2190,6 +2195,90 @@ async function registerRoutes(app2) {
       })));
     } catch (error) {
       res.status(500).json({ error: error.message });
+    }
+  });
+  app2.post("/api/admin/instructors", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const { firstName, lastName, email, username, password, phone, bio, specialization } = req.body;
+      if (!firstName || !lastName || !email || !username || !password) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ error: "Email already in use" });
+      }
+      const existingUsername = await storage.getUserByUsername(username);
+      if (existingUsername) {
+        return res.status(400).json({ error: "Username already taken" });
+      }
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const instructor = await storage.createUser({
+        firstName,
+        lastName,
+        email,
+        username,
+        password: hashedPassword,
+        phone: phone || null,
+        role: "instructor",
+        isActive: true
+      });
+      res.json({
+        id: instructor.id,
+        firstName: instructor.firstName,
+        lastName: instructor.lastName,
+        email: instructor.email,
+        username: instructor.username,
+        role: instructor.role,
+        message: "Instructor created successfully. They can now login with their username and password."
+      });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+  app2.put("/api/admin/instructors/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const instructorId = parseInt(req.params.id);
+      const { firstName, lastName, email, phone, isActive } = req.body;
+      const instructor = await storage.getUser(instructorId);
+      if (!instructor) {
+        return res.status(404).json({ error: "Instructor not found" });
+      }
+      if (email && email !== instructor.email) {
+        const existingEmail = await storage.getUserByEmail(email);
+        if (existingEmail) {
+          return res.status(400).json({ error: "Email already in use" });
+        }
+      }
+      const updates = {};
+      if (firstName !== void 0) updates.firstName = firstName;
+      if (lastName !== void 0) updates.lastName = lastName;
+      if (email !== void 0) updates.email = email;
+      if (phone !== void 0) updates.phone = phone;
+      if (isActive !== void 0) updates.isActive = isActive;
+      const updatedInstructor = await storage.updateUser(instructorId, updates);
+      res.json(updatedInstructor);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+  app2.delete("/api/admin/instructors/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const instructorId = parseInt(req.params.id);
+      const instructor = await storage.getUser(instructorId);
+      if (!instructor) {
+        return res.status(404).json({ error: "Instructor not found" });
+      }
+      const courses = await storage.getCourses();
+      const instructorHasCourses = courses.some((course) => course.instructorId === instructorId);
+      if (instructorHasCourses) {
+        return res.status(400).json({
+          error: "Cannot delete instructor with existing courses. Please reassign or delete the courses first."
+        });
+      }
+      await storage.updateUser(instructorId, { isActive: false });
+      res.json({ success: true, message: "Instructor deleted successfully" });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
     }
   });
   app2.get("/api/users", authenticateToken, requireAdmin, async (req, res) => {
