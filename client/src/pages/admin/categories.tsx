@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import AdminLayout from "@/components/admin/admin-layout";
+import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -100,18 +101,7 @@ export default function AdminCategories() {
         : '/api/categories';
       const method = editingCategory ? 'PUT' : 'POST';
 
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to save category');
-      }
-
+      const response = await apiRequest(method, url, data);
       return response.json();
     },
     onSuccess: () => {
@@ -136,16 +126,7 @@ export default function AdminCategories() {
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await fetch(`/api/categories/${id}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to delete category');
-      }
-
+      const response = await apiRequest('DELETE', `/api/categories/${id}`);
       return response.json();
     },
     onSuccess: () => {

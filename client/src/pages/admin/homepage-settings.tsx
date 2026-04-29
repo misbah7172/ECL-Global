@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AdminLayout from "@/components/admin/admin-layout";
+import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,16 +53,7 @@ export default function AdminHomepageSettings() {
 
   const updateMutation = useMutation({
     mutationFn: async (data: HomepageSettings) => {
-      const response = await fetch("/api/admin/settings/homepage", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-        credentials: "include",
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to update settings");
-      }
+      const response = await apiRequest("PUT", "/api/admin/settings/homepage", data);
       return response.json();
     },
     onSuccess: () => {
@@ -83,8 +75,11 @@ export default function AdminHomepageSettings() {
 
   const handleSave = async () => {
     setIsSaving(true);
-    await updateMutation.mutateAsync(formData);
-    setIsSaving(false);
+    try {
+      await updateMutation.mutateAsync(formData);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (

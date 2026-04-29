@@ -1144,13 +1144,21 @@ async function registerRoutes(app2) {
   app2.post("/api/auth/register", async (req, res) => {
     try {
       const userData = insertUserSchema.parse(req.body);
-      const existingUser = await storage.getUserByEmail(userData.email);
+      const normalizedUsername = userData.username.trim().toLowerCase();
+      const normalizedEmail = userData.email.trim().toLowerCase();
+      const existingUser = await storage.getUserByEmail(normalizedEmail);
       if (existingUser) {
-        return res.status(400).json({ error: "User already exists" });
+        return res.status(400).json({ error: "Email is already registered" });
+      }
+      const existingUsername = await storage.getUserByUsername(normalizedUsername);
+      if (existingUsername) {
+        return res.status(400).json({ error: "Username is already taken" });
       }
       const hashedPassword = await bcrypt.hash(userData.password, 10);
       const user = await storage.createUser({
         ...userData,
+        username: normalizedUsername,
+        email: normalizedEmail,
         password: hashedPassword
       });
       const token = jwt.sign(
@@ -1170,7 +1178,14 @@ async function registerRoutes(app2) {
         }
       });
     } catch (error) {
-      res.status(400).json({ error: error.message });
+      const message = String(error?.message || "Registration failed");
+      if (message.includes("Unique constraint failed") && message.includes("username")) {
+        return res.status(400).json({ error: "Username is already taken" });
+      }
+      if (message.includes("Unique constraint failed") && message.includes("email")) {
+        return res.status(400).json({ error: "Email is already registered" });
+      }
+      res.status(400).json({ error: message });
     }
   });
   app2.post("/api/auth/login", async (req, res) => {

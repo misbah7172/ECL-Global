@@ -73,12 +73,7 @@ export default function AdminInstructors() {
   const { data: users = [], isLoading: loadingUsers } = useQuery({
     queryKey: ["/api/users"],
     queryFn: async () => {
-      const response = await fetch("/api/users", {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      if (!response.ok) throw new Error("Failed to fetch users");
+      const response = await apiRequest("GET", "/api/users");
       return response.json();
     },
   });
@@ -97,13 +92,12 @@ export default function AdminInstructors() {
   const { data: allEnrollments = [], isLoading: loadingEnrollments } = useQuery({
     queryKey: ["/api/enrollments/all"],
     queryFn: async () => {
-      const response = await fetch("/api/enrollments/all", {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      if (!response.ok) return [];
-      return response.json();
+      try {
+        const response = await apiRequest("GET", "/api/enrollments/all");
+        return response.json();
+      } catch {
+        return [];
+      }
     },
   });
 
@@ -158,10 +152,10 @@ export default function AdminInstructors() {
   };
 
   const createInstructorMutation = useMutation({
-    mutationFn: (data: any) => 
+    mutationFn: (data: any) =>
       editingInstructor
-        ? apiRequest("PUT", `/api/users/${editingInstructor.id}`, data)
-        : apiRequest("POST", "/api/users", data),
+        ? apiRequest("PUT", `/api/admin/instructors/${editingInstructor.id}`, data)
+        : apiRequest("POST", "/api/admin/instructors", data),
     onSuccess: () => {
       toast({
         title: editingInstructor ? "Instructor Updated" : "Instructor Added",
@@ -170,6 +164,7 @@ export default function AdminInstructors() {
           : "New instructor has been added successfully.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructors"] });
       setIsDialogOpen(false);
       setEditingInstructor(null);
       form.reset();
@@ -184,6 +179,15 @@ export default function AdminInstructors() {
   });
 
   const onSubmit = (data: InstructorFormData) => {
+    if (!editingInstructor && (!data.username || !data.password)) {
+      toast({
+        title: "Error",
+        description: "Username and password are required when creating a new instructor.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const instructorData = {
       ...data,
       role: 'instructor',

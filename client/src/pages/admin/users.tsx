@@ -14,12 +14,13 @@ import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Shield, UserPlus, Edit, Trash2, Search, Filter, Eye, Lock, Unlock, Ban, CheckCircle, XCircle, AlertCircle, Calendar, Mail, Phone, MapPin, GraduationCap, Users, Settings, UserX } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 type UserRole = "admin" | "instructor" | "student" | "parent";
 type UserStatus = "active" | "inactive" | "suspended" | "pending";
 
 type User = {
-  id: string;
+  id: number;
   firstName: string;
   lastName: string;
   email: string;
@@ -48,8 +49,6 @@ type User = {
   permissions: string[];
   isOnline: boolean;
 };
-
-const mockUsers: User[] = [];
 
 const rolePermissions = {
   admin: ["full_access", "user_management", "system_settings", "course_management", "student_management", "financial_management"],
@@ -82,30 +81,51 @@ export default function AdminUsers() {
 
   const queryClient = useQueryClient();
 
-  // Mock API calls
+  // Real API calls
   const { data: users = [], isLoading } = useQuery({
-    queryKey: ['admin-users'],
+    queryKey: ['/api/users'],
     queryFn: async () => {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return mockUsers;
+      const response = await apiRequest('GET', '/api/users');
+      const apiUsers = await response.json();
+      return (apiUsers || []).map((u: any) => ({
+        id: u.id,
+        firstName: u.firstName || '',
+        lastName: u.lastName || '',
+        email: u.email || '',
+        phone: u.phone || '',
+        avatar: undefined,
+        role: (u.role || 'student') as UserRole,
+        status: (u.isActive ? 'active' : 'inactive') as UserStatus,
+        isEmailVerified: true,
+        lastLogin: undefined,
+        createdAt: u.createdAt,
+        updatedAt: u.createdAt,
+        metadata: {
+          enrolledCourses: 0,
+          completedCourses: 0,
+          totalSpent: 0,
+          loginCount: 0,
+          failedLoginAttempts: 0,
+        },
+        permissions: rolePermissions[(u.role || 'student') as keyof typeof rolePermissions] || [],
+        isOnline: false,
+      })) as User[];
     }
   });
 
   const createUserMutation = useMutation({
     mutationFn: async (data: any) => {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return { 
-        id: Date.now().toString(), 
-        ...data, 
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        metadata: { loginCount: 0, failedLoginAttempts: 0 },
-        permissions: rolePermissions[data.role as keyof typeof rolePermissions] || [],
-        isOnline: false
+      const payload = {
+        ...data,
+        username: data.email?.split('@')[0],
+        password: "ChangeMe123!",
+        isActive: data.status !== 'inactive' && data.status !== 'suspended',
       };
+      const response = await apiRequest('POST', '/api/auth/register', payload);
+      return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
       toast({
         title: "User created successfully",
         description: "The user has been created and invited to the platform.",
@@ -123,12 +143,18 @@ export default function AdminUsers() {
   });
 
   const updateUserMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<User> }) => {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return { id, updates };
+    mutationFn: async ({ id, updates }: { id: number; updates: Partial<User> }) => {
+      const response = await apiRequest('PUT', `/api/admin/instructors/${id}`, {
+        firstName: updates.firstName,
+        lastName: updates.lastName,
+        email: updates.email,
+        phone: updates.phone,
+        isActive: updates.status === 'active',
+      });
+      return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
       toast({
         title: "User updated successfully",
         description: "The user information has been updated.",
@@ -146,12 +172,12 @@ export default function AdminUsers() {
   });
 
   const deleteUserMutation = useMutation({
-    mutationFn: async (id: string) => {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return id;
+    mutationFn: async (id: number) => {
+      const response = await apiRequest('DELETE', `/api/admin/instructors/${id}`);
+      return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
       toast({
         title: "User deleted successfully",
         description: "The user has been permanently deleted.",
