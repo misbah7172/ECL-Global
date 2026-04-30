@@ -287,7 +287,7 @@ export default function Login() {
               ))}
             </div>
 
-            <div className="mt-12 p-6 rounded-xl" style={{ backgroundColor: `${COLORS.skyBlue}20` }}>
+            {/* <div className="mt-12 p-6 rounded-xl" style={{ backgroundColor: `${COLORS.skyBlue}20` }}>
               <p className="italic text-blue-100 mb-4">
                 "ECL Global helped me get into my dream university. The personalized guidance was invaluable!"
               </p>
@@ -302,7 +302,7 @@ export default function Login() {
                   <p className="text-sm text-blue-200">University of Toronto</p>
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
