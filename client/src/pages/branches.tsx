@@ -18,31 +18,41 @@ const COLORS = {
 export default function Branches() {
   const { data: branches, isLoading } = useQuery({
     queryKey: ["/api/branches"],
+    queryFn: async () => {
+      try {
+        const response = await fetch("/api/branches");
+        if (!response.ok) return [];
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+      } catch {
+        return [];
+      }
+    },
   });
 
   // International Offices - Static data (can be moved to admin later)
-  // const internationalOffices = [
-  //   {
-  //     id: 1,
-  //     name: "USA Office",
-  //     country: "United States",
-  //     city: "New York",
-  //     address: "123 Fifth Avenue, New York, NY 10001",
-  //     phone: "+1 (555) 123-4567",
-  //     email: "usa@eclglobal.com",
-  //     hours: "Mon - Fri: 9:00 AM - 6:00 PM EST",
-  //   },
-  //   {
-  //     id: 2,
-  //     name: "UK Office",
-  //     country: "United Kingdom",
-  //     city: "London",
-  //     address: "456 Oxford Street, London, UK W1C 1AT",
-  //     phone: "+44 (0) 20 7946 0958",
-  //     email: "uk@eclglobal.com",
-  //     hours: "Mon - Fri: 9:00 AM - 5:00 PM GMT",
-  //   },
-  // ];
+  const internationalOffices = [
+    {
+      id: 1,
+      name: "USA Office",
+      country: "United States",
+      city: "New York",
+      address: "123 Fifth Avenue, New York, NY 10001",
+      phone: "+1 (555) 123-4567",
+      email: "usa@eclglobal.com",
+      hours: "Mon - Fri: 9:00 AM - 6:00 PM EST",
+    },
+    {
+      id: 2,
+      name: "UK Office",
+      country: "United Kingdom",
+      city: "London",
+      address: "456 Oxford Street, London, UK W1C 1AT",
+      phone: "+44 (0) 20 7946 0958",
+      email: "uk@eclglobal.com",
+      hours: "Mon - Fri: 9:00 AM - 5:00 PM GMT",
+    },
+  ];
 
 
 

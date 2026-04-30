@@ -995,7 +995,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const branches = await storage.getBranches();
       res.json(branches);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error("Failed to load public branches:", error);
+      res.json([]);
     }
   });
 

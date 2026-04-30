@@ -29,6 +29,12 @@ interface HomepageSettings {
   heroSubtitle?: string;
   leadFormTitle?: string;
   leadFormSubtitle?: string;
+  popupEnabled?: boolean;
+  popupBadge?: string;
+  popupTitle?: string;
+  popupMessage?: string;
+  popupCtaText?: string;
+  popupCtaUrl?: string;
 }
 
 const defaultHomepageSettings: HomepageSettings = {
@@ -42,6 +48,12 @@ const defaultHomepageSettings: HomepageSettings = {
   heroSubtitle: "Bangladesh's #1 Study Abroad Consultant. Transform your global education dreams into reality with expert guidance, proven results, and personalized support.",
   leadFormTitle: "Start Your Journey Today",
   leadFormSubtitle: "Get personalized guidance from our experts",
+  popupEnabled: false,
+  popupBadge: "Proud Moment",
+  popupTitle: "Celebrate our students' success",
+  popupMessage: "Special offers, student highlights, and important announcements appear here.",
+  popupCtaText: "See Offers",
+  popupCtaUrl: "/courses",
 };
 
 export default function AdminHomepageSettings() {
@@ -293,6 +305,87 @@ export default function AdminHomepageSettings() {
                     onChange={(e) => setFormData({ ...formData, leadFormSubtitle: e.target.value })}
                     placeholder="Get personalized guidance from our experts"
                     className="text-sm"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Popup Banner Section */}
+            <Card className="border-0 shadow-lg">
+              <CardHeader style={{ backgroundColor: COLORS.offWhite, borderBottom: `2px solid ${COLORS.skyBlue}` }}>
+                <CardTitle style={{ color: COLORS.deepBlue }}>Homepage Popup Banner</CardTitle>
+                <p className="text-xs mt-1" style={{ color: COLORS.darkGrey }}>
+                  Control the promotional popup shown on the homepage for offers, proud moments, and announcements.
+                </p>
+              </CardHeader>
+              <CardContent className="pt-6 space-y-6">
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                  <div>
+                    <p className="font-medium" style={{ color: COLORS.deepBlue }}>Enable Popup</p>
+                    <p className="text-xs text-gray-500">Show or hide the homepage popup banner</p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={Boolean(formData.popupEnabled)}
+                    onChange={(e) => setFormData({ ...formData, popupEnabled: e.target.checked })}
+                    className="h-5 w-5 rounded border-gray-300"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: COLORS.deepBlue }}>
+                      Popup Badge
+                    </label>
+                    <Input
+                      value={formData.popupBadge || ""}
+                      onChange={(e) => setFormData({ ...formData, popupBadge: e.target.value })}
+                      placeholder="Proud Moment"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: COLORS.deepBlue }}>
+                      Popup CTA Text
+                    </label>
+                    <Input
+                      value={formData.popupCtaText || ""}
+                      onChange={(e) => setFormData({ ...formData, popupCtaText: e.target.value })}
+                      placeholder="See Offers"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: COLORS.deepBlue }}>
+                    Popup Title
+                  </label>
+                  <Input
+                    value={formData.popupTitle || ""}
+                    onChange={(e) => setFormData({ ...formData, popupTitle: e.target.value })}
+                    placeholder="Celebrate our students' success"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: COLORS.deepBlue }}>
+                    Popup Message
+                  </label>
+                  <Textarea
+                    value={formData.popupMessage || ""}
+                    onChange={(e) => setFormData({ ...formData, popupMessage: e.target.value })}
+                    placeholder="Special offers, student highlights, and important announcements appear here."
+                    rows={3}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: COLORS.deepBlue }}>
+                    Popup CTA URL
+                  </label>
+                  <Input
+                    value={formData.popupCtaUrl || ""}
+                    onChange={(e) => setFormData({ ...formData, popupCtaUrl: e.target.value })}
+                    placeholder="/courses"
                   />
                 </div>
               </CardContent>

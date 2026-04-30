@@ -922,6 +922,12 @@ var Storage = class {
       "heroSubtitle" TEXT NOT NULL DEFAULT 'Bangladesh''s #1 Study Abroad Consultant. Transform your global education dreams into reality with expert guidance, proven results, and personalized support.',
       "leadFormTitle" TEXT NOT NULL DEFAULT 'Start Your Journey Today',
       "leadFormSubtitle" TEXT NOT NULL DEFAULT 'Get personalized guidance from our experts',
+      "popupEnabled" BOOLEAN NOT NULL DEFAULT false,
+      "popupBadge" TEXT NOT NULL DEFAULT 'Proud Moment',
+      "popupTitle" TEXT NOT NULL DEFAULT 'Celebrate our students'' success',
+      "popupMessage" TEXT NOT NULL DEFAULT 'Special offers, student highlights, and important announcements appear here.',
+      "popupCtaText" TEXT NOT NULL DEFAULT 'See Offers',
+      "popupCtaUrl" TEXT NOT NULL DEFAULT '/courses',
       "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
       "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -1774,7 +1780,8 @@ async function registerRoutes(app2) {
       const branches = await storage.getBranches();
       res.json(branches);
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      console.error("Failed to load public branches:", error);
+      res.json([]);
     }
   });
   app2.get("/api/admin/branches", authenticateToken, requireAdmin, async (req, res) => {

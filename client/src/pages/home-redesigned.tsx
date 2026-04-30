@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import StatsSection from "@/components/stats-section";
@@ -74,10 +74,12 @@ const COLORS = {
   midBlue: '#2A7CCD',       // Hover/Secondary Accent Color
   darkGrey: '#4F4F4F',      // Body Text/Secondary Headings
   offWhite: '#F8F8F8',      // Background Color
+  red: '#EF4444',           // Highlight/Promo Color
 };
 
 export default function HomeRedesigned() {
   const [activeService, setActiveService] = useState(0);
+  const [showPopup, setShowPopup] = useState(false);
 
   const { data: featuredCourses = [] } = useQuery({
     queryKey: ["/api/courses", { featured: true }],
@@ -126,6 +128,22 @@ export default function HomeRedesigned() {
       return data || {};
     },
   });
+
+  useEffect(() => {
+    if (!settings?.popupEnabled) {
+      setShowPopup(false);
+      return;
+    }
+
+    const dismissed = sessionStorage.getItem("homepage-popup-dismissed");
+    if (dismissed === "true") {
+      setShowPopup(false);
+      return;
+    }
+
+    const timer = window.setTimeout(() => setShowPopup(true), 700);
+    return () => window.clearTimeout(timer);
+  }, [settings?.popupEnabled]);
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: COLORS.offWhite }}>
@@ -273,6 +291,85 @@ export default function HomeRedesigned() {
           <ChevronDown className="h-8 w-8 text-white" />
         </div>
       </section>
+
+      {showPopup && settings?.popupEnabled && (
+        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/50 px-4 py-6 sm:items-center">
+          <div className="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl sm:p-8">
+            <div className="mb-4 flex items-center justify-between gap-4">
+              <Badge className="rounded-full px-4 py-1" style={{ backgroundColor: COLORS.red }}>
+                {settings.popupBadge || "Proud Moment"}
+              </Badge>
+              <button
+                type="button"
+                className="rounded-full p-2 text-gray-500 hover:bg-gray-100"
+                onClick={() => {
+                  sessionStorage.setItem("homepage-popup-dismissed", "true");
+                  setShowPopup(false);
+                }}
+                aria-label="Close popup"
+              >
+                ×
+              </button>
+            </div>
+            <div className="grid gap-6 md:grid-cols-[1.2fr_0.8fr] md:items-center">
+              <div>
+                <h3 className="text-3xl font-bold leading-tight" style={{ color: COLORS.deepBlue }}>
+                  {settings.popupTitle || "Celebrate our students' success"}
+                </h3>
+                <p className="mt-3 text-base text-gray-600">
+                  {settings.popupMessage || "Special offers, student highlights, and important announcements appear here."}
+                </p>
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <Button
+                    asChild
+                    className="rounded-full text-white font-semibold hover:opacity-90"
+                    style={{ backgroundColor: COLORS.red }}
+                  >
+                    <Link href={settings.popupCtaUrl || "/courses"}>
+                      {settings.popupCtaText || "See Offers"}
+                    </Link>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="rounded-full border-gray-300 text-gray-700 hover:bg-gray-50"
+                    onClick={() => {
+                      sessionStorage.setItem("homepage-popup-dismissed", "true");
+                      setShowPopup(false);
+                    }}
+                  >
+                    Not now
+                  </Button>
+                </div>
+              </div>
+              <div className="rounded-2xl bg-gradient-to-br from-[#1C4E9C] to-[#33A9D9] p-5 text-white">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="rounded-full bg-white/20 p-2">
+                    <Trophy className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-blue-100">Featured update</p>
+                    <p className="text-lg font-semibold">Student-friendly offers</p>
+                  </div>
+                </div>
+                <ul className="space-y-3 text-sm text-blue-50">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="mt-0.5 h-4 w-4" />
+                    Popup content editable from admin
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="mt-0.5 h-4 w-4" />
+                    Can highlight proud moments and offers
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="mt-0.5 h-4 w-4" />
+                    Dismissed per browser session
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Services Section with Card UI */}
       <section id="services" className="py-20 bg-white">

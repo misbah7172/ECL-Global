@@ -450,6 +450,14 @@ model HomepageSettings {
   // Lead form
   leadFormTitle     String  @default("Start Your Journey Today")
   leadFormSubtitle  String  @default("Get personalized guidance from our experts")
+
+  // Homepage popup/banner
+  popupEnabled      Boolean @default(false) @map("popup_enabled")
+  popupBadge        String  @default("Proud Moment") @map("popup_badge")
+  popupTitle        String  @default("Celebrate our students' success") @map("popup_title")
+  popupMessage      String  @default("Special offers, student highlights, and important announcements appear here.") @map("popup_message")
+  popupCtaText      String  @default("See Offers") @map("popup_cta_text")
+  popupCtaUrl       String  @default("/courses") @map("popup_cta_url")
   
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
