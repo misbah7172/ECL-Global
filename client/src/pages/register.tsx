@@ -18,7 +18,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Eye, EyeOff, Mail, Lock, User as UserIcon, Phone as PhoneIcon, CheckCircle, Shield, Trophy, Globe, Star } from "lucide-react";
-import AnimatedAirplaneLogo from "@/components/animated-airplane-logo";
+import ECLLogo from "@/assets/ECL-Logo.png";
 
 // Color Scheme Constants
 const COLORS = {
@@ -196,7 +196,7 @@ export default function Register() {
           {/* Logo */}
           <Link href="/">
             <div className="flex items-center space-x-3 mb-8 cursor-pointer">
-              <AnimatedAirplaneLogo size="md" />
+              <img src={ECLLogo} alt="ECL Global Logo" className="h-8 mr-2" />
               <div>
                 <h1 className="text-2xl font-bold" style={{ color: COLORS.deepBlue }}>
                   ECL Global
