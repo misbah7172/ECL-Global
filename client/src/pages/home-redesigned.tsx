@@ -169,7 +169,7 @@ export default function HomeRedesigned() {
               </h1>
               
               <p className="text-xl text-blue-100 leading-relaxed">
-                Bangladesh's #1 Study Abroad Consultant. Transform your global education dreams into reality with expert guidance, proven results, and personalized support.
+                Study Abroad Consultant. Transform your global education dreams into reality with expert guidance, proven results, and personalized support.
               </p>
               
               {/* Quick Stats */}

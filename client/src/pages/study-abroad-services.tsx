@@ -139,14 +139,8 @@ export default function StudyAbroadServices() {
                 size="lg"
                 variant="outline"
                 className="h-14 px-8 border-2 border-white text-white hover:bg-white font-semibold"
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'white';
-                  e.currentTarget.style.color = COLORS.deepBlue;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = 'white';
-                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = COLORS.midBlue}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = COLORS.skyBlue}
               >
                 <Users className="mr-2 h-5 w-5" />
                 Free Consultation

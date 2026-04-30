@@ -45,7 +45,7 @@ const defaultHomepageSettings: HomepageSettings = {
   whatsappNumber: "+880 1305841167",
   email: "info@eclglobal.com",
   heroTitle: "Your Passport to Academic Adventure",
-  heroSubtitle: "Bangladesh's #1 Study Abroad Consultant. Transform your global education dreams into reality with expert guidance, proven results, and personalized support.",
+  heroSubtitle: "Study Abroad Consultant. Transform your global education dreams into reality with expert guidance, proven results, and personalized support.",
   leadFormTitle: "Start Your Journey Today",
   leadFormSubtitle: "Get personalized guidance from our experts",
   popupEnabled: false,

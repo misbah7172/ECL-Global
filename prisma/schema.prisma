@@ -445,7 +445,7 @@ model HomepageSettings {
   
   // Hero text
   heroTitle         String  @default("Your Passport to Academic Adventure")
-  heroSubtitle      String  @default("Bangladesh's #1 Study Abroad Consultant. Transform your global education dreams into reality with expert guidance, proven results, and personalized support.")
+  heroSubtitle      String  @default("Study Abroad Consultant. Transform your global education dreams into reality with expert guidance, proven results, and personalized support.")
   
   // Lead form
   leadFormTitle     String  @default("Start Your Journey Today")

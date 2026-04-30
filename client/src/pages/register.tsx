@@ -290,7 +290,7 @@ export default function Register() {
                             <FormControl>
                               <div className="relative">
                                 <UserIcon className="absolute left-3 top-3 h-5 w-5" style={{ color: COLORS.skyBlue }} />
-                                <Input placeholder="misba" className="pl-11 h-11" {...field} />
+                                <Input placeholder="patel123" className="pl-11 h-11" {...field} />
                               </div>
                             </FormControl>
                             <FormMessage />
