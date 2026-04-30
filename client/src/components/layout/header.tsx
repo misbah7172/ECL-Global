@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
-import AnimatedAirplaneLogo from "@/components/animated-airplane-logo";
+import ECLLogo from "@/assets/ECL-Logo.png";
 import { Menu, User, LogOut, Phone, MessageSquare, ChevronDown, Calendar, Mail } from "lucide-react";
 import "@/styles/airplane-logo.css";
 import {
@@ -107,7 +107,7 @@ export default function Header() {
           {/* Logo */}
           <Link href="/">
             <div className="flex items-center space-x-3 ecl-logo-container cursor-pointer group">
-              <AnimatedAirplaneLogo size="md" />
+              <img src={ECLLogo} alt="ECL Global Logo" className="h-10" />
               <div>
                 <h1 
                   className="text-2xl font-bold transition-colors"
@@ -217,7 +217,7 @@ export default function Header() {
               <div className="flex flex-col space-y-4 mt-6">
                 {/* Mobile Logo */}
                 <div className="flex items-center space-x-2 mb-4 pb-4 border-b">
-                  <AnimatedAirplaneLogo size="sm" />
+                  <img src={ECLLogo} alt="ECL Global Logo" className="h-10" />
                   <div>
                     <span className="font-bold text-lg" style={{ color: COLORS.deepBlue }}>
                       ECL Global

@@ -541,7 +541,7 @@ export default function AdminMockTests() {
                       <FormItem>
                         <FormLabel>Test Type</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g., IELTS, SAT, GRE" {...field} />
+                          <Input placeholder="e.g., IELTS, PTE, TOEFL, GERMAN, DEUTSCH" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

@@ -71,7 +71,7 @@ export default function MockTests() {
     },
   });
 
-  const testTypes = ["IELTS", "SAT", "TOEFL", "GRE"];
+  const testTypes = ["IELTS", "PTE", "TOEFL", "GERMAN", "DEUTSCH"];
 
   if (isLoading) {
     return (
@@ -148,7 +148,7 @@ export default function MockTests() {
               </p>
               <div className="space-y-4 mb-8">
                 {[
-                  "Full-length practice tests for IELTS, SAT, TOEFL, GRE",
+                  "Full-length practice tests for IELTS, PTE, TOEFL, GERMAN, DEUTSCH",
                   "Instant auto-grading and detailed feedback",
                   "Performance analytics and improvement suggestions",
                   "Adaptive difficulty based on your skill level"

@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import AnimatedAirplaneLogo from "@/components/animated-airplane-logo";
+import ECLLogo from "@/assets/ECL-Logo.png";
 import { Facebook, Youtube, Linkedin, Instagram } from "lucide-react";
 import "@/styles/airplane-logo.css";
 
@@ -11,7 +11,7 @@ export default function Footer() {
           {/* Company Info */}
           <div>
             <div className="flex items-center mb-4">
-              <AnimatedAirplaneLogo size="sm" className="mr-2" />
+              <img src={ECLLogo} alt="ECL Global Logo" className="h-8 mr-2" />
               <span className="text-xl font-bold">ECL Global</span>
             </div>
             <p className="text-gray-300 mb-4">
@@ -56,7 +56,7 @@ export default function Footer() {
             <div className="space-y-3 text-gray-300">
               <p>House 45, Road 27, Block A, Dhanmondi, Dhaka 1209</p>
               <p>+880 1305841167</p>
-              <p>info@ECL Globals.com.bd</p>
+              <p>info@eclglobal.com</p>
               <p>Mon - Sat: 9:00 AM - 8:00 PM</p>
             </div>
           </div>
