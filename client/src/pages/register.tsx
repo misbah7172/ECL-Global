@@ -164,7 +164,7 @@ export default function Register() {
               </div>
             </div>
 
-            {/* Testimonial */}
+            {/* Testimonial
             <div className="p-6 rounded-xl" style={{ backgroundColor: `${COLORS.skyBlue}20` }}>
               <div className="flex mb-3">
                 {[...Array(5)].map((_, i) => (
@@ -185,7 +185,7 @@ export default function Register() {
                   <p className="text-sm text-blue-200">MIT, USA</p>
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
