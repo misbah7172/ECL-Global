@@ -87,8 +87,79 @@ type SystemSettings = {
   };
 };
 
-// Default empty settings - load from API in production
-const defaultSettings: SystemSettings = {} as SystemSettings;
+// Default settings ensure the page renders even before real data is loaded.
+const defaultSettings: SystemSettings = {
+  general: {
+    siteName: "ECL Global",
+    siteDescription: "Educational consultancy platform for study abroad guidance.",
+    adminEmail: "admin@eclglobal.com",
+    supportEmail: "support@eclglobal.com",
+    timezone: "UTC",
+    language: "en",
+    currency: "USD",
+    dateFormat: "DD/MM/YYYY",
+    timeFormat: "12h",
+  },
+  branding: {
+    logo: "",
+    favicon: "",
+    primaryColor: "#1C4E9C",
+    secondaryColor: "#33A9D9",
+    fontFamily: "Inter",
+    customCSS: "",
+  },
+  email: {
+    smtpHost: "",
+    smtpPort: 587,
+    smtpUser: "",
+    smtpPassword: "",
+    fromEmail: "noreply@eclglobal.com",
+    fromName: "ECL Global",
+    useSSL: true,
+    isEnabled: false,
+  },
+  notifications: {
+    emailNotifications: true,
+    smsNotifications: false,
+    pushNotifications: false,
+    digestFrequency: "daily",
+    adminNotifications: true,
+  },
+  security: {
+    twoFactorAuth: false,
+    sessionTimeout: 60,
+    maxLoginAttempts: 5,
+    passwordMinLength: 8,
+    requirePasswordChange: false,
+    allowSelfRegistration: true,
+    emailVerificationRequired: false,
+  },
+  payment: {
+    paymentGateway: "stripe",
+    stripePublishableKey: "",
+    stripeSecretKey: "",
+    paypalClientId: "",
+    paypalClientSecret: "",
+    currency: "USD",
+    taxRate: 0,
+  },
+  storage: {
+    maxFileSize: 50,
+    allowedFileTypes: ["pdf", "doc", "docx", "jpg", "png"],
+    storageProvider: "local",
+    s3Bucket: "",
+    s3Region: "",
+    s3AccessKey: "",
+    s3SecretKey: "",
+  },
+  api: {
+    rateLimit: 100,
+    enableCors: true,
+    corsOrigins: "",
+    apiKey: "",
+    webhookSecret: "",
+  },
+};
 
 export default function AdminSettings() {
   const [settings, setSettings] = useState<SystemSettings>(defaultSettings);

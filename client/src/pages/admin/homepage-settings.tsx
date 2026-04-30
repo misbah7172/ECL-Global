@@ -31,24 +31,40 @@ interface HomepageSettings {
   leadFormSubtitle?: string;
 }
 
+const defaultHomepageSettings: HomepageSettings = {
+  studentsPlaced: "15,000+",
+  visaSuccessRate: "98%",
+  universityPartners: "50+",
+  phoneNumber: "+880 1777-123456",
+  whatsappNumber: "+880 1777-123456",
+  email: "info@eclglobal.com",
+  heroTitle: "Your Passport to Academic Adventure",
+  heroSubtitle: "Bangladesh's #1 Study Abroad Consultant. Transform your global education dreams into reality with expert guidance, proven results, and personalized support.",
+  leadFormTitle: "Start Your Journey Today",
+  leadFormSubtitle: "Get personalized guidance from our experts",
+};
+
 export default function AdminHomepageSettings() {
   const queryClient = useQueryClient();
-  const [formData, setFormData] = useState<HomepageSettings>({});
+  const [formData, setFormData] = useState<HomepageSettings>(defaultHomepageSettings);
   const [isSaving, setIsSaving] = useState(false);
 
   const { data: settings = {}, isLoading } = useQuery({
     queryKey: ["/api/settings/homepage"],
     queryFn: async () => {
-      const response = await fetch("/api/settings/homepage");
-      if (!response.ok) throw new Error("Failed to fetch settings");
-      return response.json();
+      try {
+        const response = await fetch("/api/settings/homepage");
+        if (!response.ok) throw new Error("Failed to fetch settings");
+        const data = await response.json();
+        return { ...defaultHomepageSettings, ...(data || {}) };
+      } catch (error) {
+        return defaultHomepageSettings;
+      }
     },
   });
 
   useEffect(() => {
-    if (settings.id) {
-      setFormData(settings);
-    }
+    setFormData({ ...defaultHomepageSettings, ...settings });
   }, [settings]);
 
   const updateMutation = useMutation({
