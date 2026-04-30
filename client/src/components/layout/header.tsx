@@ -113,10 +113,10 @@ export default function Header() {
                   className="text-2xl font-bold transition-colors"
                   style={{ color: COLORS.deepBlue }}
                 >
-                  ECL Global
+                  ECL GLOBAL
                 </h1>
                 <div className="text-xs -mt-1" style={{ color: COLORS.darkGrey }}>
-                  Study Abroad Experts
+                  Study Abroad Solution
                 </div>
               </div>
             </div>
@@ -220,10 +220,10 @@ export default function Header() {
                   <img src={ECLLogo} alt="ECL Global Logo" className="h-10" />
                   <div>
                     <span className="font-bold text-lg" style={{ color: COLORS.deepBlue }}>
-                      ECL Global
+                      ECL GLOBAL
                     </span>
                     <div className="text-xs" style={{ color: COLORS.darkGrey }}>
-                      Study Abroad Experts
+                      Study Abroad Solution
                     </div>
                   </div>
                 </div>

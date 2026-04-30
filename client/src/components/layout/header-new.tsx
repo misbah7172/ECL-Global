@@ -49,7 +49,7 @@ export default function Header() {
               <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 ECL Global
               </span>
-              <div className="text-xs text-gray-500 -mt-1">Study Abroad Experts</div>
+              <div className="text-xs text-gray-500 -mt-1">Study Abroad Solution</div>
             </div>
           </div>
         </Link>

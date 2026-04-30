@@ -42,7 +42,7 @@ export default function Footer() {
             <h3 className="text-lg font-semibold mb-4">Services</h3>
             <ul className="space-y-2">
               <li className="text-gray-300">IELTS Preparation</li>
-              <li className="text-gray-300">SAT Preparation</li>
+              <li className="text-gray-300">PTE Preparation</li>
               <li className="text-gray-300">TOEFL Preparation</li>
               <li className="text-gray-300">Study Abroad Counseling</li>
               <li className="text-gray-300">University Applications</li>
@@ -54,7 +54,7 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-semibold mb-4">Contact Info</h3>
             <div className="space-y-3 text-gray-300">
-              <p>House 45, Road 27, Block A, Dhanmondi, Dhaka 1209</p>
+              <p>Head Office : 76 Ka Rabia Plaza, Kuril, Chowrasta, Vatara, Dhaka 1229</p>
               <p>+880 1305841167</p>
               <p>info@eclglobal.com</p>
               <p>Mon - Sat: 9:00 AM - 8:00 PM</p>
@@ -64,7 +64,7 @@ export default function Footer() {
 
         <div className="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-400 text-sm">
-            © 2024 ECL Global Educational Consultancy. All rights reserved.
+            © 2026 ECL Global Educational Consultancy. All rights reserved.
           </p>
           <div className="flex space-x-6 mt-4 md:mt-0">
             <span className="text-gray-400 hover:text-white text-sm cursor-pointer transition-colors">Privacy Policy</span>

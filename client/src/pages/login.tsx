@@ -81,10 +81,10 @@ export default function Login() {
               <img src={ECLLogo} alt="ECL Global Logo" className="h-10" />
               <div>
                 <h1 className="text-2xl font-bold" style={{ color: COLORS.deepBlue }}>
-                  ECL Global
+                  ECL GLOBAL
                 </h1>
                 <div className="text-xs -mt-1" style={{ color: COLORS.darkGrey }}>
-                  Study Abroad Experts
+                  Study Abroad Solution
                 </div>
               </div>
             </div>
