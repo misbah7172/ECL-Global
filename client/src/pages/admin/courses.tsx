@@ -148,6 +148,20 @@ export default function AdminCourses() {
 
   // Reset form when editing a course
   const handleEditCourse = (course: any) => {
+    const normalizedLectures = Array.isArray(course.lectures)
+      ? course.lectures.map((lecture: any, index: number) => ({
+          id: lecture.id,
+          title: (lecture.title || `Lecture ${index + 1}`).toString(),
+          description: (lecture.description || "").toString(),
+          duration: Math.max(1, Number.parseInt(String(lecture.duration), 10) || 0),
+          videoUrl: (lecture.videoUrl || "").toString(),
+          content: (lecture.content || "").toString(),
+          order: Math.max(1, Number.parseInt(String(lecture.order), 10) || index + 1),
+          isFree: Boolean(lecture.isFree) || index === 0,
+          materials: Array.isArray(lecture.materials) ? lecture.materials : [],
+        }))
+      : [];
+
     setEditingCourse(course);
     form.reset({
       title: course.title || "",
@@ -161,7 +175,7 @@ export default function AdminCourses() {
       format: course.format || "",
       totalSessions: course.totalSessions?.toString() || "",
       syllabus: Array.isArray(course.syllabus) ? course.syllabus.join('\n') : "",
-      lectures: course.lectures || [],
+      lectures: normalizedLectures,
       thumbnail: course.imageUrl || "",
       featured: course.isFeatured || false,
       difficulty: course.difficulty || "Beginner",
@@ -236,12 +250,12 @@ export default function AdminCourses() {
       
       // Transform lectures data to ensure proper types
       const transformedLectures = (data.lectures || []).map((lecture: any, index: number) => ({
-        title: lecture.title || '',
+        title: (lecture.title || `Lecture ${index + 1}`).toString().trim(),
         description: lecture.description || '',
-        duration: typeof lecture.duration === 'number' ? lecture.duration : parseInt(lecture.duration) || 0,
+        duration: Math.max(1, typeof lecture.duration === 'number' ? lecture.duration : parseInt(lecture.duration) || 0),
         videoUrl: lecture.videoUrl || '',
         content: lecture.content || '',
-        order: lecture.order || index + 1,
+        order: Math.max(1, lecture.order || index + 1),
         isFree: lecture.isFree || false,
         materials: lecture.materials || [],
       }));

@@ -595,9 +595,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Course not found" });
       }
 
-      // Delete the course
-      await prisma.course.delete({
-        where: { id: courseId }
+      await prisma.$transaction(async (tx) => {
+        // Enrollments use a required relation without cascade, so remove dependents first.
+        await tx.enrollment.deleteMany({
+          where: { courseId }
+        });
+
+        await tx.course.delete({
+          where: { id: courseId }
+        });
       });
       
       res.json({ message: "Course deleted successfully" });

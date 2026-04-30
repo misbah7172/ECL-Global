@@ -1391,8 +1391,13 @@ async function registerRoutes(app2) {
       if (!course) {
         return res.status(404).json({ error: "Course not found" });
       }
-      await prisma.course.delete({
-        where: { id: courseId }
+      await prisma.$transaction(async (tx) => {
+        await tx.enrollment.deleteMany({
+          where: { courseId }
+        });
+        await tx.course.delete({
+          where: { id: courseId }
+        });
       });
       res.json({ message: "Course deleted successfully" });
     } catch (error) {
