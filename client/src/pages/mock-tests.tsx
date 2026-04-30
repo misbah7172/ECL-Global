@@ -190,7 +190,7 @@ export default function MockTests() {
                 style={{ backgroundColor: 'rgba(255, 255, 255, 0.95)' }}
               >
                 <div className="text-center">
-                  <div className="text-3xl font-bold" style={{ color: COLORS.deepBlue }}>25,000+</div>
+                  <div className="text-3xl font-bold" style={{ color: COLORS.deepBlue }}>150+</div>
                   <div className="text-sm font-medium" style={{ color: COLORS.darkGrey }}>Tests Completed</div>
                 </div>
               </div>
