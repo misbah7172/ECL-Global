@@ -238,7 +238,7 @@ export default function Login() {
           {/* Trust Badges */}
           <div className="mt-8 text-center">
             <p className="text-xs mb-3" style={{ color: COLORS.darkGrey }}>
-              Trusted by 15,000+ students worldwide
+              Trusted by 1000+ students worldwide
             </p>
             <div className="flex justify-center space-x-4">
               <div className="flex items-center space-x-1">
@@ -276,7 +276,7 @@ export default function Login() {
                 { icon: Globe, text: "Access to 50+ partner universities worldwide" },
                 { icon: Trophy, text: "98% visa approval success rate" },
                 { icon: CheckCircle, text: "Personalized study abroad consultation" },
-                { icon: Shield, text: "Trusted by 15,000+ students" }
+                { icon: Shield, text: "Trusted by 1000+ students" }
               ].map((item, index) => (
                 <div key={index} className="flex items-start space-x-3">
                   <div className="p-2 rounded-lg" style={{ backgroundColor: `${COLORS.skyBlue}40` }}>

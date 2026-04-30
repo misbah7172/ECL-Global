@@ -58,7 +58,7 @@ export default function Header() {
         <div className="hidden lg:flex items-center space-x-6 text-sm">
           <div className="flex items-center space-x-2 text-gray-600">
             <Phone className="h-4 w-4" />
-            <span>+880 1777-123456</span>
+            <span>+880 1305841167</span>
           </div>
           <div className="flex items-center space-x-2 text-gray-600">
             <MessageSquare className="h-4 w-4" />
@@ -129,7 +129,7 @@ export default function Header() {
               <div className="border-b pb-4 mb-4">
                 <div className="flex items-center space-x-2 text-gray-600 mb-2">
                   <Phone className="h-4 w-4" />
-                  <span className="text-sm">+880 1777-123456</span>
+                  <span className="text-sm">+880 1305841167</span>
                 </div>
                 <div className="flex items-center space-x-2 text-gray-600">
                   <MessageSquare className="h-4 w-4" />

@@ -119,7 +119,7 @@ export default function Register() {
               Begin Your Study Abroad Journey Today
             </h2>
             <p className="text-xl mb-8 text-blue-100">
-              Join 15,000+ students who transformed their future with ECL Global.
+              Join 1000+ students who transformed their future with ECL Global.
             </p>
             
             <div className="space-y-6 mb-12">
@@ -326,7 +326,7 @@ export default function Register() {
                             <FormControl>
                               <div className="relative">
                                 <PhoneIcon className="absolute left-3 top-3 h-5 w-5" style={{ color: COLORS.skyBlue }} />
-                                <Input type="tel" placeholder="+880 1777-123456" className="pl-11 h-11" {...field} />
+                                <Input type="tel" placeholder="+880 1305841167" className="pl-11 h-11" {...field} />
                               </div>
                             </FormControl>
                             <FormMessage />

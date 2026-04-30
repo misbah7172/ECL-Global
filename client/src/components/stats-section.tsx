@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 export default function StatsSection() {
   // Mock stats data - in a real app these would come from the API
   const stats = [
-    { label: "Students Enrolled", value: "15,000+", key: "studentsEnrolled" },
+    { label: "Students Enrolled", value: "1000+", key: "studentsEnrolled" },
     { label: "Courses Offered", value: "50+", key: "coursesOffered" },
     { label: "Branches", value: "12", key: "branches" },
     { label: "Success Rate", value: "98.5%", key: "successRate" },

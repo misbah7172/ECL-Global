@@ -272,7 +272,7 @@ export default function Home() {
                   {
                     icon: Award,
                     title: "Proven Track Record",
-                    description: "15+ years of excellence with 15,000+ successful student placements."
+                    description: "15+ years of excellence with 1000+ successful student placements."
                   }
                 ].map((feature, index) => (
                   <div key={index} className="flex items-start space-x-4">
@@ -754,7 +754,7 @@ export default function Home() {
               <div className="text-center">
                 <Phone className="h-12 w-12 mx-auto mb-4 text-yellow-400" />
                 <h3 className="text-lg font-semibold mb-2">Call Now</h3>
-                <p className="text-blue-200">+880 1777-123456</p>
+                <p className="text-blue-200">+880 1305841167</p>
               </div>
               <div className="text-center">
                 <MessageSquare className="h-12 w-12 mx-auto mb-4 text-green-400" />

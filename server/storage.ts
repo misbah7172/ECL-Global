@@ -1099,11 +1099,11 @@ export class Storage implements IStorage {
   private homepageSettingsSchemaSql = `
     CREATE TABLE IF NOT EXISTS "homepage_settings" (
       "id" SERIAL NOT NULL,
-      "studentsPlaced" TEXT NOT NULL DEFAULT '15,000+',
+      "studentsPlaced" TEXT NOT NULL DEFAULT '1000+',
       "visaSuccessRate" TEXT NOT NULL DEFAULT '98%',
       "universityPartners" TEXT NOT NULL DEFAULT '50+',
-      "phoneNumber" TEXT NOT NULL DEFAULT '+880 1777-123456',
-      "whatsappNumber" TEXT NOT NULL DEFAULT '+880 1777-123456',
+      "phoneNumber" TEXT NOT NULL DEFAULT '+880 1305841167',
+      "whatsappNumber" TEXT NOT NULL DEFAULT '+880 1305841167',
       "email" TEXT NOT NULL DEFAULT 'info@eclglobal.com',
       "heroTitle" TEXT NOT NULL DEFAULT 'Your Passport to Academic Adventure',
       "heroSubtitle" TEXT NOT NULL DEFAULT 'Bangladesh''s #1 Study Abroad Consultant. Transform your global education dreams into reality with expert guidance, proven results, and personalized support.',

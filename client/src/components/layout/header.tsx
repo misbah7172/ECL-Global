@@ -81,7 +81,7 @@ export default function Header() {
             <div className="flex items-center space-x-6">
               <div className="flex items-center space-x-2">
                 <Phone className="h-3 w-3" />
-                <span>+880 1777-123456</span>
+                <span>+880 1305841167</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Mail className="h-3 w-3" />
@@ -232,7 +232,7 @@ export default function Header() {
                 <div className="pb-4 mb-4 space-y-3" style={{ borderBottom: `1px solid ${COLORS.offWhite}` }}>
                   <div className="flex items-center space-x-2" style={{ color: COLORS.darkGrey }}>
                     <Phone className="h-4 w-4" style={{ color: COLORS.skyBlue }} />
-                    <span className="text-sm">+880 1777-123456</span>
+                    <span className="text-sm">+880 1305841167</span>
                   </div>
                   <div className="flex items-center space-x-2" style={{ color: COLORS.darkGrey }}>
                     <MessageSquare className="h-4 w-4" style={{ color: COLORS.skyBlue }} />

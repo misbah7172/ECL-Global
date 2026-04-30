@@ -590,7 +590,7 @@ export default function HomeRedesigned() {
                 Your Trust is Our Foundation
               </h2>
               <p className="text-xl mb-8" style={{ color: COLORS.darkGrey }}>
-                15+ years of excellence, 15,000+ successful placements, and 98% visa approval rate make us Bangladesh's most trusted educational consultancy.
+                15+ years of excellence, 1000+ successful placements, and 98% visa approval rate make us Bangladesh's most trusted educational consultancy.
               </p>
               
               <div className="space-y-6">
@@ -602,7 +602,7 @@ export default function HomeRedesigned() {
                   },
                   {
                     icon: Trophy,
-                    title: "15,000+ Successful Placements",
+                    title: "1000+ Successful Placements",
                     description: "Students placed in Harvard, MIT, Stanford, Oxford, Cambridge, and 50+ top universities."
                   },
                   {
@@ -749,7 +749,7 @@ export default function HomeRedesigned() {
         <div className="container mx-auto px-4 max-w-7xl">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
-              { number: "15,000+", label: "Students Placed", icon: Users },
+              { number: "1000+", label: "Students Placed", icon: Users },
               { number: "98%", label: "Visa Success Rate", icon: Trophy },
               { number: "50+", label: "Partner Universities", icon: Building },
               { number: "25+", label: "Countries", icon: Globe }
@@ -774,14 +774,14 @@ export default function HomeRedesigned() {
             Begin Your Journey Today
           </h2>
           <p className="text-xl mb-12" style={{ color: COLORS.darkGrey }}>
-            Join 15,000+ successful students who transformed their futures with ECL Global
+            Join 1000+ successful students who transformed their futures with ECL Global
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
             <div className="p-6 rounded-xl" style={{ backgroundColor: COLORS.offWhite }}>
               <Phone className="h-10 w-10 mx-auto mb-4" style={{ color: COLORS.skyBlue }} />
               <h3 className="font-semibold mb-2" style={{ color: COLORS.deepBlue }}>Call Us</h3>
-              <p className="text-sm" style={{ color: COLORS.darkGrey }}>+880 1777-123456</p>
+              <p className="text-sm" style={{ color: COLORS.darkGrey }}>+880 1305841167</p>
             </div>
             <div className="p-6 rounded-xl" style={{ backgroundColor: COLORS.offWhite }}>
               <MessageSquare className="h-10 w-10 mx-auto mb-4" style={{ color: COLORS.skyBlue }} />

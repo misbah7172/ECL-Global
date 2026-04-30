@@ -450,7 +450,7 @@ export default function AdminStudents() {
                   <FormItem>
                     <FormLabel>Phone</FormLabel>
                     <FormControl>
-                      <Input placeholder="+880 1777-123456" {...field} />
+                      <Input placeholder="+880 1305841167" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

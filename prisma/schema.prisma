@@ -434,13 +434,13 @@ model HomepageSettings {
   id                Int     @id @default(autoincrement())
   
   // Hero stats
-  studentsPlaced    String  @default("15,000+")
+  studentsPlaced    String  @default("1000+")
   visaSuccessRate   String  @default("98%")
   universityPartners String @default("50+")
   
   // Contact info
-  phoneNumber       String  @default("+880 1777-123456")
-  whatsappNumber    String  @default("+880 1777-123456")
+  phoneNumber       String  @default("+880 1305841167")
+  whatsappNumber    String  @default("+880 1305841167")
   email             String  @default("info@eclglobal.com")
   
   // Hero text

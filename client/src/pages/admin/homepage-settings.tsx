@@ -38,11 +38,11 @@ interface HomepageSettings {
 }
 
 const defaultHomepageSettings: HomepageSettings = {
-  studentsPlaced: "15,000+",
+  studentsPlaced: "1000+",
   visaSuccessRate: "98%",
   universityPartners: "50+",
-  phoneNumber: "+880 1777-123456",
-  whatsappNumber: "+880 1777-123456",
+  phoneNumber: "+880 1305841167",
+  whatsappNumber: "+880 1305841167",
   email: "info@eclglobal.com",
   heroTitle: "Your Passport to Academic Adventure",
   heroSubtitle: "Bangladesh's #1 Study Abroad Consultant. Transform your global education dreams into reality with expert guidance, proven results, and personalized support.",
@@ -148,10 +148,10 @@ export default function AdminHomepageSettings() {
                     <Input
                       value={formData.studentsPlaced || ""}
                       onChange={(e) => setFormData({ ...formData, studentsPlaced: e.target.value })}
-                      placeholder="e.g., 15,000+"
+                      placeholder="e.g., 1000+"
                       className="text-sm"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Example: 15,000+</p>
+                    <p className="text-xs text-gray-500 mt-1">Example: 1000+</p>
                   </div>
 
                   <div>
@@ -200,7 +200,7 @@ export default function AdminHomepageSettings() {
                     <Input
                       value={formData.phoneNumber || ""}
                       onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                      placeholder="+880 1777-123456"
+                      placeholder="+880 1305841167"
                       className="text-sm"
                     />
                   </div>
@@ -212,7 +212,7 @@ export default function AdminHomepageSettings() {
                     <Input
                       value={formData.whatsappNumber || ""}
                       onChange={(e) => setFormData({ ...formData, whatsappNumber: e.target.value })}
-                      placeholder="+880 1777-123456"
+                      placeholder="+880 1305841167"
                       className="text-sm"
                     />
                   </div>

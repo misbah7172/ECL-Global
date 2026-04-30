@@ -326,7 +326,7 @@ export default function FreeCourses() {
               },
               {
                 icon: Users,
-                title: "Join 15,000+ Learners",
+                title: "Join 1000+ Learners",
                 description: "Be part of our growing community of successful students who started their journey with our free courses."
               }
             ].map((benefit, index) => (
@@ -354,7 +354,7 @@ export default function FreeCourses() {
           {/* Stats */}
           <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
-              { value: "15,000+", label: "Active Students" },
+              { value: "15000+", label: "Active Students" },
               { value: "50+", label: "Free Courses" },
               { value: "4.8/5", label: "Average Rating" },
               { value: "98%", label: "Success Rate" }

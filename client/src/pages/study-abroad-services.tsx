@@ -110,8 +110,8 @@ export default function StudyAbroadServices() {
               {[
                 { value: "50+", label: "Countries" },
                 { value: "500+", label: "Universities" },
-                { value: "10,000+", label: "Students Placed" },
-                { value: "95%", label: "Visa Success" }
+                { value: "1000+", label: "Students Placed" },
+                { value: "98%", label: "Visa Success" }
               ].map((stat, index) => (
                 <div 
                   key={index}
@@ -321,7 +321,7 @@ export default function StudyAbroadServices() {
         </div>
       </section>
 
-      {/* Why Choose Us Section */}
+      Why Choose Us Section
       <section className="py-16" style={{ backgroundColor: COLORS.offWhite }}>
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="text-center mb-12">

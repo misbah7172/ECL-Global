@@ -55,15 +55,15 @@ const fetchAdminProfile = async (): Promise<AdminProfile> => {
     setTimeout(() => {
       resolve({
         id: "admin-001",
-        name: "Patel Administrator",
-        email: "admin@ECL Globals.com",
+        name: "Administrator",
+        email: "admin@eclglobal.com",
         phone: "+1234567890",
         role: "Super Admin",
         department: "Administration",
         joinDate: "2023-01-15",
         avatar: "/api/placeholder/150/150",
         bio: "Experienced administrator with 5+ years in educational technology management.",
-        location: "New York, USA",
+        location: "Dhaka, Bangladesh",
         permissions: ["full_access", "user_management", "system_config", "data_export"],
         lastLogin: "2024-01-15T14:30:00Z",
         totalActions: 1247,
@@ -115,8 +115,8 @@ const updateAdminProfile = async (profile: Partial<AdminProfile>): Promise<Admin
     setTimeout(() => {
       resolve({
         id: "admin-001",
-        name: profile.name || "Patel Administrator",
-        email: profile.email || "admin@ECL Globals.com",
+        name: profile.name || "Administrator",
+        email: profile.email || "admin@eclglobal.com",
         phone: profile.phone || "+1234567890",
         role: "Super Admin",
         department: "Administration",
