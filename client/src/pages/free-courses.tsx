@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import CourseCard from "@/components/course-card";
@@ -407,8 +408,9 @@ export default function FreeCourses() {
                 e.currentTarget.style.backgroundColor = 'transparent';
                 e.currentTarget.style.color = 'white';
               }}
+              asChild
             >
-              Book Free Consultation
+              <Link href="/consultation">Book Free Consultation</Link>
             </Button>
           </div>
         </div>

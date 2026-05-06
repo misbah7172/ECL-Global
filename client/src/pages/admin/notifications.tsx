@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Bell, Plus, Edit, Trash2, Send, Users, Eye, Calendar, AlertCircle, CheckCircle, Clock, Search, Filter } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 type NotificationType = "info" | "success" | "warning" | "error";
 type NotificationTarget = "all" | "students" | "instructors" | "admins";
@@ -71,6 +72,15 @@ export default function AdminNotifications() {
       await new Promise(resolve => setTimeout(resolve, 1000));
       return mockNotifications;
     }
+  });
+
+  const { data: consultationSubmissions = [] } = useQuery({
+    queryKey: ["/api/admin/consultation-submissions"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/admin/consultation-submissions");
+      if (!response.ok) return [];
+      return response.json();
+    },
   });
 
   const createNotificationMutation = useMutation({
@@ -550,6 +560,45 @@ export default function AdminNotifications() {
                           </Button>
                         </div>
                       </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Consultation Requests</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {consultationSubmissions.length === 0 ? (
+              <div className="text-sm text-gray-500">No consultation submissions yet.</div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Student</TableHead>
+                    <TableHead>IELTS Status</TableHead>
+                    <TableHead>Preferred Slot</TableHead>
+                    <TableHead>Location</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {consultationSubmissions.slice(0, 10).map((submission: any) => (
+                    <TableRow key={submission.id}>
+                      <TableCell>
+                        <div className="font-medium">
+                          {submission.firstName} {submission.lastName}
+                        </div>
+                        <p className="text-xs text-gray-500">{submission.phone}</p>
+                      </TableCell>
+                      <TableCell>{submission.ieltsStatus}</TableCell>
+                      <TableCell>
+                        {new Date(submission.preferredDate).toLocaleDateString()} • {submission.preferredTime}
+                      </TableCell>
+                      <TableCell>{submission.location}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

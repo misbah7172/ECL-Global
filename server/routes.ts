@@ -237,6 +237,39 @@ const insertBackupScheduleSchema = z.object({
   nextRun: z.string().transform((value) => new Date(value)),
 });
 
+const insertConsultationFormSchema = z.object({
+  title: z.string().min(1),
+  description: z.string().optional(),
+  isActive: z.coerce.boolean().default(true),
+});
+
+const insertConsultationSubmissionSchema = z.object({
+  formId: z.coerce.number().optional(),
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
+  phone: z.string().regex(/^\d{13}$/, "Phone number must be 13 digits"),
+  email: z.string().email(),
+  ieltsStatus: z.enum(["No", "Yes - General Training", "Yes - Academic Training"]),
+  age: z.coerce.number().min(15).max(40),
+  gender: z.enum(["Male", "Female", "Other"]),
+  educationLevel: z.enum([
+    "SSC",
+    "O levels",
+    "HSC",
+    "A levels",
+    "Diploma",
+    "Graduation",
+    "Post Graduation (Master’s)",
+  ]),
+  location: z.enum(["Dhaka", "Chittagong", "Sylhet", "Rajshahi", "Khulna", "Other"]),
+  preferredDate: z.string().transform((value) => new Date(value)),
+  preferredTime: z.string().min(1),
+  guardianFirstName: z.string().min(1),
+  guardianLastName: z.string().min(1),
+  guardianPhone: z.string().regex(/^\d{13}$/, "Guardian phone must be 13 digits"),
+  subject: z.string().min(1),
+});
+
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -1301,6 +1334,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(leads);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Consultation form routes
+  app.get("/api/consultation-forms/active", async (req, res) => {
+    try {
+      const form = await storage.getActiveConsultationForm();
+      res.json(form);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/consultation-submissions", authenticateToken, async (req, res) => {
+    try {
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ error: "Invalid token" });
+      }
+
+      const submissionData = insertConsultationSubmissionSchema.parse(req.body);
+      const formId = submissionData.formId || (await storage.getActiveConsultationForm()).id;
+
+      const submission = await storage.createConsultationSubmission({
+        formId,
+        userId: req.user.id,
+        firstName: submissionData.firstName,
+        lastName: submissionData.lastName,
+        phone: submissionData.phone,
+        email: submissionData.email,
+        ieltsStatus: submissionData.ieltsStatus,
+        age: submissionData.age,
+        gender: submissionData.gender,
+        educationLevel: submissionData.educationLevel,
+        location: submissionData.location,
+        preferredDate: submissionData.preferredDate,
+        preferredTime: submissionData.preferredTime,
+        guardianFirstName: submissionData.guardianFirstName,
+        guardianLastName: submissionData.guardianLastName,
+        guardianPhone: submissionData.guardianPhone,
+        subject: submissionData.subject,
+      });
+
+      res.json(submission);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/admin/consultation-forms", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const forms = await storage.getConsultationForms();
+      res.json(forms);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/admin/consultation-forms", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const formData = insertConsultationFormSchema.parse(req.body);
+      const form = await storage.createConsultationForm(formData);
+      res.json(form);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.delete("/api/admin/consultation-forms/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteConsultationForm(id);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/admin/consultation-submissions", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const submissions = await storage.getConsultationSubmissions();
+      res.json(submissions);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.delete("/api/admin/consultation-submissions/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteConsultationSubmission(id);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
     }
   });
 

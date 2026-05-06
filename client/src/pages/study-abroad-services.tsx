@@ -139,11 +139,19 @@ export default function StudyAbroadServices() {
                 size="lg"
                 variant="outline"
                 className="h-14 px-8 border-2 border-white text-white hover:bg-white font-semibold"
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = COLORS.midBlue}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = COLORS.skyBlue}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'white';
+                  e.currentTarget.style.color = COLORS.deepBlue;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = 'white';
+                }}
               >
-                <Users className="mr-2 h-5 w-5" />
-                Free Consultation
+                <Link href="/consultation" className="flex items-center">
+                  <Users className="mr-2 h-5 w-5" />
+                  Free Consultation
+                </Link>
               </Button>
             </div>
           </div>
@@ -213,13 +221,12 @@ export default function StudyAbroadServices() {
                   style={{ backgroundColor: `${COLORS.skyBlue}20`, color: COLORS.deepBlue }}
                   onClick={() => setSearchTerm("")}
                 >
-                  "{searchTerm}" ✕
+                  Search: {searchTerm} ✕
                 </Badge>
               )}
               {selectedType && (
                 <Badge 
                   variant="secondary"
-                  className="px-3 py-1 cursor-pointer"
                   style={{ backgroundColor: `${COLORS.skyBlue}20`, color: COLORS.deepBlue }}
                   onClick={() => setSelectedType("")}
                 >
@@ -389,9 +396,12 @@ export default function StudyAbroadServices() {
               style={{ backgroundColor: COLORS.skyBlue }}
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = COLORS.midBlue}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = COLORS.skyBlue}
+              asChild
             >
-              Book Free Consultation
-              <ChevronRight className="ml-2 h-5 w-5" />
+              <Link href="/consultation" className="flex items-center">
+                Book Free Consultation
+                <ChevronRight className="ml-2 h-5 w-5" />
+              </Link>
             </Button>
             <Button 
               size="lg"

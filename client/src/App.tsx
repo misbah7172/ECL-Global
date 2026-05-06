@@ -52,6 +52,8 @@ import StudyAbroadServices from "@/pages/study-abroad-services";
 import StudyAbroadServiceDetail from "@/pages/study-abroad-service-detail";
 import AdminStudyAbroadServices from "@/pages/admin/study-abroad-services";
 import AdminStudyAbroadInquiries from "@/pages/admin/study-abroad-inquiries";
+import ConsultationFormPage from "@/pages/consultation";
+import AdminConsultations from "@/pages/admin/consultations";
 
 function AppContent() {
   const { isLoading } = useAuth();
@@ -82,6 +84,7 @@ function AppContent() {
         <Route path="/free-courses" component={FreeCourses} />
         <Route path="/study-abroad-services" component={StudyAbroadServices} />
         <Route path="/study-abroad-services/:slug" component={StudyAbroadServiceDetail} />
+        <Route path="/consultation" component={ConsultationFormPage} />
         <Route path="/courses/:id" component={CourseDetail} />
         <Route path="/dashboard" component={Dashboard} />
         <Route path="/mock-tests" component={MockTests} />
@@ -94,6 +97,7 @@ function AppContent() {
         <Route path="/admin/free-courses" component={AdminFreeCourses} />
         <Route path="/admin/study-abroad-services" component={AdminStudyAbroadServices} />
         <Route path="/admin/study-abroad-inquiries" component={AdminStudyAbroadInquiries} />
+        <Route path="/admin/consultations" component={AdminConsultations} />
         <Route path="/admin/students" component={AdminStudents} />
         <Route path="/admin/events" component={AdminEvents} />
         <Route path="/admin/instructors" component={AdminInstructors} />

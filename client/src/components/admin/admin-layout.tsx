@@ -76,6 +76,7 @@ const adminNavItems = [
       { href: "/admin/students", icon: Users, label: "Students" },
       { href: "/admin/enrollments", icon: UserCheck, label: "Enrollments" },
       { href: "/admin/attendance", icon: ClipboardList, label: "Attendance" },
+      { href: "/admin/consultations", icon: ClipboardList, label: "Consultations" },
     ]
   },
   {

@@ -196,7 +196,7 @@ export default function HomeRedesigned() {
                   style={{ backgroundColor: COLORS.skyBlue }}
                   asChild
                 >
-                  <Link href="/register">
+                  <Link href="/consultation">
                     <Calendar className="h-5 w-5 mr-2" />
                     Book Free Consultation
                   </Link>
@@ -737,7 +737,7 @@ export default function HomeRedesigned() {
           style={{ backgroundColor: COLORS.skyBlue }}
           asChild
         >
-          <Link href="/register">
+          <Link href="/consultation">
             <Calendar className="h-5 w-5 mr-2" />
             Book Free Consultation
           </Link>
@@ -801,7 +801,7 @@ export default function HomeRedesigned() {
             style={{ backgroundColor: COLORS.skyBlue }}
             asChild
           >
-            <Link href="/register">
+            <Link href="/consultation">
               <Calendar className="h-5 w-5 mr-2" />
               Book Your Free Consultation Now
             </Link>

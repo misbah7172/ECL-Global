@@ -84,8 +84,17 @@ export default function Register() {
         title: "Account created successfully!",
         description: "Welcome to ECL Global Learning Platform.",
       });
-      // Use window.location to ensure navigation happens after auth state update
-      window.location.href = "/dashboard";
+      const searchParams = new URLSearchParams(window.location.search);
+      const redirectTarget =
+        sessionStorage.getItem("post-register-redirect") ||
+        searchParams.get("redirect");
+      if (redirectTarget) {
+        sessionStorage.removeItem("post-register-redirect");
+        window.location.href = redirectTarget;
+      } else {
+        // Use window.location to ensure navigation happens after auth state update
+        window.location.href = "/dashboard";
+      }
     } catch (error: any) {
       toast({
         title: "Registration Failed",

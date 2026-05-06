@@ -97,6 +97,15 @@ export interface IStorage {
   updateStudyAbroadInquiry(id: number, updates: any): Promise<any>;
   deleteStudyAbroadInquiry(id: number): Promise<any>;
 
+  // Consultation form methods
+  getConsultationForms(): Promise<any[]>;
+  getActiveConsultationForm(): Promise<any>;
+  createConsultationForm(formData: any): Promise<any>;
+  deleteConsultationForm(id: number): Promise<any>;
+  getConsultationSubmissions(): Promise<any[]>;
+  createConsultationSubmission(submissionData: any): Promise<any>;
+  deleteConsultationSubmission(id: number): Promise<any>;
+
   // Team Member methods
   getTeamMembers(filters?: { featured?: boolean; active?: boolean; limit?: number }): Promise<any[]>;
   getTeamMember(id: number): Promise<any>;
@@ -1001,6 +1010,73 @@ export class Storage implements IStorage {
 
   async deleteStudyAbroadInquiry(id: number) {
     return await this.db.studyAbroadInquiry.delete({
+      where: { id },
+    });
+  }
+
+  // Consultation form methods
+  async getConsultationForms() {
+    return await this.db.consultationForm.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
+  async getActiveConsultationForm() {
+    let form = await this.db.consultationForm.findFirst({
+      where: { isActive: true },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (!form) {
+      form = await this.db.consultationForm.create({
+        data: {
+          title: "Free Consultation",
+          description: "Book a consultation with our expert counselors.",
+          isActive: true,
+        },
+      });
+    }
+
+    return form;
+  }
+
+  async createConsultationForm(formData: any) {
+    return await this.db.consultationForm.create({
+      data: formData,
+    });
+  }
+
+  async deleteConsultationForm(id: number) {
+    return await this.db.consultationForm.delete({
+      where: { id },
+    });
+  }
+
+  async getConsultationSubmissions() {
+    return await this.db.consultationSubmission.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        form: true,
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+      },
+    });
+  }
+
+  async createConsultationSubmission(submissionData: any) {
+    return await this.db.consultationSubmission.create({
+      data: submissionData,
+    });
+  }
+
+  async deleteConsultationSubmission(id: number) {
+    return await this.db.consultationSubmission.delete({
       where: { id },
     });
   }
