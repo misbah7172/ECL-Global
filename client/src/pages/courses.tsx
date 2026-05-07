@@ -206,95 +206,81 @@ export default function Courses() {
 
       {/* Hero Section */}
       <section 
-        className="relative overflow-hidden px-4 py-16 md:py-20"
-        style={{ 
-          background: `linear-gradient(135deg, ${COLORS.deepBlue} 0%, ${COLORS.midBlue} 48%, #EAF6FB 100%)`
+        className="relative py-24 text-white overflow-hidden"
+        style={{
+          background: `linear-gradient(135deg, ${COLORS.deepBlue} 0%, ${COLORS.midBlue} 50%, ${COLORS.skyBlue} 100%)`
         }}
       >
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-white/30 blur-3xl" />
-          <div className="absolute bottom-0 left-0 h-64 w-64 rounded-full bg-[#FFD700]/20 blur-3xl" />
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-16 left-10 h-36 w-36 rounded-full border-4 border-white" />
+          <div className="absolute bottom-16 right-10 h-28 w-28 rounded-full border-4 border-white" />
+          <div className="absolute top-1/2 left-1/2 h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full border-4 border-white" />
         </div>
-        <div className="container mx-auto">
-          <div className="relative grid gap-10 md:grid-cols-2 md:items-center">
-            <div className="text-white">
-              <Badge className="mb-5 rounded-full border-0 bg-white/15 px-4 py-2 text-white backdrop-blur">
-                <Sparkles className="h-3 w-3 mr-1" />
-                Student-friendly learning journeys
-              </Badge>
-              <h1 className="text-4xl md:text-6xl font-bold mb-5 leading-tight tracking-tight">
-                Learn with clarity.
-                <br />
-                Grow with confidence.
-              </h1>
-              <p className="text-base md:text-lg text-white/90 max-w-xl mb-6">
-                Explore courses designed for students who want a simple path, practical lessons, and visible progress from day one.
-              </p>
-              <div className="flex flex-wrap gap-3 mb-8">
-                {studentBenefits.map((benefit) => (
-                  <div key={benefit} className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm backdrop-blur">
-                    <BadgeCheck className="h-4 w-4 text-[#FFD700]" />
-                    <span>{benefit}</span>
-                  </div>
-                ))}
+
+        <div className="container mx-auto px-4 max-w-6xl relative z-10">
+          <div className="text-center">
+            <div className="mb-6 flex items-center justify-center">
+              <div className="mr-4 flex h-20 w-20 items-center justify-center rounded-full bg-white/20">
+                <BookOpen className="h-10 w-10 text-white" />
               </div>
-              <div className="flex flex-wrap gap-3">
-                <Button 
-                  size="lg"
-                  className="rounded-full px-6 text-white font-semibold hover:opacity-90"
-                  style={{ backgroundColor: COLORS.red }}
-                >
-                  Explore Courses
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-                <Button 
-                  size="lg"
-                  variant="outline"
-                  className="rounded-full border-white/40 bg-white/10 px-6 text-white hover:bg-white/20"
-                >
-                  <BookOpen className="h-4 w-4 mr-2" />
-                  View Learning Paths
-                </Button>
+              <h1 className="text-4xl md:text-6xl font-bold">Courses</h1>
+            </div>
+
+            <p className="mx-auto mb-10 max-w-3xl text-xl md:text-2xl leading-relaxed text-blue-100">
+              Learn with clarity and build real confidence through practical courses, expert support, and a clear roadmap for progress.
+            </p>
+
+            <div className="mx-auto mb-10 grid max-w-4xl grid-cols-2 gap-6 md:grid-cols-4">
+              <div className="rounded-xl bg-white/15 p-4 backdrop-blur-sm">
+                <div className="text-3xl font-bold">{Array.isArray(courses) ? courses.length : 0}+</div>
+                <div className="text-sm text-blue-100">Total Courses</div>
+              </div>
+              <div className="rounded-xl bg-white/15 p-4 backdrop-blur-sm">
+                <div className="text-3xl font-bold">{Array.isArray(categories) ? categories.length : 0}</div>
+                <div className="text-sm text-blue-100">Categories</div>
+              </div>
+              <div className="rounded-xl bg-white/15 p-4 backdrop-blur-sm">
+                <div className="text-3xl font-bold">{featuredCourses.length}+</div>
+                <div className="text-sm text-blue-100">Featured Picks</div>
+              </div>
+              <div className="rounded-xl bg-white/15 p-4 backdrop-blur-sm">
+                <div className="text-3xl font-bold">Weekly</div>
+                <div className="text-sm text-blue-100">Live Sessions</div>
               </div>
             </div>
-            <div className="relative hidden md:block">
-              <div className="absolute inset-6 rounded-[2rem] bg-white/20 blur-2xl" />
-              <Card className="relative overflow-hidden rounded-[2rem] border-0 bg-white shadow-2xl">
-                <div className="grid gap-0">
-                  <div className="relative h-72 overflow-hidden">
-                    <img 
-                      src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&h=700&fit=crop"
-                      alt="Students learning"
-                      className="h-full w-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-                    <div className="absolute left-4 top-4 rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-900 shadow">
-                      Guided learning
-                    </div>
-                    <div className="absolute bottom-4 left-4 right-4 grid grid-cols-3 gap-3">
-                      <div className="rounded-2xl bg-white/95 p-3 shadow-lg backdrop-blur">
-                        <div className="text-xs text-gray-500">Courses</div>
-                        <div className="text-lg font-bold" style={{ color: COLORS.deepBlue }}>{courses?.length || 0}+</div>
-                      </div>
-                      <div className="rounded-2xl bg-white/95 p-3 shadow-lg backdrop-blur">
-                        <div className="text-xs text-gray-500">Categories</div>
-                        <div className="text-lg font-bold" style={{ color: COLORS.deepBlue }}>{Array.isArray(categories) ? categories.length : 0}</div>
-                      </div>
-                      <div className="rounded-2xl bg-white/95 p-3 shadow-lg backdrop-blur">
-                        <div className="text-xs text-gray-500">Live sessions</div>
-                        <div className="text-lg font-bold" style={{ color: COLORS.deepBlue }}>Weekly</div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="grid gap-4 bg-white p-6 sm:grid-cols-3">
-                    {quickGoals.map((goal) => (
-                      <div key={goal} className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
-                        {goal}
-                      </div>
-                    ))}
-                  </div>
+
+            <div className="mb-8 flex flex-wrap justify-center gap-3">
+              {studentBenefits.map((benefit) => (
+                <div key={benefit} className="flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm backdrop-blur-sm">
+                  <BadgeCheck className="h-4 w-4 text-[#FFD700]" />
+                  <span>{benefit}</span>
                 </div>
-              </Card>
+              ))}
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button
+                size="lg"
+                className="h-14 px-8 text-white font-semibold shadow-xl"
+                style={{ backgroundColor: COLORS.red }}
+                asChild
+              >
+                <Link href="/courses">
+                  Explore Courses
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Link>
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="h-14 px-8 border-2 border-white text-white hover:bg-white font-semibold"
+                asChild
+              >
+                <Link href="/consultation">
+                  <Users className="h-5 w-5 mr-2" />
+                  Free Consultation
+                </Link>
+              </Button>
             </div>
           </div>
         </div>

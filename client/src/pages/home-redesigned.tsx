@@ -201,17 +201,6 @@ export default function HomeRedesigned() {
                     Book Free Consultation
                   </Link>
                 </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="text-white border-white hover:bg-white hover:text-[#1C4E9C] font-semibold"
-                  asChild
-                >
-                  <Link href="#services">
-                    <Play className="h-5 w-5 mr-2" />
-                    Explore Services
-                  </Link>
-                </Button>
               </div>
 
               {/* Contact Options */}
@@ -231,7 +220,7 @@ export default function HomeRedesigned() {
               </div>
             </div>
             
-            {/* Lead Form Card */}
+            {/* Hero Side Card */}
             <div className="relative">
               <div className="absolute inset-0 rounded-3xl opacity-20 blur-3xl" style={{ background: `linear-gradient(to right, ${COLORS.skyBlue}, ${COLORS.midBlue})` }}></div>
               <Card className="relative bg-white shadow-2xl">
@@ -240,46 +229,29 @@ export default function HomeRedesigned() {
                     Start Your Journey Today
                   </CardTitle>
                   <p className="text-center text-sm" style={{ color: COLORS.darkGrey }}>
-                    Get personalized guidance from our experts
+                    Personalized guidance from experts for every step.
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-3">
-                    <input 
-                      type="text" 
-                      placeholder="Your Name" 
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#33A9D9] focus:border-transparent"
-                    />
-                    <input 
-                      type="email" 
-                      placeholder="Email Address" 
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#33A9D9] focus:border-transparent"
-                    />
-                    <input 
-                      type="tel" 
-                      placeholder="Phone Number" 
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#33A9D9] focus:border-transparent"
-                    />
-                    <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#33A9D9] focus:border-transparent">
-                      <option>Select Service</option>
-                      {services.map((service: any) => (
-                        <option key={service.id} value={service.serviceType}>
-                          {service.title}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="flex items-center gap-2 rounded-lg bg-blue-50 px-4 py-3 text-sm" style={{ color: COLORS.deepBlue }}>
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      Free one-to-one consultation
+                    </div>
+                    <div className="flex items-center gap-2 rounded-lg bg-blue-50 px-4 py-3 text-sm" style={{ color: COLORS.deepBlue }}>
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      Personalized country and course plan
+                    </div>
+                    <div className="flex items-center gap-2 rounded-lg bg-blue-50 px-4 py-3 text-sm" style={{ color: COLORS.deepBlue }}>
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      Visa and application strategy support
+                    </div>
                   </div>
-                  <Button 
-                    className="w-full font-semibold text-white"
-                    style={{ backgroundColor: COLORS.skyBlue }}
-                  >
-                    <Calendar className="h-5 w-5 mr-2" />
-                    Book Free Consultation
-                  </Button>
-                  <p className="text-xs text-center text-gray-500">
-                    <CheckCircle className="h-3 w-3 inline mr-1 text-green-500" />
-                    No commitment required. Free expert advice.
-                  </p>
+                  <div className="rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50 to-cyan-50 p-4 text-center">
+                    <p className="text-sm font-medium" style={{ color: COLORS.deepBlue }}>
+                      No commitment required. Just practical guidance.
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
             </div>

@@ -1045,8 +1045,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/branches", authenticateToken, requireAdmin, async (req, res) => {
     try {
       const branchData = insertBranchSchema.parse(req.body);
-      const branch = await storage.createBranch({
+      const normalized = {
         ...branchData,
+        name: branchData.name.trim(),
+        code: branchData.code.trim().toUpperCase(),
+        description: branchData.description?.trim() || null,
+        address: branchData.address.trim(),
+        city: branchData.city.trim(),
+        state: branchData.state?.trim() || null,
+        zipCode: branchData.zipCode?.trim() || null,
+        country: branchData.country.trim(),
+        phone: branchData.phone?.trim() || null,
+        email: branchData.email?.trim() || null,
+        managerName: branchData.managerName?.trim() || null,
+        managerPhone: branchData.managerPhone?.trim() || null,
+        managerEmail: branchData.managerEmail?.trim() || null,
+      };
+      const branch = await storage.createBranch({
+        ...normalized,
         totalStudents: 0,
         totalCourses: 0,
         totalInstructors: 0,
@@ -1055,7 +1071,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       res.json(branch);
     } catch (error: any) {
-      res.status(400).json({ error: error.message });
+      const message = String(error?.message || "Failed to create branch");
+      if (message.includes("Unique constraint") && message.includes("code")) {
+        return res.status(400).json({ error: "Branch code already exists" });
+      }
+      res.status(400).json({ error: message });
     }
   });
 
@@ -1063,8 +1083,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const branchData = insertBranchSchema.parse(req.body);
-      const branch = await storage.updateBranch(id, {
+      const normalized = {
         ...branchData,
+        name: branchData.name.trim(),
+        code: branchData.code.trim().toUpperCase(),
+        description: branchData.description?.trim() || null,
+        address: branchData.address.trim(),
+        city: branchData.city.trim(),
+        state: branchData.state?.trim() || null,
+        zipCode: branchData.zipCode?.trim() || null,
+        country: branchData.country.trim(),
+        phone: branchData.phone?.trim() || null,
+        email: branchData.email?.trim() || null,
+        managerName: branchData.managerName?.trim() || null,
+        managerPhone: branchData.managerPhone?.trim() || null,
+        managerEmail: branchData.managerEmail?.trim() || null,
+      };
+      const branch = await storage.updateBranch(id, {
+        ...normalized,
         totalStudents: 0,
         totalCourses: 0,
         totalInstructors: 0,
@@ -1072,7 +1108,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       res.json(branch);
     } catch (error: any) {
-      res.status(400).json({ error: error.message });
+      const message = String(error?.message || "Failed to update branch");
+      if (message.includes("Unique constraint") && message.includes("code")) {
+        return res.status(400).json({ error: "Branch code already exists" });
+      }
+      res.status(400).json({ error: message });
     }
   });
 

@@ -419,6 +419,27 @@ var Storage = class {
       where: { isActive: true }
     });
   }
+  async getBranch(id) {
+    return await this.db.branch.findUnique({
+      where: { id }
+    });
+  }
+  async createBranch(branchData) {
+    return await this.db.branch.create({
+      data: branchData
+    });
+  }
+  async updateBranch(id, updates) {
+    return await this.db.branch.update({
+      where: { id },
+      data: updates
+    });
+  }
+  async deleteBranch(id) {
+    return await this.db.branch.delete({
+      where: { id }
+    });
+  }
   // Lead methods
   async createLead(leadData) {
     return await this.db.lead.create({
@@ -828,6 +849,64 @@ var Storage = class {
       where: { id }
     });
   }
+  // Consultation form methods
+  async getConsultationForms() {
+    return await this.db.consultationForm.findMany({
+      orderBy: { createdAt: "desc" }
+    });
+  }
+  async getActiveConsultationForm() {
+    let form = await this.db.consultationForm.findFirst({
+      where: { isActive: true },
+      orderBy: { createdAt: "desc" }
+    });
+    if (!form) {
+      form = await this.db.consultationForm.create({
+        data: {
+          title: "Free Consultation",
+          description: "Book a consultation with our expert counselors.",
+          isActive: true
+        }
+      });
+    }
+    return form;
+  }
+  async createConsultationForm(formData) {
+    return await this.db.consultationForm.create({
+      data: formData
+    });
+  }
+  async deleteConsultationForm(id) {
+    return await this.db.consultationForm.delete({
+      where: { id }
+    });
+  }
+  async getConsultationSubmissions() {
+    return await this.db.consultationSubmission.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        form: true,
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true
+          }
+        }
+      }
+    });
+  }
+  async createConsultationSubmission(submissionData) {
+    return await this.db.consultationSubmission.create({
+      data: submissionData
+    });
+  }
+  async deleteConsultationSubmission(id) {
+    return await this.db.consultationSubmission.delete({
+      where: { id }
+    });
+  }
   // Team Member methods
   async getTeamMembers(filters) {
     const where = {};
@@ -870,6 +949,7 @@ var Storage = class {
   }
   async getHomepageSettings() {
     try {
+      await this.ensureHomepageSettingsColumns();
       let settings = await this.db.homepageSettings.findFirst();
       if (!settings) {
         settings = await this.db.homepageSettings.create({
@@ -884,11 +964,16 @@ var Storage = class {
           data: {}
         });
       }
+      if (String(error?.message || error).includes("column") && String(error?.message || error).includes("does not exist")) {
+        await this.ensureHomepageSettingsColumns();
+        return await this.db.homepageSettings.findFirst();
+      }
       throw error;
     }
   }
   async updateHomepageSettings(updates) {
     try {
+      await this.ensureHomepageSettingsColumns();
       const settings = await this.db.homepageSettings.findFirst();
       if (!settings) {
         return await this.db.homepageSettings.create({
@@ -906,17 +991,23 @@ var Storage = class {
           data: updates
         });
       }
+      if (String(error?.message || error).includes("column") && String(error?.message || error).includes("does not exist")) {
+        await this.ensureHomepageSettingsColumns();
+        return await this.db.homepageSettings.create({
+          data: updates
+        });
+      }
       throw error;
     }
   }
   homepageSettingsSchemaSql = `
     CREATE TABLE IF NOT EXISTS "homepage_settings" (
       "id" SERIAL NOT NULL,
-      "studentsPlaced" TEXT NOT NULL DEFAULT '15,000+',
+      "studentsPlaced" TEXT NOT NULL DEFAULT '1000+',
       "visaSuccessRate" TEXT NOT NULL DEFAULT '98%',
       "universityPartners" TEXT NOT NULL DEFAULT '50+',
-      "phoneNumber" TEXT NOT NULL DEFAULT '+880 1777-123456',
-      "whatsappNumber" TEXT NOT NULL DEFAULT '+880 1777-123456',
+      "phoneNumber" TEXT NOT NULL DEFAULT '+880 1305841167',
+      "whatsappNumber" TEXT NOT NULL DEFAULT '+880 1305841167',
       "email" TEXT NOT NULL DEFAULT 'info@eclglobal.com',
       "heroTitle" TEXT NOT NULL DEFAULT 'Your Passport to Academic Adventure',
       "heroSubtitle" TEXT NOT NULL DEFAULT 'Bangladesh''s #1 Study Abroad Consultant. Transform your global education dreams into reality with expert guidance, proven results, and personalized support.',
@@ -936,6 +1027,17 @@ var Storage = class {
   `;
   async ensureHomepageSettingsTable() {
     await this.db.$executeRawUnsafe(this.homepageSettingsSchemaSql);
+  }
+  async ensureHomepageSettingsColumns() {
+    await this.db.$executeRawUnsafe(`
+      ALTER TABLE "homepage_settings"
+      ADD COLUMN IF NOT EXISTS "popup_enabled" BOOLEAN NOT NULL DEFAULT false,
+      ADD COLUMN IF NOT EXISTS "popup_badge" TEXT NOT NULL DEFAULT 'Proud Moment',
+      ADD COLUMN IF NOT EXISTS "popup_title" TEXT NOT NULL DEFAULT 'Celebrate our students'' success',
+      ADD COLUMN IF NOT EXISTS "popup_message" TEXT NOT NULL DEFAULT 'Special offers, student highlights, and important announcements appear here.',
+      ADD COLUMN IF NOT EXISTS "popup_cta_text" TEXT NOT NULL DEFAULT 'See Offers',
+      ADD COLUMN IF NOT EXISTS "popup_cta_url" TEXT NOT NULL DEFAULT '/courses'
+    `);
   }
 };
 var storage = new Storage(prisma);
@@ -1155,6 +1257,37 @@ var insertBackupScheduleSchema = z.object({
   isEncrypted: z.coerce.boolean().default(true),
   lastRun: z.string().optional().transform((value) => value ? new Date(value) : void 0),
   nextRun: z.string().transform((value) => new Date(value))
+});
+var insertConsultationFormSchema = z.object({
+  title: z.string().min(1),
+  description: z.string().optional(),
+  isActive: z.coerce.boolean().default(true)
+});
+var insertConsultationSubmissionSchema = z.object({
+  formId: z.coerce.number().optional(),
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
+  phone: z.string().regex(/^\d{13}$/, "Phone number must be 13 digits"),
+  email: z.string().email(),
+  ieltsStatus: z.enum(["No", "Yes - General Training", "Yes - Academic Training"]),
+  age: z.coerce.number().min(15).max(40),
+  gender: z.enum(["Male", "Female", "Other"]),
+  educationLevel: z.enum([
+    "SSC",
+    "O levels",
+    "HSC",
+    "A levels",
+    "Diploma",
+    "Graduation",
+    "Post Graduation (Master\u2019s)"
+  ]),
+  location: z.enum(["Dhaka", "Chittagong", "Sylhet", "Rajshahi", "Khulna", "Other"]),
+  preferredDate: z.string().transform((value) => new Date(value)),
+  preferredTime: z.string().min(1),
+  guardianFirstName: z.string().min(1),
+  guardianLastName: z.string().min(1),
+  guardianPhone: z.string().regex(/^\d{13}$/, "Guardian phone must be 13 digits"),
+  subject: z.string().min(1)
 });
 var JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -1795,8 +1928,24 @@ async function registerRoutes(app2) {
   app2.post("/api/admin/branches", authenticateToken, requireAdmin, async (req, res) => {
     try {
       const branchData = insertBranchSchema.parse(req.body);
-      const branch = await storage.createBranch({
+      const normalized = {
         ...branchData,
+        name: branchData.name.trim(),
+        code: branchData.code.trim().toUpperCase(),
+        description: branchData.description?.trim() || null,
+        address: branchData.address.trim(),
+        city: branchData.city.trim(),
+        state: branchData.state?.trim() || null,
+        zipCode: branchData.zipCode?.trim() || null,
+        country: branchData.country.trim(),
+        phone: branchData.phone?.trim() || null,
+        email: branchData.email?.trim() || null,
+        managerName: branchData.managerName?.trim() || null,
+        managerPhone: branchData.managerPhone?.trim() || null,
+        managerEmail: branchData.managerEmail?.trim() || null
+      };
+      const branch = await storage.createBranch({
+        ...normalized,
         totalStudents: 0,
         totalCourses: 0,
         totalInstructors: 0,
@@ -1805,15 +1954,35 @@ async function registerRoutes(app2) {
       });
       res.json(branch);
     } catch (error) {
-      res.status(400).json({ error: error.message });
+      const message = String(error?.message || "Failed to create branch");
+      if (message.includes("Unique constraint") && message.includes("code")) {
+        return res.status(400).json({ error: "Branch code already exists" });
+      }
+      res.status(400).json({ error: message });
     }
   });
   app2.put("/api/admin/branches/:id", authenticateToken, requireAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const branchData = insertBranchSchema.parse(req.body);
-      const branch = await storage.updateBranch(id, {
+      const normalized = {
         ...branchData,
+        name: branchData.name.trim(),
+        code: branchData.code.trim().toUpperCase(),
+        description: branchData.description?.trim() || null,
+        address: branchData.address.trim(),
+        city: branchData.city.trim(),
+        state: branchData.state?.trim() || null,
+        zipCode: branchData.zipCode?.trim() || null,
+        country: branchData.country.trim(),
+        phone: branchData.phone?.trim() || null,
+        email: branchData.email?.trim() || null,
+        managerName: branchData.managerName?.trim() || null,
+        managerPhone: branchData.managerPhone?.trim() || null,
+        managerEmail: branchData.managerEmail?.trim() || null
+      };
+      const branch = await storage.updateBranch(id, {
+        ...normalized,
         totalStudents: 0,
         totalCourses: 0,
         totalInstructors: 0,
@@ -1821,7 +1990,11 @@ async function registerRoutes(app2) {
       });
       res.json(branch);
     } catch (error) {
-      res.status(400).json({ error: error.message });
+      const message = String(error?.message || "Failed to update branch");
+      if (message.includes("Unique constraint") && message.includes("code")) {
+        return res.status(400).json({ error: "Branch code already exists" });
+      }
+      res.status(400).json({ error: message });
     }
   });
   app2.delete("/api/admin/branches/:id", authenticateToken, requireAdmin, async (req, res) => {
@@ -2057,6 +2230,88 @@ async function registerRoutes(app2) {
       res.json(leads);
     } catch (error) {
       res.status(500).json({ error: error.message });
+    }
+  });
+  app2.get("/api/consultation-forms/active", async (req, res) => {
+    try {
+      const form = await storage.getActiveConsultationForm();
+      res.json(form);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  app2.post("/api/consultation-submissions", authenticateToken, async (req, res) => {
+    try {
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ error: "Invalid token" });
+      }
+      const submissionData = insertConsultationSubmissionSchema.parse(req.body);
+      const formId = submissionData.formId || (await storage.getActiveConsultationForm()).id;
+      const submission = await storage.createConsultationSubmission({
+        formId,
+        userId: req.user.id,
+        firstName: submissionData.firstName,
+        lastName: submissionData.lastName,
+        phone: submissionData.phone,
+        email: submissionData.email,
+        ieltsStatus: submissionData.ieltsStatus,
+        age: submissionData.age,
+        gender: submissionData.gender,
+        educationLevel: submissionData.educationLevel,
+        location: submissionData.location,
+        preferredDate: submissionData.preferredDate,
+        preferredTime: submissionData.preferredTime,
+        guardianFirstName: submissionData.guardianFirstName,
+        guardianLastName: submissionData.guardianLastName,
+        guardianPhone: submissionData.guardianPhone,
+        subject: submissionData.subject
+      });
+      res.json(submission);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+  app2.get("/api/admin/consultation-forms", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const forms = await storage.getConsultationForms();
+      res.json(forms);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  app2.post("/api/admin/consultation-forms", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const formData = insertConsultationFormSchema.parse(req.body);
+      const form = await storage.createConsultationForm(formData);
+      res.json(form);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+  app2.delete("/api/admin/consultation-forms/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteConsultationForm(id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+  app2.get("/api/admin/consultation-submissions", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const submissions = await storage.getConsultationSubmissions();
+      res.json(submissions);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  app2.delete("/api/admin/consultation-submissions/:id", authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteConsultationSubmission(id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
     }
   });
   app2.get("/api/reviews", async (req, res) => {

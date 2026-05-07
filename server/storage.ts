@@ -54,6 +54,10 @@ export interface IStorage {
 
   // Branch methods
   getBranches(): Promise<any[]>;
+  getBranch(id: number): Promise<any>;
+  createBranch(branchData: any): Promise<any>;
+  updateBranch(id: number, updates: any): Promise<any>;
+  deleteBranch(id: number): Promise<any>;
 
   // Lead methods
   createLead(leadData: any): Promise<any>;
@@ -555,6 +559,31 @@ export class Storage implements IStorage {
   async getBranches() {
     return await this.db.branch.findMany({
       where: { isActive: true },
+    });
+  }
+
+  async getBranch(id: number) {
+    return await this.db.branch.findUnique({
+      where: { id },
+    });
+  }
+
+  async createBranch(branchData: any) {
+    return await this.db.branch.create({
+      data: branchData,
+    });
+  }
+
+  async updateBranch(id: number, updates: any) {
+    return await this.db.branch.update({
+      where: { id },
+      data: updates,
+    });
+  }
+
+  async deleteBranch(id: number) {
+    return await this.db.branch.delete({
+      where: { id },
     });
   }
 
@@ -1131,6 +1160,7 @@ export class Storage implements IStorage {
 
   async getHomepageSettings() {
     try {
+      await this.ensureHomepageSettingsColumns();
       let settings = await this.db.homepageSettings.findFirst();
       if (!settings) {
         settings = await this.db.homepageSettings.create({
@@ -1145,12 +1175,17 @@ export class Storage implements IStorage {
           data: {},
         });
       }
+      if (String(error?.message || error).includes("column") && String(error?.message || error).includes("does not exist")) {
+        await this.ensureHomepageSettingsColumns();
+        return await this.db.homepageSettings.findFirst();
+      }
       throw error;
     }
   }
 
   async updateHomepageSettings(updates: any) {
     try {
+      await this.ensureHomepageSettingsColumns();
       const settings = await this.db.homepageSettings.findFirst();
       if (!settings) {
         return await this.db.homepageSettings.create({
@@ -1164,6 +1199,12 @@ export class Storage implements IStorage {
     } catch (error: any) {
       if (String(error?.message || error).includes("does not exist")) {
         await this.ensureHomepageSettingsTable();
+        return await this.db.homepageSettings.create({
+          data: updates,
+        });
+      }
+      if (String(error?.message || error).includes("column") && String(error?.message || error).includes("does not exist")) {
+        await this.ensureHomepageSettingsColumns();
         return await this.db.homepageSettings.create({
           data: updates,
         });
@@ -1200,6 +1241,18 @@ export class Storage implements IStorage {
 
   private async ensureHomepageSettingsTable() {
     await this.db.$executeRawUnsafe(this.homepageSettingsSchemaSql);
+  }
+
+  private async ensureHomepageSettingsColumns() {
+    await this.db.$executeRawUnsafe(`
+      ALTER TABLE "homepage_settings"
+      ADD COLUMN IF NOT EXISTS "popup_enabled" BOOLEAN NOT NULL DEFAULT false,
+      ADD COLUMN IF NOT EXISTS "popup_badge" TEXT NOT NULL DEFAULT 'Proud Moment',
+      ADD COLUMN IF NOT EXISTS "popup_title" TEXT NOT NULL DEFAULT 'Celebrate our students'' success',
+      ADD COLUMN IF NOT EXISTS "popup_message" TEXT NOT NULL DEFAULT 'Special offers, student highlights, and important announcements appear here.',
+      ADD COLUMN IF NOT EXISTS "popup_cta_text" TEXT NOT NULL DEFAULT 'See Offers',
+      ADD COLUMN IF NOT EXISTS "popup_cta_url" TEXT NOT NULL DEFAULT '/courses'
+    `);
   }
 }
 
