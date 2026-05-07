@@ -70,7 +70,7 @@ export default function Register() {
     setIsLoading(true);
     try {
       const { confirmPassword, ...registerData } = data;
-      await register(registerData);
+      const result = await register(registerData);
       
       // Track registration in Facebook Pixel
       trackCompleteRegistration({
@@ -84,21 +84,26 @@ export default function Register() {
         title: "Account created successfully!",
         description: "Welcome to ECL Global Learning Platform.",
       });
+
       const searchParams = new URLSearchParams(window.location.search);
       const redirectTarget =
         sessionStorage.getItem("post-register-redirect") ||
         searchParams.get("redirect");
+
       if (redirectTarget) {
         sessionStorage.removeItem("post-register-redirect");
         window.location.href = redirectTarget;
+      } else if (result && result.user) {
+        // Redirect user to homepage after successful creation
+        window.location.href = "/";
       } else {
-        // Use window.location to ensure navigation happens after auth state update
-        window.location.href = "/dashboard";
+        window.location.href = "/";
       }
     } catch (error: any) {
+      const message = (error && (error.message || String(error))) || "Something went wrong";
       toast({
         title: "Registration Failed",
-        description: error.message || "Something went wrong",
+        description: message,
         variant: "destructive",
       });
       setIsLoading(false);

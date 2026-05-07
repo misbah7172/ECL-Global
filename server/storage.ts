@@ -1045,34 +1045,58 @@ export class Storage implements IStorage {
 
   // Consultation form methods
   async getConsultationForms() {
-    return await this.db.consultationForm.findMany({
-      orderBy: { createdAt: "desc" },
-    });
+    try {
+      return await this.db.consultationForm.findMany({
+        orderBy: { createdAt: "desc" },
+      });
+    } catch (error: any) {
+      if (String(error?.message || error).includes("does not exist") || String(error?.message || error).includes("relation \"consultation_forms\" does not exist")) {
+        await this.ensureConsultationTables();
+        return await this.db.consultationForm.findMany({ orderBy: { createdAt: "desc" } });
+      }
+      throw error;
+    }
   }
 
   async getActiveConsultationForm() {
-    let form = await this.db.consultationForm.findFirst({
-      where: { isActive: true },
-      orderBy: { createdAt: "desc" },
-    });
-
-    if (!form) {
-      form = await this.db.consultationForm.create({
-        data: {
-          title: "Free Consultation",
-          description: "Book a consultation with our expert counselors.",
-          isActive: true,
-        },
+    try {
+      let form = await this.db.consultationForm.findFirst({
+        where: { isActive: true },
+        orderBy: { createdAt: "desc" },
       });
-    }
 
-    return form;
+      if (!form) {
+        form = await this.db.consultationForm.create({
+          data: {
+            title: "Free Consultation",
+            description: "Book a consultation with our expert counselors.",
+            isActive: true,
+          },
+        });
+      }
+
+      return form;
+    } catch (error: any) {
+      if (String(error?.message || error).includes("does not exist") || String(error?.message || error).includes("relation \"consultation_forms\" does not exist")) {
+        await this.ensureConsultationTables();
+        return await this.getActiveConsultationForm();
+      }
+      throw error;
+    }
   }
 
   async createConsultationForm(formData: any) {
-    return await this.db.consultationForm.create({
-      data: formData,
-    });
+    try {
+      return await this.db.consultationForm.create({
+        data: formData,
+      });
+    } catch (error: any) {
+      if (String(error?.message || error).includes("does not exist") || String(error?.message || error).includes("relation \"consultation_forms\" does not exist")) {
+        await this.ensureConsultationTables();
+        return await this.db.consultationForm.create({ data: formData });
+      }
+      throw error;
+    }
   }
 
   async deleteConsultationForm(id: number) {
@@ -1082,26 +1106,42 @@ export class Storage implements IStorage {
   }
 
   async getConsultationSubmissions() {
-    return await this.db.consultationSubmission.findMany({
-      orderBy: { createdAt: "desc" },
-      include: {
-        form: true,
-        user: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
+    try {
+      return await this.db.consultationSubmission.findMany({
+        orderBy: { createdAt: "desc" },
+        include: {
+          form: true,
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+            },
           },
         },
-      },
-    });
+      });
+    } catch (error: any) {
+      if (String(error?.message || error).includes("does not exist") || String(error?.message || error).includes("relation \"consultation_submissions\" does not exist")) {
+        await this.ensureConsultationTables();
+        return await this.db.consultationSubmission.findMany({ orderBy: { createdAt: "desc" } });
+      }
+      throw error;
+    }
   }
 
   async createConsultationSubmission(submissionData: any) {
-    return await this.db.consultationSubmission.create({
-      data: submissionData,
-    });
+    try {
+      return await this.db.consultationSubmission.create({
+        data: submissionData,
+      });
+    } catch (error: any) {
+      if (String(error?.message || error).includes("does not exist") || String(error?.message || error).includes("relation \"consultation_submissions\" does not exist") || String(error?.message || error).includes("relation \"consultation_forms\" does not exist")) {
+        await this.ensureConsultationTables();
+        return await this.db.consultationSubmission.create({ data: submissionData });
+      }
+      throw error;
+    }
   }
 
   async deleteConsultationSubmission(id: number) {
@@ -1252,6 +1292,43 @@ export class Storage implements IStorage {
       ADD COLUMN IF NOT EXISTS "popup_message" TEXT NOT NULL DEFAULT 'Special offers, student highlights, and important announcements appear here.',
       ADD COLUMN IF NOT EXISTS "popup_cta_text" TEXT NOT NULL DEFAULT 'See Offers',
       ADD COLUMN IF NOT EXISTS "popup_cta_url" TEXT NOT NULL DEFAULT '/courses'
+    `);
+  }
+
+  // Create consultation tables if missing (runtime self-heal)
+  private async ensureConsultationTables() {
+    await this.db.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "consultation_forms" (
+        "id" SERIAL PRIMARY KEY,
+        "title" TEXT NOT NULL,
+        "description" TEXT,
+        "is_active" BOOLEAN NOT NULL DEFAULT true,
+        "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS "consultation_submissions" (
+        "id" SERIAL PRIMARY KEY,
+        "form_id" INTEGER NOT NULL REFERENCES "consultation_forms" (id) ON DELETE CASCADE,
+        "user_id" INTEGER REFERENCES "users" (id) ON DELETE SET NULL,
+        "first_name" TEXT NOT NULL,
+        "last_name" TEXT NOT NULL,
+        "phone" TEXT NOT NULL,
+        "email" TEXT NOT NULL,
+        "ielts_status" TEXT NOT NULL,
+        "age" INTEGER NOT NULL,
+        "gender" TEXT NOT NULL,
+        "education_level" TEXT NOT NULL,
+        "location" TEXT NOT NULL,
+        "preferred_date" TIMESTAMP(3),
+        "preferred_time" TEXT,
+        "guardian_first_name" TEXT,
+        "guardian_last_name" TEXT,
+        "guardian_phone" TEXT,
+        "subject" TEXT,
+        "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
     `);
   }
 }

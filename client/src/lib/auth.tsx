@@ -172,16 +172,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = async (userData: any) => {
     const response = await apiRequest("POST", "/api/auth/register", userData);
     const data = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(data.error || "Registration failed");
     }
-    
+
     setToken(data.token);
     setUser(data.user);
     localStorage.setItem(SESSION_KEYS.TOKEN, data.token);
     localStorage.setItem(SESSION_KEYS.USER, JSON.stringify(data.user));
     updateLastActivity();
+
+    return data;
   };
 
   const logout = () => {
