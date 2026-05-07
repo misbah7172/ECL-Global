@@ -1297,6 +1297,7 @@ export class Storage implements IStorage {
 
   // Create consultation tables if missing (runtime self-heal)
   private async ensureConsultationTables() {
+    // Create forms table first, then submissions table (separate statements)
     await this.db.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS "consultation_forms" (
         "id" SERIAL PRIMARY KEY,
@@ -1305,8 +1306,10 @@ export class Storage implements IStorage {
         "is_active" BOOLEAN NOT NULL DEFAULT true,
         "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-      );
+      )
+    `);
 
+    await this.db.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS "consultation_submissions" (
         "id" SERIAL PRIMARY KEY,
         "form_id" INTEGER NOT NULL REFERENCES "consultation_forms" (id) ON DELETE CASCADE,
@@ -1328,7 +1331,7 @@ export class Storage implements IStorage {
         "subject" TEXT,
         "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-      );
+      )
     `);
   }
 }
